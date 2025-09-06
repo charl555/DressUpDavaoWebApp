@@ -1,0 +1,1 @@
+<img src="{{ asset('images/Dressupdavaologo.png') }}" alt='DressUp Davao Logo' style="width: 100px; height: auto;" />

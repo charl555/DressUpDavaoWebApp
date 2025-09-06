@@ -1,0 +1,105 @@
+<?php
+
+namespace App\Filament\Resources\Products\Pages;
+
+use App\Filament\Resources\Products\ProductsResource;
+use App\Models\ProductImages as product_image;
+use Filament\Notifications\Notification;
+use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Arr;
+
+class CreateProducts extends CreateRecord
+{
+    protected static string $resource = ProductsResource::class;
+    protected $occasionsData = [];
+    protected $measurementsData = [];
+    protected $thumbnail = null;
+    protected $galleryImages = [];
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        $data['user_id'] = auth()->id();
+
+        $this->occasionsData = explode(',', $data['occasions'] ?? []);
+        unset($data['occasions']);
+
+        $this->measurementsData = Arr::only($data, [
+            'gown_length',
+            'gown_upper_chest',
+            'gown_chest',
+            'gown_waist',
+            'gown_hips',
+            'jacket_chest',
+            'jacket_length',
+            'jacket_shoulder',
+            'jacket_sleeve_length',
+            'jacket_sleeve_width',
+            'jacket_bicep',
+            'jacket_arm_hole',
+            'jacket_waist',
+            'trouser_waist',
+            'trouser_hip',
+            'trouser_inseam',
+            'trouser_outseam',
+            'trouser_thigh',
+            'trouser_leg_opening',
+            'trouser_crotch',
+        ]);
+        $data = Arr::except($data, array_keys($this->measurementsData));
+
+        $this->thumbnail = $data['thumbnail'] ?? null;
+        $this->galleryImages = $data['image_path'] ?? [];
+
+        unset($data['thumbnail'], $data['image_path']);
+
+        return $data;
+    }
+
+    protected function afterCreate(): void
+    {
+        $product = $this->record;
+
+        // Save occasions
+        foreach ($this->occasionsData as $occasion_name) {
+            $product->occasions()->create([
+                'occasion_name' => $occasion_name,
+            ]);
+        }
+
+        // Save product measurements
+        $product->product_measurements()->create(
+            array_merge($this->measurementsData, ['product_id' => $product->product_id])
+        );
+
+        product_image::create([
+            'product_id' => $product->product_id,
+            'image_path' => $this->thumbnail,
+            'type' => 'thumbnail',
+        ]);
+
+        // Save gallery images
+        if (!empty($this->galleryImages)) {
+            foreach ($this->galleryImages as $image) {
+                product_image::create([
+                    'product_id' => $product->product_id,
+                    'image_path' => $image,
+                    'type' => 'gallery',
+                ]);
+            }
+        } else {
+            // Optional: add placeholder/null gallery image if none uploaded
+            product_image::create([
+                'product_id' => $product->product_id,
+                'image_path' => null,
+                'type' => 'gallery',
+            ]);
+        }
+
+        Notification::make()
+            ->title('New Product Created')
+            ->body("A new product named '{$product->name}' was created.")
+            ->success()
+            ->sendToDatabase(Auth::user());
+    }
+}
