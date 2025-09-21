@@ -32,7 +32,14 @@ class ProductsResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->where('user_id', auth()->id());
+            ->where('user_id', auth()->id())
+            ->with(['occasions', 'product_images', 'user']);
+    }
+
+    public static function getTableQuery(): Builder
+    {
+        return static::getEloquentQuery()
+            ->with(['occasions', 'product_images', 'user']);
     }
 
     public static function canViewAny(): bool

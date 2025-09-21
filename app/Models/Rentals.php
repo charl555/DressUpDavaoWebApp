@@ -19,6 +19,17 @@ class Rentals extends Model
         'rental_price',
         'actual_return_date',
         'penalty_amount',
+        'is_returned',  // Add missing field
+    ];
+
+    protected $casts = [
+        'pickup_date' => 'date',
+        'event_date' => 'date',
+        'return_date' => 'date',
+        'actual_return_date' => 'date',
+        'is_returned' => 'boolean',
+        'rental_price' => 'integer',
+        'penalty_amount' => 'integer',
     ];
 
     public function product()

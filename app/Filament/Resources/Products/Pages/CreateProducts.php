@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Products\Pages;
 
 use App\Filament\Resources\Products\ProductsResource;
-use App\Models\ProductImages as product_image;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
@@ -48,10 +47,11 @@ class CreateProducts extends CreateRecord
         ]);
         $data = Arr::except($data, array_keys($this->measurementsData));
 
-        $this->thumbnail = $data['thumbnail'] ?? null;
-        $this->galleryImages = $data['image_path'] ?? [];
+        // Handle images (updated column names)
+        $this->thumbnail = $data['thumbnail_image'] ?? null;
+        $this->galleryImages = $data['images'] ?? [];
 
-        unset($data['thumbnail'], $data['image_path']);
+        unset($data['thumbnail_image'], $data['images']);
 
         return $data;
     }
@@ -60,41 +60,20 @@ class CreateProducts extends CreateRecord
     {
         $product = $this->record;
 
-        // Save occasions
         foreach ($this->occasionsData as $occasion_name) {
             $product->occasions()->create([
                 'occasion_name' => $occasion_name,
             ]);
         }
 
-        // Save product measurements
         $product->product_measurements()->create(
             array_merge($this->measurementsData, ['product_id' => $product->product_id])
         );
 
-        product_image::create([
-            'product_id' => $product->product_id,
-            'image_path' => $this->thumbnail,
-            'type' => 'thumbnail',
+        $product->product_images()->create([
+            'thumbnail_image' => $this->thumbnail ?? null,
+            'images' => !empty($this->galleryImages) ? $this->galleryImages : [],
         ]);
-
-        // Save gallery images
-        if (!empty($this->galleryImages)) {
-            foreach ($this->galleryImages as $image) {
-                product_image::create([
-                    'product_id' => $product->product_id,
-                    'image_path' => $image,
-                    'type' => 'gallery',
-                ]);
-            }
-        } else {
-            // Optional: add placeholder/null gallery image if none uploaded
-            product_image::create([
-                'product_id' => $product->product_id,
-                'image_path' => null,
-                'type' => 'gallery',
-            ]);
-        }
 
         Notification::make()
             ->title('New Product Created')

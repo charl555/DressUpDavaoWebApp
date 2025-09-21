@@ -3,17 +3,28 @@
 namespace App\Filament\Pages;
 
 use App\Models\Products;
+use App\Models\Shops;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextArea;
 use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\ImageEntry;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
@@ -22,9 +33,10 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use BackedEnum;
 
-class ShopPage extends Page implements HasTable
+class ShopPage extends Page implements HasTable, hasSchemas
 {
     use InteractsWithTable;
+    use InteractsWithSchemas;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingStorefront;
 
@@ -32,7 +44,11 @@ class ShopPage extends Page implements HasTable
 
     protected string $view = 'filament.pages.shop-page';
 
+    protected static ?string $navigationLabel = 'Shop';
+
     public static ?string $Title = 'Shop Page';
+
+    public ?Shops $record = null;
 
     public static function canAccess(): bool
     {
@@ -41,15 +57,56 @@ class ShopPage extends Page implements HasTable
 
     public function getTableQuery(): Builder
     {
-        return Products::query()->where('user_id', auth()->id());
+        return Products::query()
+            ->where('user_id', auth()->id())
+            ->with(['occasions', 'product_images', 'user']);
     }
 
     public function getHeaderActions(): array
     {
         return [
-            Action::make('viewStore')
-                ->label('View Store Page')
-                ->icon('heroicon-o-eye'),
+            EditAction::make('EditShopDetails')
+                ->label('Edit Shop Details')
+                ->record(fn() => Shops::firstOrNew(['user_id' => auth()->id()]))
+                ->form([
+                    Select::make('user_id')
+                        ->label('User')
+                        ->options(fn() => User::where('id', auth()->id())->pluck('name', 'id'))
+                        ->default(auth()->id())
+                        ->disabled()
+                        ->hidden(),
+                    Group::make()
+                        ->schema([
+                            Group::make()
+                                ->schema([
+                                    FileUpload::make('shop_logo')
+                                        ->label('Shop Logo')
+                                        ->disk('public')
+                                        ->directory('shop-images')
+                                        ->imageEditor()
+                                        ->image()
+                                        ->deletable(true)
+                                        ->openable(),
+                                ]),
+                            Group::make()
+                                ->schema([
+                                    TextInput::make('shop_name')->label('Shop Name')->required(),
+                                    TextInput::make('shop_address')->label('Shop Address')->required(),
+                                ]),
+                        ])
+                        ->columns(2),
+                    TextArea::make('shop_description')->label('Shop Description'),
+                    TextArea::make('shop_policy')->label('Shop Policy'),
+                ])
+                ->using(function (EditAction $action, array $data) {
+                    $record = $action->getRecord();
+                    $record->fill($data);
+                    $record->save();
+                }),
+            Action::make('viewShop')
+                ->label('View Shop Page')
+                ->icon('heroicon-o-eye')
+                ->url(fn() => route('shop.overview', Shops::where('user_id', auth()->id())->firstOrFail())),
             Action::make('addProduct')
                 ->label('Add products to shop')
                 ->icon('heroicon-o-plus')
@@ -82,6 +139,7 @@ class ShopPage extends Page implements HasTable
     public function table(Table $table): Table
     {
         return $table
+            ->description('This table contains all the products that you have added to your shop. You can edit the details of any product by clicking the "Edit" button.')
             ->query(Products::query()->where('user_id', auth()->id()))
             ->modifyQueryUsing(fn(Builder $query) => $query->where('visibility', 'Yes'))
             ->columns([
@@ -114,13 +172,14 @@ class ShopPage extends Page implements HasTable
                         ];
                     }),
                 ViewAction::make()
-                    ->form(function (Products $record): array {
+                    ->schema(function (Products $record): array {
                         return [
-                            TextInput::make('name')->label('Product Name'),
-                            TextInput::make('type')->label('Product Type'),
-                            TextInput::make('subtype')->label('Style'),
-                            TextArea::make('description')->label('Description'),
-                            TextArea::make('inclusions')->label('Inclusions'),
+                            TextEntry::make('name')->label('Product Name')->disabled(),
+                            TextEntry::make('type')->label('Product Type')->disabled(),
+                            TextEntry::make('subtype')->label('Style')->disabled(),
+                            TextEntry::make('description')->label('Description')->disabled(),
+                            TextEntry::make('inclusions')->label('Inclusions')->disabled(),
+                            ImageEntry::make('product_images.thumbnail_image')->label('Thumbnail Image')->disk('public'),
                         ];
                     }),
                 Action::make('Remove from shop')
@@ -140,5 +199,37 @@ class ShopPage extends Page implements HasTable
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public function mount(): void
+    {
+        $this->record = Shops::where('user_id', auth()->id())->firstOrCreate(['user_id' => auth()->id()]);
+    }
+
+    public function ShopDetailsInfolist(Schema $schema): Schema
+    {
+        return $schema->components([
+            Section::make('Shop Details')
+                ->description('This section contains your shop details. You can edit these details by clicking the "Edit Shop Details" button.')
+                ->schema([
+                    Group::make()
+                        ->schema([
+                            TextEntry::make('shop_name')->label('Shop Name'),
+                            TextEntry::make('shop_address')->label('Shop Address'),
+                        ]),
+                    Group::make()
+                        ->schema([
+                            TextEntry::make('shop_description')->label('Shop Description')->markdown(),
+                            TextEntry::make('shop_policy')->label('Shop Policy')->markdown(),
+                        ]),
+                    Group::make()
+                        ->schema([
+                            ImageEntry::make('shop_logo')
+                                ->disk('public')
+                                ->label('Shop Logo'),
+                        ]),
+                ])
+                ->columns(3),
+        ])->record($this->record);
     }
 }

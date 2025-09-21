@@ -59,6 +59,11 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasOne(Subscriptions::class, 'user_id', 'id');
     }
 
+    public function user_measurements()
+    {
+        return $this->hasOne(UserMeasurements::class, 'user_id', 'id');
+    }
+
     public function products()
     {
         return $this->hasMany(Products::class, 'user_id', 'id');

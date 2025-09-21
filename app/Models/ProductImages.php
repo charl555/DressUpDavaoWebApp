@@ -11,8 +11,12 @@ class ProductImages extends Model
 
     protected $fillable = [
         'product_id',
-        'image_path',
-        'type',
+        'thumbnail_image',
+        'images',
+    ];
+
+    protected $casts = [
+        'images' => 'array',
     ];
 
     public function product()

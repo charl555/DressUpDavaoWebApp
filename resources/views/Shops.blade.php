@@ -13,7 +13,7 @@
 <body class="bg-white min-h-screen flex flex-col">
     <main class="flex-grow">
         <x-Navbar />
-        <x-ShopCards />
+        <x-ShopCards :shops="$shops" />
         <x-ChatWindow />
     </main>
 

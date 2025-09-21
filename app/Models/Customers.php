@@ -19,7 +19,7 @@ class Customers extends Model
 
     public function rentals()
     {
-        return $this->hasMany(rentals::class, 'customer_id', 'customer_id');
+        return $this->hasMany(Rentals::class, 'customer_id', 'customer_id');
     }
 
     public function user()

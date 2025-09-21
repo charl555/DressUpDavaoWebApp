@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Products extends Model
 {
+    use HasFactory;
+
     protected $table = 'products';
     protected $primaryKey = 'product_id';
 
@@ -38,13 +41,6 @@ class Products extends Model
     public function product_images()
     {
         return $this->hasMany(ProductImages::class, 'product_id', 'product_id');
-    }
-
-    public function thumbnail()
-    {
-        return $this
-            ->hasOne(ProductImages::class, 'product_id', 'product_id')
-            ->where('type', 'thumbnail');
     }
 
     public function rentals()

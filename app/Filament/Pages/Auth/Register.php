@@ -36,10 +36,13 @@ class Register extends BaseRegister
                                 TextInput::make('password')
                                     ->password()
                                     ->required()
+                                    ->revealable()
                                     ->maxLength(255),
                                 TextInput::make('password_confirmation')
                                     ->password()
                                     ->same('password')
+                                    ->label('Confirm Password')
+                                    ->revealable()
                                     ->required(),
                             ]),
                         Wizard\Step::make('Shop Details')

@@ -10,48 +10,38 @@
             </a>
         </div>
         <div class="flex items-center">
-            <div class="relative hidden lg:flex items-center">
-                <span class="absolute left-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                        stroke="currentColor" class="h-5 w-5 text-gray-400">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                    </svg>
-                </span>
-                <input type="text" placeholder="Search"
-                    class="pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-full hover:border-purple-600 focus:border-purple-600 focus:outline-none transition-colors duration-300 ease-in-out" />
-            </div>
-
             {{-- User Dropdown --}}
             <div class="relative px-3" x-data="{ open: false }">
-                <!-- User Icon -->
-                <button @click="open = !open" class="focus:outline-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                        stroke="currentColor" class="h-6 w-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 
-                   20.118a7.5 7.5 0 0 1 14.998 0A17.933 
-                   17.933 0 0 1 12 21.75c-2.676 
-                   0-5.216-.584-7.499-1.632Z" />
-                    </svg>
-                </button>
+                @guest
+                    <!-- Show Sign In button for guests -->
+                    <a href="/login"
+                        class="px-4 py-2 bg-white text-black rounded-md border-1.5 box-shadow shadow-md hover:bg-purple-700 hover:text-white transition-colors duration-300">
+                        Sign in
+                    </a>
+                @endguest
 
-                <!-- Dropdown -->
-                <div x-cloak x-show="open" @click.away="open = false"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 transform scale-95"
-                    x-transition:enter-end="opacity-100 transform scale-100" {{--
-                    x-transition:leave="transition ease-in duration-150" --}}
-                    x-transition:leave-start="opacity-100 transform scale-100"
-                    x-transition:leave-end="opacity-0 transform scale-95" class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 
-               rounded-lg shadow-lg py-2 z-50">
+                @auth
+                    <!-- User Icon for logged-in users -->
+                    <button @click="open = !open" class="focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="h-6 w-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 
+                                                                                                   20.118a7.5 7.5 0 0 1 14.998 0A17.933 
+                                                                                                   17.933 0 0 1 12 21.75c-2.676 
+                                                                                                   0-5.216-.584-7.499-1.632Z" />
+                        </svg>
+                    </button>
 
-                    @guest
-                        <a href="/login" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Sign In / Register</a>
-                        <a href="/login" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Account</a>
-                        <a href="/login" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Bookings</a>
-                    @endguest
-
-                    @auth
+                    <!-- Dropdown -->
+                    <div x-cloak x-show="open" @click.away="open = false"
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 transform scale-95"
+                        x-transition:enter-end="opacity-100 transform scale-100"
+                        x-transition:leave-start="opacity-100 transform scale-100"
+                        x-transition:leave-end="opacity-0 transform scale-95"
+                        class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 
+                                                                                               rounded-lg shadow-lg py-2 z-50">
                         <a href="/account" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Account</a>
                         <a href="/bookings" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Bookings</a>
 
@@ -62,9 +52,11 @@
                                 Log Out
                             </button>
                         </form>
-                    @endauth
-                </div>
+                    </div>
+                @endauth
             </div>
+
+            <!-- Mobile Menu Button -->
             <div class="lg:hidden ml-4">
                 <button id="mobile-menu-button" class="text-black focus:outline-none">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -74,6 +66,7 @@
                 </button>
             </div>
         </div>
+
     </div>
     <div class="hidden items-center justify-center lg:flex ">
         <ol class="flex justify-items justify-center p-10 gap-6">
@@ -84,6 +77,11 @@
             <li>
                 <a href="#"
                     class="mx-4 font-italic hover:text-purple-900 transition-colors duration-300 ease-in-out hover-underline-animation">Suits</a>
+            </li>
+            <li>
+                <a href="/product-list"
+                    class="mx-4 font-italic hover:text-purple-900 transition-colors duration-300 ease-in-out hover-underline-animation">Collections
+                </a>
             </li>
             <li>
                 <a href="/shops"

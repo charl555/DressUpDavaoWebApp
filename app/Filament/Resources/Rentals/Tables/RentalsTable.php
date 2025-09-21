@@ -16,8 +16,12 @@ class RentalsTable
             ->columns([
                 TextColumn::make('product.name')->label('Product Name'),
                 TextColumn::make('customer.first_name')->label('Customer'),
-                TextColumn::make('rental_date'),
-                TextColumn::make('return_date'),
+                TextColumn::make('pickup_date')
+                    ->date('F j, Y')
+                    ->sortable(),
+                TextColumn::make('return_date')
+                    ->date('F j, Y')
+                    ->sortable(),
                 TextColumn::make('rental_price')
                     ->formatStateUsing(fn($state) => '₱' . number_format($state, 2)),
                 TextColumn::make('rental_status')
@@ -30,7 +34,9 @@ class RentalsTable
                 TextColumn::make('payments.amount_paid')
                     ->label('Amount Paid')
                     ->formatStateUsing(fn($state) => '₱' . number_format($state, 2)),
-                TextColumn::make('payments.payment_date')->label('Payment Date'),
+                TextColumn::make('payments.payment_date')
+                    ->date('F j, Y')
+                    ->label('Payment Date'),
             ])
             ->filters([
                 //

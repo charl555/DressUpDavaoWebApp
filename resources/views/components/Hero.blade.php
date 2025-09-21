@@ -9,9 +9,8 @@
             <h1 class="text-white text-3xl lg:text-5xl pb-6" style="font-family: 'Playfair Display', serif;">
                 Wear the moment. Rent with Ease.
             </h1>
-            <div
+            <a href="/product-list"
                 class="w-auto px-6 py-3 flex flex-row items-center justify-center hover:bg-purple-600 hover:border-purple-600 transition-colors duration-600 ease-in-out border border-white group">
-
                 <p class="text-white text-semibold text-center group-hover:text-white mr-2"> View all Collections
                 </p>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
@@ -20,7 +19,7 @@
                         d="M2 8a.75.75 0 0 1 .75-.75h8.69L8.22 4.03a.75.75 0 0 1 1.06-1.06l4.5 4.5a.75.75 0 0 1 0 1.06l-4.5 4.5a.75.75 0 0 1-1.06-1.06l3.22-3.22H2.75A.75.75 0 0 1 2 8Z"
                         clip-rule="evenodd" />
                 </svg>
-            </div>
+            </a>
         </div>
     </div>
 </div>

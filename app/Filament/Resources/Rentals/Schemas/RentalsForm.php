@@ -23,14 +23,18 @@ class RentalsForm
                             ->label('Product Name')
                             ->required()
                             ->reactive()
+                            ->searchable()
                             ->afterStateUpdated(function ($state, callable $set) {
                                 $product = Products::find($state);
                                 if ($product) {
                                     $set('rental_price', $product->rental_price);
+                                    $set('amount_paid', $product->rental_price);  // Auto-fill amount paid
                                 } else {
                                     $set('rental_price', null);
+                                    $set('amount_paid', null);
                                 }
-                            }),
+                            })
+                            ->helperText('Only available products are shown'),
                         TextInput::make('rental_price')
                             ->label('Rental Price')
                             ->numeric()
@@ -39,12 +43,25 @@ class RentalsForm
                             ->disabled(fn() => true)
                             ->dehydrated(true),
                         Select::make('customer_id')
-                            ->options(Customers::all()->pluck('first_name', 'customer_id'))
+                            ->options(Customers::all()->mapWithKeys(function ($customer) {
+                                return [$customer->customer_id => $customer->first_name . ' ' . $customer->last_name];
+                            }))
                             ->label('Customer')
-                            ->required(),
-                        DatePicker::make('pickup_date')->required(),
-                        DatePicker::make('event_date')->required(),
-                        DatePicker::make('return_date')->required(),
+                            ->required()
+                            ->searchable()
+                            ->helperText('Select the customer for this rental'),
+                        DatePicker::make('pickup_date')
+                            ->required()
+                            ->minDate(now())
+                            ->helperText('Date when customer will pick up the item'),
+                        DatePicker::make('event_date')
+                            ->required()
+                            ->minDate(now())
+                            ->helperText('Date of the event'),
+                        DatePicker::make('return_date')
+                            ->required()
+                            ->minDate(now()->addDay())
+                            ->helperText('Date when customer should return the item'),
                     ])
                     ->columnSpan(1),
                 Section::make('Payment Information')
@@ -61,8 +78,9 @@ class RentalsForm
                             ->label('Amount Paid')
                             ->numeric()
                             ->prefix('₱')
-                            ->formatStateUsing(fn($state) => '₱' . number_format($state, 2))
-                            ->required(),
+                            ->required()
+                            ->reactive()
+                            ->helperText('Amount paid by the customer'),
                         DatePicker::make('payment_date')
                             ->default(now())
                             ->disabled(fn() => true)

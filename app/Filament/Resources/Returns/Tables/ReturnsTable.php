@@ -25,10 +25,18 @@ class ReturnsTable
                     ->formatStateUsing(function ($state, $record) {
                         return $record->customer->first_name . ' ' . $record->customer->last_name;
                     }),
-                TextColumn::make('pickup_date')->sortable(),
-                TextColumn::make('event_date')->sortable(),
-                TextColumn::make('return_date')->sortable(),
-                TextColumn::make('actual_return_date'),
+                TextColumn::make('pickup_date')
+                    ->date('F j, Y')
+                    ->sortable(),
+                TextColumn::make('event_date')
+                    ->date('F j, Y')
+                    ->sortable(),
+                TextColumn::make('return_date')
+                    ->date('F j, Y')
+                    ->sortable(),
+                TextColumn::make('actual_return_date')
+                    ->date('F j, Y')
+                    ->sortable(),
                 TextColumn::make('rental_status')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {

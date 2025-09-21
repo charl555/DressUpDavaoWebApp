@@ -17,12 +17,16 @@ class ProductImagesTable
         return $table
             ->columns([
                 TextColumn::make('product.name')->label('Product Name'),
-                ImageColumn::make('image_path')->label('Images'),
-                TextColumn::make('type')->label('Type'),
+                ImageColumn::make('thumbnail_image')
+                    ->label('Thumbnail Image')
+                    ->disk('public'),
+                ImageColumn::make('images')
+                    ->label('Gallery Images')
+                    ->disk('public'),
             ])
             ->filters([])
             ->actions([
-                viewAction::make(),
+                ViewAction::make(),
                 EditAction::make(),
             ])
             ->bulkActions([

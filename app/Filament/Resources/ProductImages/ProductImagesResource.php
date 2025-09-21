@@ -34,7 +34,14 @@ class ProductImagesResource extends Resource
         return parent::getEloquentQuery()
             ->whereHas('product', function ($query) {
                 $query->where('user_id', auth()->id());
-            });
+            })
+            ->with(['product']);
+    }
+
+    public static function getTableQuery(): Builder
+    {
+        return static::getEloquentQuery()
+            ->with(['product']);
     }
 
     public static function canViewAny(): bool

@@ -54,6 +54,7 @@ class AddProductToShopPage extends Page implements HasTable
     public function table(Table $table): Table
     {
         return $table
+            ->description('This table contains all of your products. You can add any of these products to your shop by clicking the "Add to shop" button.')
             ->query(Products::query()->where('user_id', auth()->id()))
             ->modifyQueryUsing(fn(Builder $query) => $query->where('visibility', 'No'))
             ->columns([
@@ -66,6 +67,7 @@ class AddProductToShopPage extends Page implements HasTable
                 TextColumn::make('subtype')
                     ->label('Style')
                     ->searchable(),
+                TextColumn::make('status')
             ])
             ->filters([
                 //

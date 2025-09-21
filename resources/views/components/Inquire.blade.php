@@ -10,6 +10,20 @@
 
         <form id="inquiryForm" action="#" method="POST" class="space-y-4">
             <div>
+                <label for="userName" class="block text-gray-700 text-sm font-semibold mb-2">Name:</label>
+                <input type="text" id="userName" name="userName" readonly
+                    class="w-full p-3 border border-gray-300 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
+                    value="@auth{{ auth()->user()->name }}@else Please log in to inquire @endauth">
+            </div>
+
+            <div>
+                <label for="userEmail" class="block text-gray-700 text-sm font-semibold mb-2">Email:</label>
+                <input type="email" id="userEmail" name="userEmail" readonly
+                    class="w-full p-3 border border-gray-300 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
+                    value="@auth{{ auth()->user()->email }}@else Please log in to inquire @endauth">
+            </div>
+
+            <div>
                 <label for="rentalDate" class="block text-gray-700 text-sm font-semibold mb-2">Desired Rental
                     Date:</label>
                 <input type="date" id="rentalDate" name="rentalDate" required
@@ -17,18 +31,10 @@
             </div>
 
             <div>
-                <label for="returnDate" class="block text-gray-700 text-sm font-semibold mb-2">Desired Return
-                    Date:</label>
-                <input type="date" id="returnDate" name="returnDate" required
-                    class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
-            </div>
-
-            <div>
-                <label for="inquiryMessage" class="block text-gray-700 text-sm font-semibold mb-2">Additional Details
-                    (Optional):</label>
-                <textarea id="inquiryMessage" name="inquiryMessage" rows="4"
+                <label for="inquiryMessage" class="block text-gray-700 text-sm font-semibold mb-2">Message:</label>
+                <textarea id="inquiryMessage" name="inquiryMessage" rows="4" required
                     class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                    placeholder="E.g., specific event date, delivery preference, any questions..."></textarea>
+                    placeholder="I would like to inquire about this product."></textarea>
             </div>
 
             <p class="text-sm text-gray-600 mt-4">
@@ -36,9 +42,13 @@
                 this product.
             </p>
 
-            <button type="submit"
+            <button type="submit" id="submitInquiryBtn"
                 class="w-full bg-purple-600 text-white py-3 rounded-md font-semibold hover:bg-purple-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
-                Send Inquiry
+                @auth
+                    Send Inquiry
+                @else
+                    Login to Inquire
+                @endauth
             </button>
         </form>
     </div>
@@ -50,18 +60,47 @@
         const inquiryModal = document.getElementById('inquiryModal');
         const closeModalButton = document.getElementById('closeModalButton');
         const inquiryForm = document.getElementById('inquiryForm');
+        const isAuthenticated = @json(auth()->check());
+
+        // Get product information from the page
+        const getProductInfo = () => {
+            // Use the product data passed from the Overview component
+            if (window.productData) {
+                return {
+                    productName: window.productData.name,
+                    productId: window.productData.id,
+                    productOwner: window.productData.owner,
+                    shopName: window.productData.shop
+                };
+            }
+
+            // Fallback: Try to get product name from the page title or heading
+            const productNameElement = document.querySelector('h1') || document.querySelector('.product-name');
+            const productName = productNameElement ? productNameElement.textContent.trim() : 'Product';
+
+            // Get product ID from URL or data attribute
+            const urlParts = window.location.pathname.split('/');
+            const productId = urlParts[urlParts.length - 1];
+
+            return { productName, productId, productOwner: 'Shop Owner', shopName: 'Shop' };
+        };
 
         // Show the modal when the inquire button is clicked
         inquireButton.addEventListener('click', function () {
             inquiryModal.classList.remove('hidden');
-            // Optional: Disable scrolling on the body when modal is open
             document.body.style.overflow = 'hidden';
+
+            // Pre-fill the message with product information
+            const { productName, shopName } = getProductInfo();
+            const messageTextarea = document.getElementById('inquiryMessage');
+            if (messageTextarea.value === '' || messageTextarea.value === 'I would like to inquire about this product.') {
+                messageTextarea.value = `I would like to inquire about this product: ${productName}`;
+            }
         });
 
         // Hide the modal when the close button is clicked
         closeModalButton.addEventListener('click', function () {
             inquiryModal.classList.add('hidden');
-            // Optional: Re-enable scrolling on the body
             document.body.style.overflow = '';
         });
 
@@ -73,60 +112,74 @@
             }
         });
 
-        // Handle form submission (this is where the inquiry process begins)
-        inquiryForm.addEventListener('submit', function (event) {
-            event.preventDefault(); // Prevent default form submission
+        // Handle form submission
+        inquiryForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            // Check if user is authenticated
+            if (!isAuthenticated) {
+                // Redirect to login page
+                window.location.href = '/login';
+                return;
+            }
 
             const rentalDate = document.getElementById('rentalDate').value;
-            const returnDate = document.getElementById('returnDate').value;
             const inquiryMessage = document.getElementById('inquiryMessage').value;
+            const { productName, productId, productOwner, shopName } = getProductInfo();
 
-            // Here, you would send this data to your backend
-            // For demonstration, we'll just log it and close the modal
-            console.log('Inquiry Submitted:');
-            console.log('Product:', 'Red Dress'); // You'd dynamically get product name/ID
-            console.log('Desired Rental Date:', rentalDate);
-            console.log('Desired Return Date:', returnDate);
-            console.log('Additional Message:', inquiryMessage);
+            // Validate required fields
+            if (!rentalDate || !inquiryMessage.trim()) {
+                alert('Please fill in all required fields.');
+                return;
+            }
 
-            // You would typically send an AJAX request here (e.g., using fetch API or Axios)
-            // Example using fetch:
-            /*
-            fetch('/api/inquire-rental', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': 'YOUR_CSRF_TOKEN_HERE' // Important for Laravel/security
-                },
-                body: JSON.stringify({
-                    product_id: 'PRODUCT_ID_HERE', // Pass the actual product ID
-                    rental_date: rentalDate,
-                    return_date: returnDate,
-                    message: inquiryMessage
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Your inquiry has been sent successfully!');
+            // Disable submit button to prevent double submission
+            const submitBtn = document.getElementById('submitInquiryBtn');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
+
+            try {
+                // Format the inquiry message for the chat system
+                const formattedMessage = `🔍 PRODUCT INQUIRY\n\n` +
+                    `Product: ${productName}\n` +
+                    `Shop: ${shopName}\n` +
+                    `Desired Rental Date: ${rentalDate}\n\n` +
+                    `Message: ${inquiryMessage}`;
+
+                // Send the inquiry as a chat message to the product owner
+                const response = await fetch('/chat/send-inquiry', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        product_id: productId,
+                        message: formattedMessage,
+                        rental_date: rentalDate,
+                        original_message: inquiryMessage
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(`Your inquiry has been sent successfully to ${shopName}! ${productOwner} will respond to you soon through the chat system.`);
                     inquiryModal.classList.add('hidden');
                     document.body.style.overflow = '';
-                    inquiryForm.reset(); // Clear the form
+                    inquiryForm.reset();
                 } else {
-                    alert('Failed to send inquiry: ' + (data.message || 'Unknown error.'));
+                    throw new Error(data.message || 'Failed to send inquiry');
                 }
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Error sending inquiry:', error);
-                alert('An error occurred. Please try again.');
-            });
-            */
-
-            // For now, just simulate success and close
-            alert('Your inquiry has been sent successfully!');
-            inquiryModal.classList.add('hidden');
-            document.body.style.overflow = '';
-            inquiryForm.reset(); // Clear the form
+                alert('Failed to send inquiry. Please try again or contact support.');
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
         });
     });
 </script>

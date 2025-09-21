@@ -24,6 +24,7 @@ return new class extends Migration {
             $table->text('inclusions')->nullable();
             $table->string('status')->default('Available');
             $table->string('colors');
+            $table->string('fabric')->nullable();
             $table->string('size');
             $table->integer('rental_price');
             $table->integer('rental_count')->default(0);

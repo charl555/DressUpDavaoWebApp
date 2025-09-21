@@ -17,8 +17,8 @@ return new class extends Migration {
                 ->constrained('products', 'product_id')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
-            $table->string('image_path')->nullable();
-            $table->string('type')->nullable();
+            $table->string('thumbnail_image')->nullable();
+            $table->json('images')->nullable();
             $table->timestamps();
         });
     }

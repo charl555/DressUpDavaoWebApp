@@ -14,23 +14,35 @@ class ProductImagesForm
     {
         return $schema
             ->components([
-                Section::make('Product Image')
+                Section::make('Product Images')
                     ->schema([
                         Select::make('product_id')
                             ->options(
-                                Products::all()->pluck('name', 'product_id')
+                                Products::where('user_id', auth()->id())->pluck('name', 'product_id')
                             )
                             ->label('Product')
                             ->disabled()
                             ->required(),
                     ]),
-                Section::make('Image')
+                Section::make('Images')
                     ->schema([
-                        FileUpload::make('thumbnail')
-                            ->label('Thumbnail'),
-                        FileUpload::make('image_path')
-                            ->label('Image')
-                            ->multiple(),
+                        FileUpload::make('thumbnail_image')
+                            ->label('Thumbnail')
+                            ->disk('public')
+                            ->directory('product-images')
+                            ->image()
+                            ->preserveFilenames()
+                            ->deletable(true)
+                            ->openable(),
+                        FileUpload::make('images')
+                            ->label('Images')
+                            ->disk('public')
+                            ->directory('product-images')
+                            ->image()
+                            ->multiple()
+                            ->preserveFilenames()
+                            ->deletable(true)
+                            ->openable(),
                     ]),
             ]);
     }

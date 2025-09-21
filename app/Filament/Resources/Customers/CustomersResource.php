@@ -34,7 +34,14 @@ class CustomersResource extends Resource
         return parent::getEloquentQuery()
             ->whereHas('user', function ($query) {
                 $query->where('user_id', auth()->id());
-            });
+            })
+            ->with(['user']);
+    }
+
+    public static function getTableQuery(): Builder
+    {
+        return static::getEloquentQuery()
+            ->with(['user']);
     }
 
     public static function canViewAny(): bool

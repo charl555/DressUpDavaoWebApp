@@ -33,6 +33,7 @@ class ProductsForm
                                         'Wedding Gown' => 'Wedding Gown',
                                         'Ball Gown' => 'Ball Gown',
                                         'Night Gown' => 'Night Gown',
+                                        'Evening Gown' => 'Evening Gown',
                                         'Cocktail Gown' => 'Cocktail Gown',
                                         'A-line Gown' => 'A-line Gown',
                                         'Sheath Gown' => 'Sheath Gown',
@@ -89,12 +90,13 @@ class ProductsForm
                     ->columns(1),
                 Section::make('Product Images')
                     ->hiddenOn('edit')
+                    ->description('Upload at least 1 image for the thumbnail. The thumbnail image will be used as the main image for the product.')
                     ->schema([
-                        FileUpload::make('thumbnail')
+                        FileUpload::make('thumbnail_image')
                             ->label('Thumbnail Image')
                             ->disk('public')
                             ->directory('product-images'),
-                        FileUpload::make('image_path')
+                        FileUpload::make('images')
                             ->label('Product images')
                             ->multiple()
                             ->disk('public')
@@ -104,25 +106,26 @@ class ProductsForm
                     ->hiddenOn('edit')
                     ->schema([
                         Section::make('Gown Measurements in inches')
+                            ->description('Fill in measurements in range if product uses back lace. ex Chest 32-40')
                             ->visible(fn($get) => $get('type') === 'Gown')
                             ->schema([
-                                TextInput::make('gown_length')->numeric(),
-                                TextInput::make('gown_upper_chest')->numeric(),
+                                // TextInput::make('gown_upper_chest')->numeric(),
                                 TextInput::make('gown_chest')->numeric(),
                                 TextInput::make('gown_waist')->numeric(),
                                 TextInput::make('gown_hips')->numeric(),
+                                TextInput::make('gown_length')->numeric(),
                             ]),
                         Section::make('Jacket Measurements in inches')
                             ->visible(fn($get) => $get('type') === 'Suit')
                             ->schema([
                                 TextInput::make('jacket_chest')->numeric(),
-                                TextInput::make('jacket_length')->numeric(),
                                 TextInput::make('jacket_shoulder')->numeric(),
-                                TextInput::make('jacket_sleeve_length')->numeric(),
-                                TextInput::make('jacket_sleeve_width')->numeric(),
-                                TextInput::make('jacket_bicep')->numeric(),
-                                TextInput::make('jacket_arm_hole')->numeric(),
                                 TextInput::make('jacket_waist')->numeric(),
+                                TextInput::make('jacket_length')->numeric(),
+                                // TextInput::make('jacket_sleeve_length')->numeric(),
+                                // TextInput::make('jacket_sleeve_width')->numeric(),
+                                // TextInput::make('jacket_bicep')->numeric(),
+                                // TextInput::make('jacket_arm_hole')->numeric(),
                             ]),
                         Section::make('Trouser Measurements in inches')
                             ->visible(fn($get) => $get('type') === 'Suit')
