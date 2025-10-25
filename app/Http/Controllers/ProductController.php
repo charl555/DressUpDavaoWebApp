@@ -27,7 +27,7 @@ class ProductController extends Controller
             'thumbnail' => $product->product_images->first()->thumbnail_image ?? null
         ]) . ';</script>';
 
-        return view('ProductOverview', compact('product'));
+        return view('productoverview', compact('product'));
     }
 
     // public function shopOverview(Shops $shop)
@@ -173,6 +173,6 @@ class ProductController extends Controller
             return view('partials.products-grid', compact('products'))->render();
         }
 
-        return view('ProductList', compact('products'));
+        return view('productlist', compact('products'));
     }
 }

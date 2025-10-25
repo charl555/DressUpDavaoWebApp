@@ -9,16 +9,16 @@ class HomeController extends Controller
 {
     public function showLogin()
     {
-        return view('Login');
+        return view('login');
     }
 
     public function showRegister()
     {
-        return view('Register');
+        return view('register');
     }
 
     public function showForgotPassword()
     {
-        return view('ForgotPassword');
+        return view('forgotpassword');
     }
 }

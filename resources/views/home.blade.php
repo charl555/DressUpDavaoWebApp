@@ -99,17 +99,17 @@
 
 <body class="bg-white min-h-screen flex flex-col">
     <main class="flex-grow">
-        <x-Navbar />
-        <x-Hero />
-        {{-- <x-ThreeDimensionalAssetViewer /> --}}
-        <x-InfoCardsComponent />
-        <x-Category />
-        <x-ProductCards :products="$products" />
+        <x-navbar />
+        <x-hero />
+        {{-- <x-threedimensionalassetviewer /> --}}
+        <x-infocardscomponent />
+        <x-category />
+        <x-productcards :products="$products" />
     </main>
 
-    <x-Footer />
-    <x-Chatwindow />
-    <x-Toast />
+    <x-footer />
+    <x-chatwindow />
+    <x-toast />
 
 
     <script src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js" defer></script>

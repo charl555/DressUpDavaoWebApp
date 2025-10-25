@@ -13,9 +13,9 @@
 <body class="bg-white h-full">
     <main>
 
-        <x-ForgotPasswordForm />
+        <x-loginform />
     </main>
-    <x-Toast />
+    <x-toast />
 
 </body>
 

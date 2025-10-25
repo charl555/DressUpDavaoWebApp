@@ -13,13 +13,13 @@
 
 <body class="bg-white min-h-screen flex flex-col">
     <main class="flex-grow">
-        <x-Navbar />
-        <x-ShopDetailsCardComponent :shop="$shop" :reviews="$reviews" :averageRating="$averageRating" />
-        <x-ProductListComponent :products="$products" />
-        <x-ChatWindow />
+        <x-navbar />
+        <x-shopdetailscardcomponent :shop="$shop" :reviews="$reviews" :averageRating="$averageRating" />
+        <x-productlistcomponent :products="$products" />
+        <x-chatwindow />
     </main>
-    <x-Footer />
-    <x-Toast />
+    <x-footer />
+    <x-toast />
 </body>
 
 </html>

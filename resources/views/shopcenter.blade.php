@@ -10,7 +10,7 @@
 </head>
 
 <body class="bg-white min-h-screen flex flex-col">
-    <x-Navbar />
+    <x-navbar />
 
     <main class="flex-grow pt-[72px]">
         <!-- Hero Section with Background Image -->
@@ -228,7 +228,7 @@
         </section>
     </main>
 
-    <x-Footer />
+    <x-footer />
 </body>
 
 </html>

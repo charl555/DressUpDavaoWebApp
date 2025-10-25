@@ -29,7 +29,7 @@ class ShopPageController extends Controller
             ]);
         }
 
-        return view('Shops', compact('shops', 'search'));
+        return view('shops', compact('shops', 'search'));
     }
 
     public function overview(Request $request, Shops $shop)
@@ -184,6 +184,6 @@ class ShopPageController extends Controller
             return view('partials.products-grid', compact('products'))->render();
         }
 
-        return view('ShopOverview', compact('shop', 'products', 'reviews', 'averageRating'));
+        return view('shopoverview', compact('shop', 'products', 'reviews', 'averageRating'));
     }
 }

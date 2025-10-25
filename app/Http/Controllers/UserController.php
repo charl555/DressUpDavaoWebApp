@@ -32,7 +32,7 @@ class UserController extends Controller
             ->latest()
             ->get();
 
-        return view('AccountPage', compact('bookings', 'favorites'));
+        return view('accountpage', compact('bookings', 'favorites'));
     }
 
     public function update(Request $request)

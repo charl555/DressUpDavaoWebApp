@@ -12,12 +12,12 @@
 
 <body class="bg-white min-h-screen flex flex-col">
     <main class="flex-grow">
-        <x-Navbar />
-        <x-AccountSettings :bookings="$bookings" :favorites="$favorites" />
-        <x-Chatwindow />
+        <x-navbar />
+        <x-accountsettings :bookings="$bookings" :favorites="$favorites" />
+        <x-chatwindow />
     </main>
-    <x-Footer />
-    <x-Toast />
+    <x-footer />
+    <x-toast />
 
 </body>
 

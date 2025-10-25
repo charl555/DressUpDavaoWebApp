@@ -41,7 +41,7 @@ Route::get('/', function () {
                 ->get();
         });
 
-        return view('Home', compact('products'));
+        return view('home', compact('products'));
     } catch (\Exception $e) {
         // Fallback if cache fails
         $products = Products::where('visibility', 'Yes')
@@ -51,7 +51,7 @@ Route::get('/', function () {
             ->limit(5)
             ->get();
 
-        return view('Home', compact('products'));
+        return view('home', compact('products'));
     }
 });
 
@@ -86,7 +86,7 @@ Route::get('/product-overview/{product_id}', [ProductController::class, 'show'])
 // Route::get('/shop-overview/{shop}', [ProductController::class, 'shopOverview'])->name('shop.overview');
 
 Route::get('/shop-center', function () {
-    return view('ShopCenter');
+    return view('shopcenter');
 });
 
 // account page route
