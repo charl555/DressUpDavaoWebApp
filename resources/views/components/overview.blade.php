@@ -70,9 +70,9 @@
                         @if ($imgPath)
                             <div
                                 class="bg-gray-100 h-24 sm:h-28 rounded-lg overflow-hidden cursor-pointer border-2 border-transparent hover:border-purple-500 transition-all duration-200 group">
-                                <img src="{{ Storage::disk('public')->url($imgPath) }}" alt="Product Image"
+                                <img src="{{ asset('storage/' . $imgPath) }}" alt="Product Image"
                                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200"
-                                    onclick="openImageModal('{{ Storage::disk('public')->url($imgPath) }}')" />
+                                    onclick="openImageModal('{{ asset('storage/' . $imgPath) }}')" />
                             </div>
                         @endif
                     @endforeach
@@ -289,7 +289,7 @@
             <div class="flex justify-center md:justify-start mb-8">
                 <button id="inquireButton"
                     class="text-lg px-8 py-4 w-full md:w-auto rounded-lg shadow-md transition-all duration-300 ease-in-out font-semibold flex items-center justify-center
-                               {{ $product->status === 'Available' ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 hover:shadow-lg' : 'bg-gray-300 text-gray-600 cursor-not-allowed' }}"
+                                   {{ $product->status === 'Available' ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 hover:shadow-lg' : 'bg-gray-300 text-gray-600 cursor-not-allowed' }}"
                     {{ $product->status !== 'Available' ? 'disabled' : '' }}>
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

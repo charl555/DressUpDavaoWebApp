@@ -23,7 +23,7 @@
                             $imageUrl = null;
 
                             if ($imageRecord && $imageRecord->thumbnail_image) {
-                                $imageUrl = Storage::disk('public')->url($imageRecord->thumbnail_image);
+                                $imageUrl = asset('storage/' . $imageRecord->thumbnail_image);
                             }
                         @endphp
 
