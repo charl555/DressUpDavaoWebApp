@@ -25,7 +25,7 @@
         }
 
         $model3D = $product->product_3d_models()->first();
-        $modelPath = $model3D ? Storage::disk('public')->url($model3D->model_path) : null;
+        $modelPath = $model3D ? asset('storage/' . $model3D->model_path) : null;
         $clippingData = $model3D ? $model3D->clipping_planes_data : null;
         $imagesCount = count($galleryImages);
 
@@ -45,9 +45,9 @@
                 @if ($modelPath)
                     <canvas id="renderCanvas" class="w-full h-full"></canvas>
                 @elseif ($thumbnail)
-                    <img src="{{ Storage::disk('public')->url($thumbnail) }}" alt="{{ $product->name }}"
+                    <img src="{{ asset('storage/' . $thumbnail) }}" alt="{{ $product->name }}"
                         class="w-full h-full object-cover cursor-pointer transition-transform duration-300 hover:scale-105"
-                        onclick="openImageModal('{{ Storage::disk('public')->url($thumbnail) }}')" />
+                        onclick="openImageModal('{{ asset('storage/' . $thumbnail) }}')" />
                 @else
                     <div class="flex items-center justify-center h-full w-full text-gray-500">
                         <div class="text-center">
@@ -289,7 +289,7 @@
             <div class="flex justify-center md:justify-start mb-8">
                 <button id="inquireButton"
                     class="text-lg px-8 py-4 w-full md:w-auto rounded-lg shadow-md transition-all duration-300 ease-in-out font-semibold flex items-center justify-center
-                                   {{ $product->status === 'Available' ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 hover:shadow-lg' : 'bg-gray-300 text-gray-600 cursor-not-allowed' }}"
+                                           {{ $product->status === 'Available' ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 hover:shadow-lg' : 'bg-gray-300 text-gray-600 cursor-not-allowed' }}"
                     {{ $product->status !== 'Available' ? 'disabled' : '' }}>
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
