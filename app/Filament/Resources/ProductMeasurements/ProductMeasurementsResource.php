@@ -25,6 +25,8 @@ class ProductMeasurementsResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Products';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationLabel = 'Product Measurements';
 
     protected static ?int $navigationSort = 2;

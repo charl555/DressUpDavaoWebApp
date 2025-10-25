@@ -1,49 +1,69 @@
 <x-filament-panels::page>
-    <div class="space-y-6 p-4">
+    @php
+        $shop = \App\Models\Shops::where('user_id', auth()->id())->first();
+        $hasAccess = $shop?->allow_3d_model_access ?? false;
+    @endphp
 
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <form wire:submit.prevent="submit">
-                {{ $this->form }}
+    @if(!$hasAccess)
+        <div class="space-y-6">
+            <x-filament::section>
+                <x-slot name="heading">
+                    Access Denied
+                </x-slot>
 
-                <x-filament::button type="submit" wire:loading.attr="disabled" wire:target="submit, images">
-                    <span wire:loading.remove wire:target="submit, images">Upload and Generate 3D Model</span>
-                    <span wire:loading wire:target="submit, images">Uploading & Generating...</span>
-                </x-filament::button>
-
-
-                @if ($statusMessage)
-                    <div class="mt-4 p-3 rounded-md bg-gray-100 text-gray-700">
-                        {{ $statusMessage }}
-                        @if ($serialize)
-                            <p class="text-sm italic mt-1">
-                                Your job ID is: <span class="font-bold">{{ $serialize }}</span>.
-                                You can track its full progress in the <a href="/jobs-3d-model" a
-                                    class="underline text-blue-600">3D Model
-                                    Jobs</a> section.
-                            </p>
-                        @endif
-                    </div>
-                @endif
-
-                @error('general')
-                    <div class="mt-4 p-3 rounded-md bg-red-100 text-red-700">
-                        {{ $message }}
-                    </div>
-                @enderror
-            </form>
+                <x-slot name="description">
+                    Your account currently does not have access to this page.
+                </x-slot>
+            </x-filament::section>
         </div>
+    @else
+        <div class="space-y-6">
+            <div class="bg-white p-6 rounded-lg shadow">
+                <form wire:submit.prevent="submit">
+                    {{ $this->form }}
 
+                    <x-filament::button type="submit" wire:loading.attr="disabled" class="w-full" size="lg">
+                        <span wire:loading.remove>Generate 3D Model</span>
+                        <span wire:loading>Uploading...</span>
+                    </x-filament::button>
 
-        @if ($modelUrl)
-            <div class="bg-white p-6 rounded-lg shadow-md mt-6">
-                <h2 class="text-2xl font-semibold mb-4">Immediate Download Link (Will disappear on refresh)</h2>
-                <p class="text-green-700 mb-4">Your 3D model link (serial: {{ $serialize }}) is: <a href="{{ $modelUrl }}"
-                        target="_blank" class="underline text-blue-600">Download Model</a></p>
-                <p class="text-sm text-gray-500 mt-2">
-                    * This link is for immediate access. For persistent access and job history, please check the 3D Model
-                    Jobs section.
-                </p>
+                    @if ($isProcessing)
+                        <div class="mt-4 p-3 bg-blue-50 text-blue-700 rounded">
+                            <div class="flex items-center">
+                                <x-filament::loading-indicator class="w-5 h-5 mr-2" />
+                                Uploading images to Kiri Engine...
+                            </div>
+                        </div>
+                    @endif
+
+                    @if ($statusMessage)
+                        <div class="mt-4 p-3 bg-gray-50 text-gray-700 rounded">
+                            {{ $statusMessage }}
+                            @if ($serialize)
+                                <p class="text-sm mt-2">
+                                    Job ID: <span class="font-mono">{{ $serialize }}</span>
+                                </p>
+                                <p class="text-sm mt-1">
+                                    Check the <a href="{{ url('/admin/download-3d-models') }}"
+                                        class="text-primary-600 underline">Download 3D Models</a> page for progress.
+                                </p>
+                            @endif
+                        </div>
+                    @endif
+
+                    @error('general')
+                        <div class="mt-4 p-3 bg-red-50 text-red-700 rounded">
+                            {{ $message }}
+                        </div>
+                    @enderror
+
+                    @error('images')
+                        <div class="mt-4 p-3 bg-red-50 text-red-700 rounded">
+                            {{ $message }}
+                        </div>
+                    @enderror
+                </form>
             </div>
-        @endif
-    </div>
+        </div>
+    @endif
 </x-filament-panels::page>

@@ -17,7 +17,7 @@ return new class extends Migration {
                 ->constrained('products', 'product_id')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
-            $table->json('occasion_name');
+            $table->string('occasion_name');
             $table->timestamps();
         });
     }

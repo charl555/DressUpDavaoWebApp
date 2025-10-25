@@ -13,9 +13,11 @@
 <body class="bg-white min-h-screen flex flex-col">
     <main class="flex-grow">
         <x-Navbar />
-        <x-AccountSettings />
+        <x-AccountSettings :bookings="$bookings" :favorites="$favorites" />
         <x-Chatwindow />
     </main>
+    <x-Footer />
+    <x-Toast />
 
 </body>
 

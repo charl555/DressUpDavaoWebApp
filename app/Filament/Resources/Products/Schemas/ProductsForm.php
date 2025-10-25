@@ -6,8 +6,11 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Tables\Columns\Column;
+use Illuminate\Support\Facades\Storage;
 
 class ProductsForm
 {
@@ -16,129 +19,284 @@ class ProductsForm
         return $schema
             ->schema([
                 Section::make('Product Information')
+                    ->description('Enter the basic details about your dress or suit rental product')
+                    ->icon('heroicon-o-information-circle')
                     ->schema([
-                        TextInput::make('name')->required(),
-                        Select::make('type')
-                            ->options([
-                                'Gown' => 'Gown',
-                                'Suit' => 'Suit',
+                        Group::make()
+                            ->schema([
+                                TextInput::make('name')
+                                    ->label('Product Name')
+                                    ->helperText('Enter a descriptive name for your product (e.g., "Elegant Navy Blue Ball Gown")')
+                                    ->required()
+                                    ->maxLength(100)
+                                    ->placeholder('e.g., Royal Blue Mermaid Evening Gown')
+                                    ->rules(['required', 'string', 'max:100'])
+                                    ->columnSpan(2),
+                                Select::make('type')
+                                    ->label('Product Type')
+                                    ->helperText('Select whether this is a gown or suit')
+                                    ->options([
+                                        'Gown' => 'Gown',
+                                        'Suit' => 'Suit',
+                                    ])
+                                    ->required()
+                                    ->reactive()
+                                    ->placeholder('Choose product type')
+                                    ->columnSpan(1),
                             ])
-                            ->required()
-                            ->reactive(),
-                        Select::make('subtype')
-                            ->label('Style')
-                            ->options(function ($get) {
-                                if ($get('type') === 'Gown') {
-                                    return [
-                                        'Wedding Gown' => 'Wedding Gown',
-                                        'Ball Gown' => 'Ball Gown',
-                                        'Night Gown' => 'Night Gown',
-                                        'Evening Gown' => 'Evening Gown',
-                                        'Cocktail Gown' => 'Cocktail Gown',
-                                        'A-line Gown' => 'A-line Gown',
-                                        'Sheath Gown' => 'Sheath Gown',
-                                        'Mermaid Gown' => 'Mermaid Gown',
-                                        'Off-shoulder Gown' => 'Off-shoulder Gown',
-                                        'Princess Gown' => 'Princess Gown',
-                                        'Empire Waist Gown' => 'Empire Waist Gown',
-                                        'V-neck Gown' => 'V-neck Gown',
-                                        'Trumpet Gown' => 'Trumpet Gown',
-                                        'Other' => 'Other',
-                                    ];
-                                } elseif ($get('type') === 'Suit') {
-                                    return [
-                                        'Tuxedo' => 'Tuxedo',
-                                        'Two Piece Suit' => 'Two Piece Suit',
-                                        'Three Piece Suit' => 'Three Piece Suit',
-                                        'Italian Suit' => 'Italian Suit',
-                                        'Single Breasted Suit' => 'Single Breasted Suit',
-                                        'Double Breasted Suit' => 'Double Breasted Suit',
-                                        'Other' => 'Other',
-                                    ];
-                                }
-                            })
-                            ->required(),
-                        TagsInput::make('occasions')
-                            ->label('Events')
-                            ->separator(',')
-                            ->suggestions([
-                                'Wedding',
-                                'Debut',
-                                'Prom',
-                                'Formal',
-                                'Casual',
-                                'Corporate',
-                                'Birthday',
+                            ->columns(3),
+                        Group::make()
+                            ->schema([
+                                Select::make('subtype')
+                                    ->label('Style/Cut')
+                                    ->helperText('Select the specific style or cut of the garment')
+                                    ->options(function ($get) {
+                                        if ($get('type') === 'Gown') {
+                                            return [
+                                                'Wedding Gown' => 'Wedding Gown',
+                                                'Ball Gown' => 'Ball Gown',
+                                                'Night Gown' => 'Night Gown',
+                                                'Evening Gown' => 'Evening Gown',
+                                                'Cocktail Gown' => 'Cocktail Gown',
+                                                'A-line Gown' => 'A-line Gown',
+                                                'Sheath Gown' => 'Sheath Gown',
+                                                'Mermaid Gown' => 'Mermaid Gown',
+                                                'Off-shoulder Gown' => 'Off-shoulder Gown',
+                                                'Princess Gown' => 'Princess Gown',
+                                                'Empire Waist Gown' => 'Empire Waist Gown',
+                                                'V-neck Gown' => 'V-neck Gown',
+                                                'Trumpet Gown' => 'Trumpet Gown',
+                                                'Other' => 'Other',
+                                            ];
+                                        } elseif ($get('type') === 'Suit') {
+                                            return [
+                                                'Tuxedo' => 'Tuxedo',
+                                                'Two Piece Suit' => 'Two Piece Suit',
+                                                'Three Piece Suit' => 'Three Piece Suit',
+                                                'Italian Suit' => 'Italian Suit',
+                                                'Single Breasted Suit' => 'Single Breasted Suit',
+                                                'Double Breasted Suit' => 'Double Breasted Suit',
+                                                'Other' => 'Other',
+                                            ];
+                                        }
+                                    })
+                                    ->required()
+                                    ->placeholder('Choose style')
+                                    ->columnSpan(1),
+                                Select::make('size')
+                                    ->label('Size')
+                                    ->helperText('Select the size category for this product')
+                                    ->options([
+                                        'Small' => 'Small',
+                                        'Medium' => 'Medium',
+                                        'Large' => 'Large',
+                                        'XLarge' => 'XLarge',
+                                        'XXLarge' => 'XXLarge',
+                                    ])
+                                    ->required()
+                                    ->placeholder('Choose size')
+                                    ->columnSpan(1),
+                                TextInput::make('rental_price')
+                                    ->label('Rental Price')
+                                    ->helperText('Set the rental price for this product (in Philippine Pesos)')
+                                    ->numeric()
+                                    ->required()
+                                    ->prefix('₱')
+                                    ->minValue(100)
+                                    ->maxValue(50000)
+                                    ->placeholder('e.g., 2500')
+                                    ->rules(['required', 'numeric', 'min:100', 'max:50000'])
+                                    ->columnSpan(1),
                             ])
-                            ->required(),
-                        TextInput::make('colors')->required(),
-                        Select::make('size')
-                            ->options([
-                                'Small' => 'Small',
-                                'Medium' => 'Medium',
-                                'Large' => 'Large',
-                                'XLarge' => 'XLarge',
-                                'XXLarge' => 'XXLarge',
+                            ->columns(3),
+                        Group::make()
+                            ->schema([
+                                TagsInput::make('occasion_names')
+                                    ->label('Occasions')
+                                    ->placeholder('Type and press enter...')
+                                    ->separator(',')
+                                    ->suggestions([
+                                        'Wedding',
+                                        'Debut',
+                                        'Prom',
+                                        'Formal',
+                                        'Casual',
+                                        'Corporate',
+                                        'Birthday',
+                                        'Anniversary',
+                                        'Graduation',
+                                        'Gala',
+                                    ])
+                                    ->helperText('Add all occasions this product suits.')
+                                    ->afterStateHydrated(function ($component, $record) {
+                                        // Only run when editing (record exists)
+                                        if ($record) {
+                                            $component->state($record->occasions->pluck('occasion_name')->toArray());
+                                        }
+                                    })
+                                    ->dehydrateStateUsing(fn($state) => $state ?? [])
+                                    ->saveRelationshipsUsing(function ($state, $record) {
+                                        // Only run when editing (record exists)
+                                        if (!$record) {
+                                            return;
+                                        }
+
+                                        // Remove existing records
+                                        $record->occasions()->delete();
+
+                                        // Reinsert new records
+                                        foreach ($state as $occasion) {
+                                            $record->occasions()->create(['occasion_name' => $occasion]);
+                                        }
+                                    }),
+                                TextInput::make('colors')
+                                    ->label('Available Colors')
+                                    ->helperText('List all available colors for this product (separate with commas)')
+                                    ->required()
+                                    ->maxLength(100)
+                                    ->placeholder('e.g., Navy Blue, Royal Blue, Midnight Blue')
+                                    ->rules(['required', 'string', 'max:100'])
+                                    ->columnSpan(1),
+                                TextInput::make('fabric')
+                                    ->label('Fabric Type')
+                                    ->helperText('Specify the type of fabric used for this product')
+                                    ->maxLength(100)
+                                    ->placeholder('e.g., Silk, Satin, Chiffon')
+                                    ->rules(['string', 'max:100'])
+                                    ->columnSpan(1),
                             ])
-                            ->required(),
-                        TextInput::make('rental_price')
-                            ->numeric()
-                            ->required()
-                            ->label('Rental Price')
-                            ->prefix('₱'),
+                            ->columns(3),
                     ])
                     ->columns(1),
                 Section::make('Product Images')
                     ->hiddenOn('edit')
-                    ->description('Upload at least 1 image for the thumbnail. The thumbnail image will be used as the main image for the product.')
+                    ->description('Upload high-quality images to showcase your product')
+                    ->icon('heroicon-o-photo')
                     ->schema([
                         FileUpload::make('thumbnail_image')
-                            ->label('Thumbnail Image')
+                            ->label('Main Thumbnail Image')
+                            ->helperText('Upload the main image that will be displayed as the product thumbnail. Recommended size: 800x800px')
                             ->disk('public')
-                            ->directory('product-images'),
+                            ->visibility('public')
+                            ->directory('product-images/thumbnails')
+                            ->image()
+                            ->imageEditor()
+                            ->imageEditorAspectRatios([
+                                '1:1',
+                                '4:3',
+                                '16:9',
+                            ])
+                            ->maxSize(5120)  // 5MB
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->deletable(true)
+                            ->openable()
+                            ->required()
+                            ->deleteUploadedFileUsing(fn($file) => Storage::disk('public')->delete($file))
+                            ->columnSpan(1),
                         FileUpload::make('images')
-                            ->label('Product images')
+                            ->label('Additional Gallery Images')
+                            ->helperText('Upload additional images to show different angles and details of your product. Maximum 10 images, 5MB each')
                             ->multiple()
                             ->disk('public')
-                            ->directory('product-images'),
-                    ]),
+                            ->visibility('public')
+                            ->directory('product-images')
+                            ->image()
+                            ->imageEditor()
+                            ->maxFiles(10)
+                            ->maxSize(5120)  // 5MB per file
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->deletable(true)
+                            ->openable()
+                            ->reorderable()
+                            ->deleteUploadedFileUsing(fn($file) => Storage::disk('public')->delete($file))
+                            ->columnSpan(1),
+                    ])
+                    ->columns(2),
                 Section::make('Product Measurements')
                     ->hiddenOn('edit')
+                    ->description('Enter precise measurements for your product. All measurements should be in inches.')
+                    ->icon('heroicon-o-calculator')
                     ->schema([
-                        Section::make('Gown Measurements in inches')
-                            ->description('Fill in measurements in range if product uses back lace. ex Chest 32-40')
+                        Section::make('Gown Measurements (inches)')
+                            ->description('Enter precise measurements for gown products')
+                            ->icon('heroicon-o-sparkles')
                             ->visible(fn($get) => $get('type') === 'Gown')
                             ->schema([
-                                // TextInput::make('gown_upper_chest')->numeric(),
-                                TextInput::make('gown_chest')->numeric(),
-                                TextInput::make('gown_waist')->numeric(),
-                                TextInput::make('gown_hips')->numeric(),
-                                TextInput::make('gown_length')->numeric(),
+                                Group::make()
+                                    ->schema([
+                                        TextInput::make('gown_neck')->label('Neck')->numeric()->suffix('inches')->placeholder('e.g., 14'),
+                                        TextInput::make('gown_shoulder')->label('Shoulder')->numeric()->suffix('inches')->placeholder('e.g., 16'),
+                                        TextInput::make('gown_back_width')->label('Back Width')->numeric()->suffix('inches')->placeholder('e.g., 14'),
+                                        TextInput::make('gown_bust')->label('Bust')->numeric()->suffix('inches')->placeholder('e.g., 38'),
+                                        TextInput::make('gown_chest')->label('Chest')->numeric()->suffix('inches')->placeholder('e.g., 36'),
+                                        TextInput::make('gown_bust_point')->label('Bust Point')->numeric()->suffix('inches')->placeholder('e.g., 10'),
+                                        TextInput::make('gown_bust_distance')->label('Bust Distance')->numeric()->suffix('inches')->placeholder('e.g., 8'),
+                                        TextInput::make('gown_arm_hole')->label('Arm Hole')->numeric()->suffix('inches')->placeholder('e.g., 18'),
+                                    ])
+                                    ->columns(2),
+                                Group::make()
+                                    ->schema([
+                                        TextInput::make('gown_waist')->label('Waist')->numeric()->suffix('inches')->placeholder('e.g., 28'),
+                                        TextInput::make('gown_hips')->label('Hips')->numeric()->suffix('inches')->placeholder('e.g., 40'),
+                                        TextInput::make('gown_figure')->label('Figure')->numeric()->suffix('inches')->placeholder('e.g., 38'),
+                                        TextInput::make('gown_sleeve_width')->label('Sleeve Width')->numeric()->suffix('inches')->placeholder('e.g., 6'),
+                                        TextInput::make('gown_length')->label('Gown Length')->numeric()->suffix('inches')->placeholder('e.g., 60'),
+                                    ])
+                                    ->columns(2),
                             ]),
-                        Section::make('Jacket Measurements in inches')
+                        Section::make('Jacket Measurements (inches)')
+                            ->description('Enter precise measurements for the jacket/blazer part of the suit')
+                            ->icon('heroicon-o-squares-2x2')
                             ->visible(fn($get) => $get('type') === 'Suit')
                             ->schema([
-                                TextInput::make('jacket_chest')->numeric(),
-                                TextInput::make('jacket_shoulder')->numeric(),
-                                TextInput::make('jacket_waist')->numeric(),
-                                TextInput::make('jacket_length')->numeric(),
-                                // TextInput::make('jacket_sleeve_length')->numeric(),
-                                // TextInput::make('jacket_sleeve_width')->numeric(),
-                                // TextInput::make('jacket_bicep')->numeric(),
-                                // TextInput::make('jacket_arm_hole')->numeric(),
+                                Group::make()
+                                    ->schema([
+                                        TextInput::make('jacket_shoulder')->label('Shoulder Width')->numeric()->suffix('inches')->placeholder('e.g., 18'),
+                                        TextInput::make('jacket_back_width')->label('Back Width')->numeric()->suffix('inches')->placeholder('e.g., 16'),
+                                        TextInput::make('jacket_chest')->label('Jacket Chest')->numeric()->suffix('inches')->placeholder('e.g., 42'),
+                                        TextInput::make('jacket_bust')->label('Jacket Bust')->numeric()->suffix('inches')->placeholder('e.g., 40'),
+                                        TextInput::make('jacket_arm_hole')->label('Arm Hole')->numeric()->suffix('inches')->placeholder('e.g., 20'),
+                                        TextInput::make('jacket_sleeve_length')->label('Sleeve Length')->numeric()->suffix('inches')->placeholder('e.g., 25'),
+                                    ])
+                                    ->columns(2),
+                                Group::make()
+                                    ->schema([
+                                        TextInput::make('jacket_waist')->label('Jacket Waist')->numeric()->suffix('inches')->placeholder('e.g., 36'),
+                                        TextInput::make('jacket_hip')->label('Jacket Hip')->numeric()->suffix('inches')->placeholder('e.g., 44'),
+                                        TextInput::make('jacket_figure')->label('Jacket Figure')->numeric()->suffix('inches')->placeholder('e.g., 42'),
+                                        TextInput::make('jacket_sleeve_width')->label('Sleeve Width')->numeric()->suffix('inches')->placeholder('e.g., 6'),
+                                        TextInput::make('jacket_bicep')->label('Bicep')->numeric()->suffix('inches')->placeholder('e.g., 14'),
+                                        TextInput::make('jacket_length')->label('Jacket Length')->numeric()->suffix('inches')->placeholder('e.g., 30'),
+                                    ])
+                                    ->columns(2),
                             ]),
-                        Section::make('Trouser Measurements in inches')
+                        Section::make('Trouser Measurements (inches)')
+                            ->description('Enter precise measurements for the trouser/pants part of the suit')
+                            ->icon('heroicon-o-rectangle-stack')
                             ->visible(fn($get) => $get('type') === 'Suit')
                             ->schema([
-                                TextInput::make('trouser_waist')->numeric(),
-                                TextInput::make('trouser_hip')->numeric(),
-                                TextInput::make('trouser_inseam')->numeric(),
-                                TextInput::make('trouser_outseam')->numeric(),
-                                TextInput::make('trouser_thigh')->numeric(),
-                                TextInput::make('trouser_leg_opening')->numeric(),
-                                TextInput::make('trouser_crotch')->numeric(),
+                                Group::make()
+                                    ->schema([
+                                        TextInput::make('trouser_waist')->label('Trouser Waist')->numeric()->suffix('inches')->placeholder('e.g., 32'),
+                                        TextInput::make('trouser_hip')->label('Trouser Hip')->numeric()->suffix('inches')->placeholder('e.g., 40'),
+                                        TextInput::make('trouser_crotch')->label('Crotch')->numeric()->suffix('inches')->placeholder('e.g., 28'),
+                                        TextInput::make('trouser_thigh')->label('Thigh')->numeric()->suffix('inches')->placeholder('e.g., 24'),
+                                    ])
+                                    ->columns(2),
+                                Group::make()
+                                    ->schema([
+                                        TextInput::make('trouser_knee')->label('Knee')->numeric()->suffix('inches')->placeholder('e.g., 16'),
+                                        TextInput::make('trouser_bottom')->label('Bottom')->numeric()->suffix('inches')->placeholder('e.g., 14'),
+                                        TextInput::make('trouser_leg_opening')->label('Leg Opening')->numeric()->suffix('inches')->placeholder('e.g., 8'),
+                                        TextInput::make('trouser_inseam')->label('Inseam')->numeric()->suffix('inches')->placeholder('e.g., 32'),
+                                        TextInput::make('trouser_outseam')->label('Outseam')->numeric()->suffix('inches')->placeholder('e.g., 42'),
+                                        TextInput::make('trouser_length')->label('Trouser Length')->numeric()->suffix('inches')->placeholder('e.g., 42'),
+                                    ])
+                                    ->columns(2),
                             ]),
-                    ]),
-            ]);
+                    ])
+                    ->columns(1),
+            ])
+            ->columns(1);
     }
 }

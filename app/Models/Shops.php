@@ -20,7 +20,22 @@ class Shops extends Model
         'shop_slug',
         'shop_logo',
         'shop_policy',
+        'shop_status',
+        'facebook_url',
+        'instagram_url',
+        'tiktok_url',
+        'allow_3d_model_access',
+        'payment_options',
     ];
+
+    protected $casts = [
+        'payment_options' => 'array',
+    ];
+
+    public function getShopPolicyAttribute()
+    {
+        return $this->attributes['shop_policy'] ?? 'No specific policy provided by this shop.';
+    }
 
     public function user()
     {
@@ -30,5 +45,15 @@ class Shops extends Model
     public function products()
     {
         return $this->hasMany(Products::class, 'user_id', 'user_id');
+    }
+
+    public function shop_reviews()
+    {
+        return $this->hasMany(ShopReviews::class, 'shop_id', 'shop_id');
+    }
+
+    public function shop_account_requests()
+    {
+        return $this->hasOne(ShopAccountRequests::class, 'shop_id', 'shop_id');
     }
 }

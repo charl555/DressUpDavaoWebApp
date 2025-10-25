@@ -13,12 +13,12 @@
 <body class="bg-white min-h-screen flex flex-col">
     <main class="flex-grow">
         <x-Navbar />
-        <div class="pt-[200px]">
+        <div class="pt-[72px]">
             <x-ProductListComponent :products="$products" />
         </div>
-
         <x-Chatwindow />
     </main>
+    <x-Footer />
 
 </body>
 

@@ -21,6 +21,7 @@ class Products extends Model
         'inclusions',
         'status',
         'colors',
+        'fabric',
         'size',
         'rental_price',
         'rental_count',
@@ -56,5 +57,32 @@ class Products extends Model
     public function product_3d_models()
     {
         return $this->hasOne(Product3dModels::class, 'product_id', 'product_id');
+    }
+
+    // Change this to belongsToMany for many-to-many relationship
+    public function favoritedBy()
+    {
+        return $this
+            ->belongsToMany(User::class, 'favorites', 'product_id', 'user_id')
+            ->withTimestamps()
+            ->using(Favorites::class);
+    }
+
+    public function getIsFavoritedAttribute(): bool
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+
+        // Use direct query to avoid ambiguous column issues
+        return \App\Models\Favorites::where('user_id', auth()->id())
+            ->where('product_id', $this->product_id)
+            ->exists();
+    }
+
+    public function getFavoritesCountAttribute(): int
+    {
+        // Use direct query to avoid ambiguous column issues
+        return \App\Models\Favorites::where('product_id', $this->product_id)->count();
     }
 }

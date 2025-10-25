@@ -23,9 +23,11 @@ class RentalsResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedListBullet;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Rentals';
+    protected static string|UnitEnum|null $navigationGroup = 'Rental Management';
 
-    protected static ?string $navigationLabel = 'Add Rentals';
+    protected static ?string $navigationLabel = 'Rentals';
+
+    protected static ?int $navigationSort = 1;
 
     public static function getEloquentQuery(): Builder
     {

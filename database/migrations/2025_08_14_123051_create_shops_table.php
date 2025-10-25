@@ -23,6 +23,10 @@ return new class extends Migration {
             $table->string('shop_slug')->nullable();
             $table->string('shop_logo')->nullable();
             $table->string('shop_policy')->nullable();
+            $table->string('shop_status')->default('Not Verified');
+            $table->string('facebook_url')->nullable();
+            $table->string('instagram_url')->nullable();
+            $table->string('tiktok_url')->nullable();
             $table->timestamps();
         });
     }

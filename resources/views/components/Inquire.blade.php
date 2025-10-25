@@ -1,51 +1,102 @@
-<div id="inquiryModal"
-    class="hidden fixed inset-0 bg-black text-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 relative">
+<div id="inquiryModal" class="hidden fixed inset-0 bg-black/50 items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-auto p-6 relative">
         <button id="closeModalButton"
-            class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl font-bold">
-            &times;
+            class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors duration-200 p-1 rounded-full hover:bg-gray-100">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
         </button>
 
-        <h3 class="text-2xl font-bold text-gray-900 mb-6 text-center">Inquire About Rental</h3>
+        <h3 class="text-2xl font-bold text-gray-900 mb-6 text-center flex items-center justify-center">
+            <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            Inquire About Rental
+        </h3>
 
-        <form id="inquiryForm" action="#" method="POST" class="space-y-4">
-            <div>
-                <label for="userName" class="block text-gray-700 text-sm font-semibold mb-2">Name:</label>
-                <input type="text" id="userName" name="userName" readonly
-                    class="w-full p-3 border border-gray-300 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
-                    value="@auth{{ auth()->user()->name }}@else Please log in to inquire @endauth">
+        <form id="inquiryForm" action="#" method="POST" class="space-y-6">
+            {{-- User Information --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="userName" class="block text-gray-700 text-sm font-semibold mb-2">Name</label>
+                    <input type="text" id="userName" name="userName" readonly
+                        class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed focus:ring-2 focus:ring-purple-200"
+                        value="@auth{{ auth()->user()->name }}@else log in to inquire @endauth">
+                </div>
+
+                <div>
+                    <label for="userEmail" class="block text-gray-700 text-sm font-semibold mb-2">Email</label>
+                    <input type="email" id="userEmail" name="userEmail" readonly
+                        class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed focus:ring-2 focus:ring-purple-200"
+                        value="@auth{{ auth()->user()->email }}@else log in to inquire @endauth">
+                </div>
             </div>
 
+            {{-- Rental Date --}}
             <div>
-                <label for="userEmail" class="block text-gray-700 text-sm font-semibold mb-2">Email:</label>
-                <input type="email" id="userEmail" name="userEmail" readonly
-                    class="w-full p-3 border border-gray-300 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
-                    value="@auth{{ auth()->user()->email }}@else Please log in to inquire @endauth">
-            </div>
-
-            <div>
-                <label for="rentalDate" class="block text-gray-700 text-sm font-semibold mb-2">Desired Rental
-                    Date:</label>
+                <label for="rentalDate" class="block text-gray-700 text-sm font-semibold mb-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Desired Rental Date
+                </label>
                 <input type="date" id="rentalDate" name="rentalDate" required
-                    class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200">
             </div>
 
+            {{-- Message --}}
             <div>
-                <label for="inquiryMessage" class="block text-gray-700 text-sm font-semibold mb-2">Message:</label>
+                <label for="inquiryMessage" class="block text-gray-700 text-sm font-semibold mb-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                    Message
+                </label>
                 <textarea id="inquiryMessage" name="inquiryMessage" rows="4" required
-                    class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                    placeholder="I would like to inquire about this product."></textarea>
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200 resize-none"
+                    placeholder="I would like to inquire about this product..."></textarea>
             </div>
 
-            <p class="text-sm text-gray-600 mt-4">
-                By submitting this inquiry, you agree to be contacted by DressUp Davao Boutique regarding the rental of
-                this product.
+            {{-- Shop Policy Section --}}
+            <div class="border-t border-gray-200 pt-4">
+                <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                    <svg class="w-4 h-4 mr-1 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    Shop Policy
+                </h4>
+                <div id="shopPolicyContent"
+                    class="bg-gray-50 p-4 rounded-lg max-h-32 overflow-y-auto text-sm text-gray-600 border border-gray-200">
+                    Loading shop policy...
+                </div>
+
+                {{-- Agreement Checkbox - Hidden for guests --}}
+                <div id="agreementSection" class="mt-4 flex items-start space-x-3 @guest hidden @endguest">
+                    <input type="checkbox" id="agreeToPolicy" name="agreeToPolicy"
+                        class="h-5 w-5 text-purple-600 focus:ring-purple-500 border-gray-300 rounded mt-0.5">
+                    <label for="agreeToPolicy" class="block text-sm text-gray-700 leading-tight">
+                        I have read and agree to the shop's rental policy
+                    </label>
+                </div>
+            </div>
+
+            {{-- Terms Notice --}}
+            <p class="text-sm text-gray-600 text-center border-t border-gray-200 pt-4">
+                By submitting this inquiry, you agree to be contacted by DressUp Davao regarding the rental of this
+                product.
             </p>
 
-            <button type="submit" id="submitInquiryBtn"
-                class="w-full bg-purple-600 text-white py-3 rounded-md font-semibold hover:bg-purple-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
+            {{-- Submit Button --}}
+            <button type="submit" id="submitInquiryBtn" disabled
+                class="w-full flex justify-center items-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 relative disabled:from-purple-300 disabled:to-indigo-300 disabled:cursor-not-allowed hover:from-purple-700 hover:to-indigo-700 shadow-md hover:shadow-lg">
                 @auth
-                    Send Inquiry
+                    <span class="btn-text">Send Inquiry</span>
+                    <span
+                        class="loading hidden absolute right-6 animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5"></span>
                 @else
                     Login to Inquire
                 @endauth
@@ -56,98 +107,204 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const inquireButton = document.getElementById('inquireButton');
         const inquiryModal = document.getElementById('inquiryModal');
         const closeModalButton = document.getElementById('closeModalButton');
         const inquiryForm = document.getElementById('inquiryForm');
         const isAuthenticated = @json(auth()->check());
+        const submitBtn = document.getElementById('submitInquiryBtn');
+        const btnText = submitBtn.querySelector('.btn-text');
+        const loadingIcon = submitBtn.querySelector('.loading');
+        const agreeToPolicyCheckbox = document.getElementById('agreeToPolicy');
+        const shopPolicyContent = document.getElementById('shopPolicyContent');
+        const agreementSection = document.getElementById('agreementSection');
+        const cooldownSeconds = 60;
+        let lastInquiryTime = 0;
+        let cooldownInterval;
+        let currentShopPolicy = '';
 
-        // Get product information from the page
+        // Function to show/hide agreement section based on authentication
+        const toggleAgreementSection = () => {
+            if (!isAuthenticated) {
+                agreementSection.classList.add('hidden');
+            } else {
+                agreementSection.classList.remove('hidden');
+            }
+        };
+
+        // Function to update submit button state
+        const updateSubmitButtonState = () => {
+            if (!isAuthenticated) {
+                // For guests, always show "Login to Inquire" and keep disabled
+                submitBtn.disabled = true;
+                submitBtn.classList.add('from-purple-300', 'to-indigo-300', 'cursor-not-allowed');
+                submitBtn.classList.remove('from-purple-600', 'to-indigo-600', 'hover:from-purple-700', 'hover:to-indigo-700', 'cursor-pointer');
+                return;
+            }
+
+            const isAgreed = agreeToPolicyCheckbox.checked;
+            const rentalDate = document.getElementById('rentalDate').value;
+            const inquiryMessage = document.getElementById('inquiryMessage').value.trim();
+
+            if (isAgreed && rentalDate && inquiryMessage) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('from-purple-300', 'to-indigo-300', 'cursor-not-allowed');
+                submitBtn.classList.add('from-purple-600', 'to-indigo-600', 'hover:from-purple-700', 'hover:to-indigo-700', 'cursor-pointer');
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('from-purple-300', 'to-indigo-300', 'cursor-not-allowed');
+                submitBtn.classList.remove('from-purple-600', 'to-indigo-600', 'hover:from-purple-700', 'hover:to-indigo-700', 'cursor-pointer');
+            }
+        };
+
+        // Only allow future dates (not today)
+        const dateInput = document.getElementById('rentalDate');
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        dateInput.setAttribute('min', tomorrow.toISOString().split('T')[0]);
+
         const getProductInfo = () => {
-            // Use the product data passed from the Overview component
             if (window.productData) {
                 return {
                     productName: window.productData.name,
                     productId: window.productData.id,
                     productOwner: window.productData.owner,
-                    shopName: window.productData.shop
+                    shopName: window.productData.shop,
+                    shopId: window.productData.shopId
                 };
             }
 
-            // Fallback: Try to get product name from the page title or heading
+            // Fallback: Try to get shop ID from the product
             const productNameElement = document.querySelector('h1') || document.querySelector('.product-name');
             const productName = productNameElement ? productNameElement.textContent.trim() : 'Product';
-
-            // Get product ID from URL or data attribute
             const urlParts = window.location.pathname.split('/');
             const productId = urlParts[urlParts.length - 1];
 
-            return { productName, productId, productOwner: 'Shop Owner', shopName: 'Shop' };
+            return {
+                productName,
+                productId,
+                productOwner: 'Shop Owner',
+                shopName: 'Shop',
+                shopId: window.productData?.shopId || null
+            };
         };
 
-        // Show the modal when the inquire button is clicked
-        inquireButton.addEventListener('click', function () {
+        const fetchShopPolicy = async (productId) => {
+            if (!productId) {
+                shopPolicyContent.innerHTML = '<p class="text-gray-500 text-center py-4">No shop policy available.</p>';
+                return;
+            }
+
+            // If user is not authenticated, show login prompt instead of fetching
+            if (!isAuthenticated) {
+                shopPolicyContent.innerHTML = `
+                    <div class="text-center py-4">
+                        <p class="text-gray-500 mb-3">Log in to view the shop policy</p>
+                        <button type="button" onclick="window.location.href='/login'" 
+                            class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 font-medium">
+                            Log In Now
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                // Use product ID - the API will handle finding the shop
+                const policyResponse = await fetch(`/api/shop-policy/${productId}`);
+                const policyData = await policyResponse.json();
+
+                if (policyResponse.ok && policyData.policy) {
+                    currentShopPolicy = policyData.policy;
+                    shopPolicyContent.innerHTML = `<p class="whitespace-pre-wrap">${currentShopPolicy}</p>`;
+                } else {
+                    shopPolicyContent.innerHTML = '<p class="text-gray-500 text-center py-4">No shop policy available.</p>';
+                }
+            } catch (error) {
+                console.error('Error fetching shop policy:', error);
+                shopPolicyContent.innerHTML = '<p class="text-gray-500 text-center py-4">Unable to load shop policy. Please try again.</p>';
+            }
+        };
+
+        const closeModal = () => {
+            inquiryModal.classList.add('hidden');
+            document.body.style.overflow = '';
+            if (agreeToPolicyCheckbox) {
+                agreeToPolicyCheckbox.checked = false;
+            }
+            updateSubmitButtonState();
+        };
+
+        const openModal = () => {
             inquiryModal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
 
-            // Pre-fill the message with product information
-            const { productName, shopName } = getProductInfo();
+            const { productName, productId } = getProductInfo();
             const messageTextarea = document.getElementById('inquiryMessage');
-            if (messageTextarea.value === '' || messageTextarea.value === 'I would like to inquire about this product.') {
+
+            // Only pre-fill message for authenticated users
+            if (isAuthenticated && (messageTextarea.value.trim() === '' || messageTextarea.value.includes('inquire about'))) {
                 messageTextarea.value = `I would like to inquire about this product: ${productName}`;
             }
+
+            // Show/hide agreement section based on authentication
+            toggleAgreementSection();
+
+            // Fetch shop policy (will show login prompt for guests)
+            fetchShopPolicy(productId);
+        };
+
+        document.getElementById('inquireButton')?.addEventListener('click', openModal);
+
+        // Event listeners for form validation (only for authenticated users)
+        if (isAuthenticated) {
+            agreeToPolicyCheckbox.addEventListener('change', updateSubmitButtonState);
+        }
+        dateInput.addEventListener('change', updateSubmitButtonState);
+        document.getElementById('inquiryMessage').addEventListener('input', updateSubmitButtonState);
+
+        closeModalButton.addEventListener('click', closeModal);
+        inquiryModal.addEventListener('click', e => {
+            if (e.target === inquiryModal) closeModal();
         });
 
-        // Hide the modal when the close button is clicked
-        closeModalButton.addEventListener('click', function () {
-            inquiryModal.classList.add('hidden');
-            document.body.style.overflow = '';
-        });
-
-        // Hide the modal if clicked outside the modal content
-        inquiryModal.addEventListener('click', function (event) {
-            if (event.target === inquiryModal) {
-                inquiryModal.classList.add('hidden');
-                document.body.style.overflow = '';
-            }
-        });
-
-        // Handle form submission
         inquiryForm.addEventListener('submit', async function (event) {
             event.preventDefault();
 
-            // Check if user is authenticated
             if (!isAuthenticated) {
-                // Redirect to login page
                 window.location.href = '/login';
                 return;
             }
 
-            const rentalDate = document.getElementById('rentalDate').value;
-            const inquiryMessage = document.getElementById('inquiryMessage').value;
-            const { productName, productId, productOwner, shopName } = getProductInfo();
-
-            // Validate required fields
-            if (!rentalDate || !inquiryMessage.trim()) {
-                alert('Please fill in all required fields.');
+            const now = Date.now();
+            const timeSinceLastInquiry = (now - lastInquiryTime) / 1000;
+            if (timeSinceLastInquiry < cooldownSeconds) {
+                const remaining = Math.ceil(cooldownSeconds - timeSinceLastInquiry);
+                showToast(`Please wait ${remaining}s before sending another inquiry.`, 'warning');
                 return;
             }
 
-            // Disable submit button to prevent double submission
-            const submitBtn = document.getElementById('submitInquiryBtn');
-            const originalText = submitBtn.textContent;
+            const rentalDate = dateInput.value;
+            const inquiryMessage = document.getElementById('inquiryMessage').value.trim();
+            const { productName, productId, productOwner, shopName } = getProductInfo();
+
+            if (!rentalDate || !inquiryMessage) {
+                showToast('Fill in all required fields.', 'error');
+                return;
+            }
+
+            if (!agreeToPolicyCheckbox.checked) {
+                showToast('Agree to the shop policy before sending an inquiry.', 'error');
+                return;
+            }
+
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Sending...';
+            btnText.textContent = 'Sending...';
+            loadingIcon.classList.remove('hidden');
 
             try {
-                // Format the inquiry message for the chat system
-                const formattedMessage = `🔍 PRODUCT INQUIRY\n\n` +
-                    `Product: ${productName}\n` +
-                    `Shop: ${shopName}\n` +
-                    `Desired Rental Date: ${rentalDate}\n\n` +
-                    `Message: ${inquiryMessage}`;
+                const formattedMessage =
+                    `🔍 PRODUCT INQUIRY\n\nProduct: ${productName}\nShop: ${shopName}\nDesired Rental Date: ${rentalDate}\n\nMessage: ${inquiryMessage}`;
 
-                // Send the inquiry as a chat message to the product owner
                 const response = await fetch('/chat/send-inquiry', {
                     method: 'POST',
                     headers: {
@@ -158,28 +315,46 @@
                         product_id: productId,
                         message: formattedMessage,
                         rental_date: rentalDate,
-                        original_message: inquiryMessage
+                        original_message: inquiryMessage,
+                        thumbnail_path: window.productData?.thumbnail || null
                     })
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    alert(`Your inquiry has been sent successfully to ${shopName}! ${productOwner} will respond to you soon through the chat system.`);
-                    inquiryModal.classList.add('hidden');
-                    document.body.style.overflow = '';
+                    showToast(`Your inquiry has been sent successfully to ${shopName}!`, 'success', 5000);
                     inquiryForm.reset();
+                    agreeToPolicyCheckbox.checked = false;
+                    lastInquiryTime = now;
+
+                    setTimeout(closeModal, 700);
+
+                    let remaining = cooldownSeconds;
+                    cooldownInterval = setInterval(() => {
+                        remaining--;
+                        btnText.textContent = `Wait ${remaining}s`;
+                        if (remaining <= 0) {
+                            clearInterval(cooldownInterval);
+                            updateSubmitButtonState();
+                            btnText.textContent = 'Send Inquiry';
+                        }
+                    }, 1000);
                 } else {
-                    throw new Error(data.message || 'Failed to send inquiry');
+                    throw new Error(data.message || 'Failed to send inquiry.');
                 }
             } catch (error) {
-                console.error('Error sending inquiry:', error);
-                alert('Failed to send inquiry. Please try again or contact support.');
-            } finally {
-                // Re-enable submit button
+                console.error('Error:', error);
+                showToast('Failed to send inquiry. Please try again later.', 'error');
                 submitBtn.disabled = false;
-                submitBtn.textContent = originalText;
+                updateSubmitButtonState();
+            } finally {
+                loadingIcon.classList.add('hidden');
             }
         });
+
+        // Initialize agreement section visibility and button state
+        toggleAgreementSection();
+        updateSubmitButtonState();
     });
 </script>

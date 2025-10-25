@@ -17,18 +17,31 @@ return new class extends Migration {
                 ->constrained('products', 'product_id')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
+
+            $table->unsignedBigInteger('customer_id')->nullable();
             $table
-                ->foreignId('customer_id')
-                ->constrained('customers', 'customer_id')
+                ->foreign('customer_id')
+                ->references('customer_id')
+                ->on('customers')
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
+
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table
+                ->foreign('user_id')
+                ->references('id')
+                ->on('users')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
             $table->date('pickup_date');
             $table->date('event_date');
             $table->date('return_date');
             $table->date('actual_return_date')->nullable();
-            $table->string('rental_status')->default('On Going');
-            $table->integer('rental_price');
-            $table->integer('penalty_amount')->default(0)->nullable();
+            $table->string('rental_status');
+            $table->decimal('deposit_amount', 10, 2)->default(0);
+            $table->decimal('balance_due', 10, 2)->default(0);
+            $table->decimal('rental_price', 10, 2);
+            $table->decimal('penalty_amount', 10, 2)->default(0)->nullable();
             $table->boolean('is_returned')->default(false);
             $table->timestamps();
         });

@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -6,9 +6,42 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif,
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+        "Noto Color Emoji";
 }
+
 [x-cloak] {
     display: none !important;
-  }
+}
+
+/* Fix for opacity issues in Tailwind v4 */
+.bg-opacity-30 {
+    background-color: rgb(0 0 0 / 0.3);
+}
+
+.bg-opacity-50 {
+    background-color: rgb(0 0 0 / 0.5);
+}
+
+.bg-opacity-60 {
+    background-color: rgb(0 0 0 / 0.6);
+}
+
+.bg-opacity-70 {
+    background-color: rgb(0 0 0 / 0.7);
+}
+
+/* Ensure modal overlays work correctly */
+.modal-overlay {
+    background-color: rgb(0 0 0 / 0.5);
+}
+
+.modal-overlay-dark {
+    background-color: rgb(0 0 0 / 0.7);
+}
+
+/* Product overlay for unavailable items */
+.product-overlay {
+    background-color: rgb(17 24 39 / 0.6);
+}

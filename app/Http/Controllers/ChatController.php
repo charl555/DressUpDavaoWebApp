@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\MessageSent;
+use App\Models\Bookings;
 use App\Models\ChatMessage;
 use App\Models\Products;
 use App\Models\User;
@@ -49,15 +50,32 @@ class ChatController extends Controller
 
         $request->validate([
             'receiver_id' => 'required|exists:users,id',
-            'message' => 'required|string|max:1000',
+            'message' => 'nullable|string|max:1000',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',  // 5MB max
+            'message_type' => 'nullable|in:text,image'
         ]);
 
-        $message = ChatMessage::create([
+        $messageData = [
             'sender_id' => Auth::id(),
             'receiver_id' => $request->receiver_id,
-            'message' => $request->message,
-        ]);
+            'message' => $request->message ?? '',
+            'message_type' => $request->message_type ?? 'text',
+        ];
 
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imagePath = $image->store('chat-images', 'public');
+            $messageData['image_path'] = $imagePath;
+            $messageData['message_type'] = 'image';
+        }
+
+        // Validate that either message or image is provided
+        if (empty($messageData['message']) && empty($messageData['image_path'])) {
+            return response()->json(['error' => 'Either message or image is required'], 400);
+        }
+
+        $message = ChatMessage::create($messageData);
         $message->load(['sender', 'receiver']);
 
         // Broadcast the message using Pusher
@@ -104,7 +122,7 @@ class ChatController extends Controller
     }
 
     /**
-     * Get all admins (for users to start conversations with)
+     * Get admins that the current user has conversations with (for regular users)
      */
     public function getAdmins()
     {
@@ -112,13 +130,34 @@ class ChatController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $admins = User::whereIn('role', ['Admin', 'SuperAdmin'])->get(['id', 'name', 'email', 'role']);
+        $currentUserId = Auth::id();
+
+        // Only return admins that the user has had conversations with
+        $adminIds = ChatMessage::where(function ($query) use ($currentUserId) {
+            $query
+                ->where('sender_id', $currentUserId)
+                ->orWhere('receiver_id', $currentUserId);
+        })
+            ->where(function ($query) use ($currentUserId) {
+                $query
+                    ->where('sender_id', '!=', $currentUserId)
+                    ->orWhere('receiver_id', '!=', $currentUserId);
+            })
+            ->get()
+            ->map(function ($message) use ($currentUserId) {
+                return $message->sender_id === $currentUserId ? $message->receiver_id : $message->sender_id;
+            })
+            ->unique();
+
+        $admins = User::whereIn('id', $adminIds)
+            ->whereIn('role', ['Admin', 'SuperAdmin'])
+            ->get(['id', 'name', 'email', 'role']);
 
         return response()->json($admins);
     }
 
     /**
-     * Get all users (for admins to see all potential conversations)
+     * Get users that have initiated conversations with the current admin
      */
     public function getAllUsers()
     {
@@ -126,7 +165,27 @@ class ChatController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $users = User::where('id', '!=', Auth::id())
+        $currentUserId = Auth::id();
+
+        // Only return users that have had conversations with this admin
+        $userIds = ChatMessage::where(function ($query) use ($currentUserId) {
+            $query
+                ->where('sender_id', $currentUserId)
+                ->orWhere('receiver_id', $currentUserId);
+        })
+            ->where(function ($query) use ($currentUserId) {
+                $query
+                    ->where('sender_id', '!=', $currentUserId)
+                    ->orWhere('receiver_id', '!=', $currentUserId);
+            })
+            ->get()
+            ->map(function ($message) use ($currentUserId) {
+                return $message->sender_id === $currentUserId ? $message->receiver_id : $message->sender_id;
+            })
+            ->unique();
+
+        $users = User::whereIn('id', $userIds)
+            ->where('id', '!=', $currentUserId)
             ->get(['id', 'name', 'email', 'role']);
 
         return response()->json($users);
@@ -159,12 +218,13 @@ class ChatController extends Controller
             'product_id' => 'required|exists:products,product_id',
             'message' => 'required|string|max:1000',
             'rental_date' => 'required|date|after:today',
-            'original_message' => 'required|string|max:500'
+            'original_message' => 'required|string|max:500',
+            'thumbnail_path' => 'nullable|string'
         ]);
 
         try {
-            // Get the product and its owner
-            $product = Products::with('user')->findOrFail($request->product_id);
+            // Get the product and its owner with images
+            $product = Products::with(['user', 'product_images'])->findOrFail($request->product_id);
             $productOwner = $product->user;
             $currentUser = Auth::user();
 
@@ -173,13 +233,73 @@ class ChatController extends Controller
                 return response()->json(['error' => 'You cannot inquire about your own product'], 400);
             }
 
-            // Create the chat message
-            $message = ChatMessage::create([
+            // Get product thumbnail image
+            $thumbnailPath = null;
+
+            // Use provided thumbnail path or get from product images
+            if ($request->thumbnail_path) {
+                $originalPath = storage_path('app/public/' . $request->thumbnail_path);
+                if (file_exists($originalPath)) {
+                    $fileName = 'inquiry_' . time() . '_' . basename($request->thumbnail_path);
+                    $newPath = 'chat-images/' . $fileName;
+                    $fullNewPath = storage_path('app/public/' . $newPath);
+
+                    // Create directory if it doesn't exist
+                    $directory = dirname($fullNewPath);
+                    if (!file_exists($directory)) {
+                        mkdir($directory, 0755, true);
+                    }
+
+                    // Copy the file
+                    if (copy($originalPath, $fullNewPath)) {
+                        $thumbnailPath = $newPath;
+                    }
+                }
+            } else {
+                // Fallback to product images
+                $productImage = $product->product_images()->first();
+                if ($productImage && $productImage->thumbnail_image) {
+                    $originalPath = storage_path('app/public/' . $productImage->thumbnail_image);
+                    if (file_exists($originalPath)) {
+                        $fileName = 'inquiry_' . time() . '_' . basename($productImage->thumbnail_image);
+                        $newPath = 'chat-images/' . $fileName;
+                        $fullNewPath = storage_path('app/public/' . $newPath);
+
+                        // Create directory if it doesn't exist
+                        $directory = dirname($fullNewPath);
+                        if (!file_exists($directory)) {
+                            mkdir($directory, 0755, true);
+                        }
+
+                        // Copy the file
+                        if (copy($originalPath, $fullNewPath)) {
+                            $thumbnailPath = $newPath;
+                        }
+                    }
+                }
+            }
+
+            // Create the chat message with product metadata
+            $messageData = [
                 'sender_id' => $currentUser->id,
                 'receiver_id' => $productOwner->id,
                 'message' => $request->message,
-                'is_read' => false
-            ]);
+                'message_type' => 'inquiry',
+                'is_read' => false,
+                'metadata' => [
+                    'product_id' => $product->product_id,
+                    'product_name' => $product->name,
+                    'rental_date' => $request->rental_date,
+                    'original_message' => $request->original_message
+                ]
+            ];
+
+            // Add image if available
+            if ($thumbnailPath) {
+                $messageData['image_path'] = $thumbnailPath;
+            }
+
+            $message = ChatMessage::create($messageData);
 
             // Broadcast the message if Pusher is configured
             try {
@@ -201,6 +321,99 @@ class ChatController extends Controller
         } catch (\Exception $e) {
             \Log::error('Error sending inquiry: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to send inquiry'], 500);
+        }
+    }
+
+    /**
+     * Get available products for booking (admin only)
+     */
+    public function getAvailableProducts()
+    {
+        if (!Auth::check() || !in_array(Auth::user()->role, ['Admin', 'SuperAdmin'])) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $products = Products::where('user_id', Auth::id())
+            ->where('status', 'Available')
+            ->where('visibility', 'Yes')
+            ->get(['product_id', 'name', 'type', 'rental_price']);
+
+        return response()->json($products);
+    }
+
+    /**
+     * Create a booking reservation (admin only)
+     */
+    public function createBooking(Request $request)
+    {
+        if (!Auth::check() || !in_array(Auth::user()->role, ['Admin', 'SuperAdmin'])) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'product_id' => 'required|exists:products,product_id',
+            'booking_date' => 'required|date|after:today',
+        ]);
+
+        try {
+            // Check if product is available
+            $product = Products::findOrFail($request->product_id);
+
+            if ($product->user_id !== Auth::id()) {
+                return response()->json(['error' => 'You can only book your own products'], 403);
+            }
+
+            if ($product->status !== 'Available') {
+                return response()->json(['error' => 'Product is not available for booking'], 400);
+            }
+
+            // Check if there's already a booking for this product on this date
+            $existingBooking = Bookings::where('product_id', $request->product_id)
+                ->where('booking_date', $request->booking_date)
+                ->where('status', 'On Going')
+                ->first();
+
+            if ($existingBooking) {
+                return response()->json(['error' => 'Product is already booked for this date'], 400);
+            }
+
+            // Create the booking
+            $booking = Bookings::create([
+                'user_id' => $request->user_id,
+                'created_by' => Auth::id(),
+                'product_id' => $request->product_id,
+                'booking_date' => $request->booking_date,
+                'status' => 'On Going',
+            ]);
+
+            // Update product status to Reserved
+            $product->update(['status' => 'Reserved']);
+
+            // Send a notification message to the user
+            $user = User::findOrFail($request->user_id);
+            $notificationMessage = ChatMessage::create([
+                'sender_id' => Auth::id(),
+                'receiver_id' => $request->user_id,
+                'message' => "🎉 Booking Confirmed!\n\nProduct: {$product->name}\nReservation Date: {$request->booking_date}\n\nPlease visit our shop on the scheduled date to view and potentially rent this item. Thank you!",
+                'message_type' => 'text',
+                'metadata' => [
+                    'booking_id' => $booking->booking_id,
+                    'type' => 'booking_confirmation'
+                ]
+            ]);
+
+            // Broadcast the notification
+            broadcast(new MessageSent($notificationMessage))->toOthers();
+
+            return response()->json([
+                'success' => true,
+                'booking' => $booking->load(['user', 'product']),
+                'message' => 'Booking created successfully'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error creating booking: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to create booking'], 500);
         }
     }
 }

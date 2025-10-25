@@ -52,17 +52,29 @@
         const scene = new BABYLON.Scene(engine);
         scene.clearColor = new BABYLON.Color3(1, 1, 1);
 
-        // Camera
-        const camera = new BABYLON.ArcRotateCamera("camera",
-            Math.PI / 2, Math.PI / 3, 3, BABYLON.Vector3.Zero(), scene);
+        // Camera setup
+        const camera = new BABYLON.ArcRotateCamera(
+            "camera",
+            Math.PI / 2,
+            Math.PI / 3,
+            3,
+            BABYLON.Vector3.Zero(),
+            scene
+        );
         camera.attachControl(canvas, true);
 
-        // Enable smooth zooming
-        camera.wheelPrecision = 50; // higher = slower zoom
-        camera.panningSensibility = 50; // smoother panning
+        // 🎯 Adjust sensitivity for slower control
+        camera.wheelPrecision = 100;         // Zoom speed (higher = slower)
+        camera.panningSensibility = 2000;    // Panning sensitivity (higher = slower)
+        camera.angularSensibilityX = 4000;   // Rotation horizontal (higher = slower)
+        camera.angularSensibilityY = 4000;   // Rotation vertical (higher = slower)
 
-        const light = new BABYLON.HemisphericLight("light",
-            new BABYLON.Vector3(1, 1, 0), scene);
+        // 📱 Adjust for mobile gestures (slower pinch & swipe)
+        camera.pinchPrecision = 200;         // Pinch zoom slower
+        camera.pinchDeltaPercentage = 0.002; // Fine-tuned pinch control
+
+        // Light setup
+        const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(1, 1, 0), scene);
 
         // Auto rotation
         camera.useAutoRotationBehavior = true;
@@ -73,7 +85,7 @@
             autoRotateBehavior.idleRotationSpinUpTime = 1000;
         }
 
-        // Clipping planes (if provided)
+        // Clipping planes
         const clippingData = @json($clippingData);
         scene.clipPlane = new BABYLON.Plane(1, 0, 0, 10);
         scene.clipPlane2 = new BABYLON.Plane(-1, 0, 0, 10);
@@ -96,13 +108,23 @@
                 const radius = boundingInfo.extendSizeWorld.length();
 
                 camera.target = center;
-                camera.radius = radius * 1.5; // closer zoom (default was *3)
+                camera.radius = radius * 1.5;
                 camera.lowerRadiusLimit = radius * 0.8;
                 camera.upperRadiusLimit = radius * 5;
             }
         });
 
+        // ✅ Prevent page scroll when mouse is over canvas
+        canvas.addEventListener('wheel', (event) => {
+            if (document.activeElement === canvas || canvas.matches(':hover')) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+
         engine.runRenderLoop(() => scene.render());
         window.addEventListener('resize', () => engine.resize());
     </script>
+
+
+
 </x-filament-panels::page>

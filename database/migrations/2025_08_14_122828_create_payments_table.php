@@ -19,8 +19,11 @@ return new class extends Migration {
                 ->cascadeOnUpdate();
             $table->string('payment_method');
             $table->string('payment_status')->default('Paid');
-            $table->integer('amount_paid');
+            $table->decimal('amount_paid', 10, 2);
             $table->date('payment_date');
+            $table->enum('payment_type', [
+                'deposit', 'rental', 'penalty', 'refund'
+            ])->default('rental');
             $table->timestamps();
         });
     }

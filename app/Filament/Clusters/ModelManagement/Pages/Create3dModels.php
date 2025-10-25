@@ -4,10 +4,9 @@ namespace App\Filament\Clusters\ModelManagement\Pages;
 
 use App\Filament\Clusters\ModelManagement\ModelManagementCluster;
 use App\Models\KiriEngineJobs;
+use App\Models\Shops;
 use Carbon\Carbon;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Toggle;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
@@ -17,6 +16,7 @@ use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use BackedEnum;
 use Exception;
 
@@ -25,36 +25,16 @@ class Create3dModels extends Page implements HasSchemas
     use InteractsWithSchemas;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCube;
-
     protected static ?string $navigationLabel = 'Create 3D Models';
-
+    protected static ?string $slug = 'create3d-models';
     protected string $view = 'filament.clusters.model-management.pages.create3d-models';
-
     protected static ?string $cluster = ModelManagementCluster::class;
+    protected static ?int $navigationSort = 1;
 
     public $images = [];
-
-    public int $modelQuality = 1;
-
-    public int $textureQuality = 1;
-
-    public string $fileFormat = 'GLB';
-
-    public bool $isMask = false;
-
-    public bool $textureSmoothing = true;
-
     public ?string $serialize = null;
-
-    public ?string $modelUrl = null;
-
     public bool $isProcessing = false;
-
     public string $statusMessage = '';
-
-    public ?int $currentJobId = null;
-
-    public bool $isDownloaded = false;
 
     public static function canAccess(): bool
     {
@@ -64,151 +44,129 @@ class Create3dModels extends Page implements HasSchemas
     public function mount(): void
     {
         $this->form->fill([
-            'modelQuality' => $this->modelQuality,
-            'textureQuality' => $this->textureQuality,
-            'fileFormat' => $this->fileFormat,
-            'isMask' => $this->isMask,
-            'textureSmoothing' => $this->textureSmoothing,
+            'images' => $this->images,
         ]);
-
-        $this->reset(['serialize', 'modelUrl', 'isProcessing', 'statusMessage', 'currentJobId', 'isDownloaded']);
     }
 
     public function form(Schema $schema): Schema
     {
+        $shop = Shops::where('user_id', Auth::id())->first();
+
+        if (!$shop?->allow_3d_model_access) {
+            return $schema
+                ->schema([
+                    Section::make('Access Denied')
+                        ->description('Your account does not have access to 3D model features')
+                        ->schema([
+                            // Empty schema - just shows the access denied message
+                        ]),
+                ]);
+        }
+
         return $schema
             ->schema([
-                Section::make('Upload Images & Generate 3D Model')
-                    ->description('Upload at least 20 images but no more than 300 images for consistent 3D models. Ensure images are well-lit and capture the object from various angles.')
+                Section::make('Upload Images for 3D Model')
+                    ->description('Upload 20-100 images to generate a 3D model')
                     ->schema([
                         FileUpload::make('images')
-                            ->label('Select Images for 3D Model')
+                            ->label('Images')
+                            ->helperText('Upload 20-100 high-quality images from all angles')
                             ->multiple()
                             ->image()
                             ->required()
-                            ->reactive()
                             ->minFiles(20)
-                            ->maxFiles(300)
-                            ->maxSize(10240),
-                        Select::make('modelQuality')
-                            ->label('Model Quality')
-                            ->options([1 => 'High', 0 => 'Low'])
-                            ->default($this->modelQuality)
-                            ->required()
-                            ->reactive(),
-                        Select::make('textureQuality')
-                            ->label('Texture Quality')
-                            ->options([1 => 'High', 0 => 'Low'])
-                            ->default($this->textureQuality)
-                            ->required()
-                            ->reactive(),
-                        Select::make('fileFormat')
-                            ->label('Output File Format')
-                            ->options(['GLB' => 'GLB (Recommended for web)', 'OBJ' => 'OBJ'])
-                            ->default($this->fileFormat)
-                            ->required()
-                            ->reactive(),
-                        Toggle::make('isMask')
-                            ->label('Apply Masking (If images have transparent backgrounds)')
-                            ->default($this->isMask)
-                            ->reactive(),
-                        Toggle::make('textureSmoothing')
-                            ->label('Apply Texture Smoothing')
-                            ->default($this->textureSmoothing)
-                            ->reactive(),
+                            ->maxFiles(100)
+                            ->maxSize(10240)
+                            ->disk('public')
+                            ->directory('3d-model-images')
+                            ->visibility('public')
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp']),
                     ]),
             ]);
     }
 
     public function submit()
     {
-        $this->resetErrorBag();
-
-        $this->modelUrl = null;
-        $this->serialize = null;
-        $this->statusMessage = '';
-        $this->isDownloaded = false;
-        $this->currentJobId = null;  // Clear previous job ID
-
-        $data = $this->form->getState();
-
-        if (empty($data['images'])) {
-            $this->addError('images', 'Please upload at least 20 images.');
+        $shop = Shops::where('user_id', Auth::id())->first();
+        if (!$shop?->allow_3d_model_access) {
+            $this->addError('general', 'Your account does not have access to 3D model features.');
             return;
         }
 
+        $this->resetErrorBag();
+        $this->serialize = null;
+        $this->statusMessage = '';
+
+        // Validate the form
+        $this->validate([
+            'images' => ['required', 'array', 'min:20', 'max:300'],
+            'images.*' => ['required', 'file', 'image', 'max:10240'],
+        ]);
+
+        $data = $this->form->getState();
+
         $this->isProcessing = true;
-        $this->statusMessage = 'Uploading images and starting 3D model generation... This may take a moment. Check your job history for updates.';
+        $this->statusMessage = 'Uploading images...';
 
         $apiKey = config('services.kiri.key');
 
         if (empty($apiKey)) {
-            Log::error('Kiri Engine API Key is empty. Check .env and config/services.php');
-            $this->addError('general', 'Kiri Engine API Key is not configured. Please contact support.');
+            $this->addError('general', 'API configuration error. Please contact support.');
             $this->isProcessing = false;
             return;
         }
 
+        // Create job record
         try {
-            $expiryDate = Carbon::now()->addDays(3)->toDateString();
-
             $job = KiriEngineJobs::create([
                 'user_id' => Auth::id(),
-                'serialize_id' => 'temp_serialize_' . uniqid(),  // Temporary ID, will be updated by Kiri
+                'serialize_id' => 'temp_' . uniqid(),
                 'status' => 'uploading',
-                'kiri_options' => $data,
+                'kiri_options' => [],
                 'is_downloaded' => false,
-                'url_expiry' => $expiryDate,
+                'url_expiry' => Carbon::now()->addDays(7)->toDateString(),
             ]);
-            $this->currentJobId = $job->kiri_engine_job_id;  // Store the ID of the newly created job
-            $this->serialize = $job->serialize_id;  // Display the temporary ID
         } catch (Exception $e) {
-            Log::error('Failed to create Kiri Engine job record: ' . $e->getMessage());
-            $this->addError('general', 'Failed to create job record. Please try again.');
+            $this->addError('general', 'Failed to create job. Please try again.');
             $this->isProcessing = false;
             return;
         }
 
+        // Prepare images for upload - USING STORED PATHS
         $multipart = [];
-        foreach ($data['images'] as $imagePath) {
+        foreach ($data['images'] as $storedImagePath) {
             try {
-                // Ensure file paths are correctly resolved for Livewire temporary uploads
-                $file = storage_path('app/livewire-tmp/' . basename($imagePath));
-                if (!file_exists($file)) {
-                    // Fallback for paths not in livewire-tmp if necessary, though it should be
-                    $file = storage_path('app/' . $imagePath);
-                    if (!file_exists($file)) {
-                        $file = public_path('storage/' . $imagePath);  // Last resort
-                        if (!file_exists($file)) {
-                            throw new Exception('Temporary file not found at: ' . $imagePath);
-                        }
-                    }
+                // Get the full path to the stored image
+                $fullPath = Storage::disk('public')->path($storedImagePath);
+
+                if (!file_exists($fullPath)) {
+                    throw new Exception('Stored file not found: ' . $storedImagePath);
                 }
+
                 $multipart[] = [
                     'name' => 'imagesFiles',
-                    'contents' => fopen($file, 'r'),
-                    'filename' => basename($file),
+                    'contents' => fopen($fullPath, 'r'),
+                    'filename' => basename($storedImagePath),
                 ];
             } catch (Exception $e) {
-                Log::error('Failed to open temporary file for Kiri Engine upload: ' . $e->getMessage());
-                $this->addError('images', 'Error preparing some images for upload. Please try again.');
+                Log::error('File upload error: ' . $e->getMessage() . ' - Path: ' . $storedImagePath);
+                $this->addError('images', 'Error preparing images for upload.');
                 $this->isProcessing = false;
                 $job->update(['status' => 'failed', 'notes' => 'Image file error: ' . $e->getMessage()]);
                 return;
             }
         }
 
-        $multipart[] = ['name' => 'modelQuality', 'contents' => (string) $data['modelQuality']];
-        $multipart[] = ['name' => 'textureQuality', 'contents' => (string) $data['textureQuality']];
-        $multipart[] = ['name' => 'fileFormat', 'contents' => $data['fileFormat']];
-        $multipart[] = ['name' => 'isMask', 'contents' => $data['isMask'] ? '1' : '0'];
-        $multipart[] = ['name' => 'textureSmoothing', 'contents' => $data['textureSmoothing'] ? '1' : '0'];
-
+        // Add required API parameters with optimal defaults
+        $multipart[] = ['name' => 'modelQuality', 'contents' => '0'];
+        $multipart[] = ['name' => 'textureQuality', 'contents' => '0'];
+        $multipart[] = ['name' => 'fileFormat', 'contents' => 'GLB'];
+        $multipart[] = ['name' => 'isMask', 'contents' => '0'];
+        $multipart[] = ['name' => 'textureSmoothing', 'contents' => '1'];
         $multipart[] = ['name' => 'notifyUrl', 'contents' => route('webhooks.kiri-model-ready', ['job_id' => $job->kiri_engine_job_id])];
 
         try {
             $response = Http::withToken($apiKey)
-                ->withHeaders(['Accept' => 'application/json'])
                 ->timeout(300)
                 ->send('POST', 'https://api.kiriengine.app/api/v1/open/photo/image', [
                     'multipart' => $multipart,
@@ -219,30 +177,41 @@ class Create3dModels extends Page implements HasSchemas
                 if (isset($responseBody['data']['serialize'])) {
                     $kiriSerializeId = $responseBody['data']['serialize'];
                     $job->update([
-                        'serialize_id' => $kiriSerializeId,  // Update with actual serialize ID from Kiri
+                        'serialize_id' => $kiriSerializeId,
                         'status' => 'processing',
                     ]);
-                    $this->serialize = $kiriSerializeId;  // Update Livewire property for immediate display
-                    $this->statusMessage = 'Images uploaded successfully! 3D model generation has started (Serial ID: ' . $this->serialize . '). Check your job history for progress.';
+                    $this->serialize = $kiriSerializeId;
+                    $this->statusMessage = 'Upload successful! 3D model generation started. Check Download 3D Models page for progress.';
+
+                    // Optional: Clean up uploaded images after successful API call
+                    // $this->cleanupUploadedImages($data['images']);
                 } else {
-                    $job->update(['status' => 'failed', 'notes' => 'Kiri API response missing serialize ID: ' . json_encode($responseBody)]);
-                    $this->addError('general', 'Kiri Engine API response missing serialize ID. ' . ($responseBody['message'] ?? 'Unknown error.'));
-                    $this->statusMessage = 'Upload successful, but could not get model ID. Check your job history for details.';
+                    $job->update(['status' => 'failed', 'notes' => 'No serialize ID in response']);
+                    $this->addError('general', 'Upload failed: No model ID received');
                 }
             } else {
-                $errorMsg = $response->json('message', 'Unknown error from Kiri Engine API.');
-                $job->update(['status' => 'failed', 'notes' => 'Upload to Kiri Engine failed: ' . $response->body()]);
-                $this->addError('general', 'Upload to Kiri Engine failed: ' . $errorMsg);
-                $this->statusMessage = 'Upload to Kiri Engine failed: ' . $errorMsg . '. Check your job history for details.';
+                $errorMsg = $response->json('message', 'Upload failed');
+                $job->update(['status' => 'failed', 'notes' => 'API error: ' . $errorMsg]);
+                $this->addError('general', 'Upload failed: ' . $errorMsg);
             }
         } catch (Exception $e) {
-            $job->update(['status' => 'failed', 'notes' => 'API call exception: ' . $e->getMessage()]);
-            Log::error('Kiri Engine API Call Error: ' . $e->getMessage());
-            $this->addError('general', 'An error occurred during API call: ' . $e->getMessage());
-            $this->statusMessage = 'An unexpected error occurred during upload. Please check your job history.';
-        } finally {
-            $this->isProcessing = false;
-            $this->images = [];
+            $job->update(['status' => 'failed', 'notes' => 'Exception: ' . $e->getMessage()]);
+            $this->addError('general', 'Upload error: ' . $e->getMessage());
+        }
+
+        $this->isProcessing = false;
+        $this->images = [];
+    }
+
+    private function cleanupUploadedImages(array $imagePaths): void
+    {
+        try {
+            foreach ($imagePaths as $imagePath) {
+                Storage::disk('public')->delete($imagePath);
+            }
+            Log::info('Cleaned up uploaded images after successful API call');
+        } catch (Exception $e) {
+            Log::warning('Failed to clean up uploaded images: ' . $e->getMessage());
         }
     }
 }

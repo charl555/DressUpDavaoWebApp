@@ -3,8 +3,10 @@
 namespace App\Filament\Resources\Rentals\Pages;
 
 use App\Filament\Resources\Rentals\RentalsResource;
+use App\Models\Customers;
 use App\Models\Products;
 use App\Models\Rentals;
+use App\Models\User;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 
@@ -15,7 +17,7 @@ class CreateRentals extends CreateRecord
     protected function handleRecordCreation(array $data): Model
     {
         try {
-            // Validate that the product is still available
+            // --- Step 1: Validate product existence and availability ---
             $product = Products::find($data['product_id']);
             if (!$product) {
                 throw new \Exception('Product not found.');
@@ -25,18 +27,39 @@ class CreateRentals extends CreateRecord
                 throw new \Exception('Product is no longer available for rental.');
             }
 
-            // Validate that the customer exists
-            $customer = \App\Models\Customers::find($data['customer_id']);
-            if (!$customer) {
-                throw new \Exception('Customer not found.');
+            // --- Step 2: Validate client type and ID ---
+            $clientType = $data['client_type'] ?? null;
+            $clientId = $data['client_id'] ?? null;
+
+            if (!$clientType || !$clientId) {
+                throw new \Exception('Please select a client type and client.');
             }
 
-            // Validate dates
+            $customerId = null;
+            $userId = null;
+
+            if ($clientType === 'customer') {
+                $customer = Customers::find($clientId);
+                if (!$customer) {
+                    throw new \Exception('Selected customer not found.');
+                }
+                $customerId = $clientId;
+            } elseif ($clientType === 'user') {
+                $user = User::where('role', 'User')->find($clientId);
+                if (!$user) {
+                    throw new \Exception('Selected user not found.');
+                }
+                $userId = $clientId;
+            } else {
+                throw new \Exception('Invalid client type selected.');
+            }
+
+            // --- Step 3: Validate date logic ---
             $pickupDate = \Carbon\Carbon::parse($data['pickup_date']);
             $eventDate = \Carbon\Carbon::parse($data['event_date']);
             $returnDate = \Carbon\Carbon::parse($data['return_date']);
 
-            if ($pickupDate->isPast()) {
+            if ($pickupDate->isBefore(today())) {
                 throw new \Exception('Pickup date cannot be in the past.');
             }
 
@@ -48,51 +71,58 @@ class CreateRentals extends CreateRecord
                 throw new \Exception('Return date cannot be before event date.');
             }
 
-            // Step 1: Create rental with all required fields
+            // --- Step 4: Prepare financial data ---
+            $amountPaid = (float) ($data['amount_paid'] ?? 0);
+            $deposit = (float) ($data['deposit_amount'] ?? 0);
+
+            // --- Step 5: Create rental record ---
             $rental = Rentals::create([
                 'product_id' => $data['product_id'],
-                'customer_id' => $data['customer_id'],
+                'customer_id' => $customerId,
+                'user_id' => $userId,
                 'pickup_date' => $data['pickup_date'],
                 'event_date' => $data['event_date'],
                 'return_date' => $data['return_date'],
                 'rental_price' => $data['rental_price'],
-                'rental_status' => 'On Going',  // Set default status
-                'is_returned' => false,  // Set default return status
-                'penalty_amount' => 0,  // Set default penalty
+                'deposit_amount' => $deposit,
+                'balance_due' => max(0, (float) $data['rental_price'] - $amountPaid),
+                'rental_status' => 'Rented',
+                'is_returned' => false,
+                'penalty_amount' => 0,
             ]);
 
-            // Step 2: Create payment with correct relationship key and all required fields
-            $rental->payments()->create([
-                'rental_id' => $rental->rental_id,  // Use correct primary key
-                'payment_method' => $data['payment_method'],
-                'amount_paid' => $data['amount_paid'],
-                'payment_date' => $data['payment_date'],
-                'payment_status' => 'Paid',  // Set default payment status
-            ]);
+            // --- Step 6: Record initial payment (optional) ---
+            if ($amountPaid > 0) {
+                $rental->payments()->create([
+                    'rental_id' => $rental->rental_id,
+                    'payment_method' => 'Cash',
+                    'amount_paid' => $amountPaid,
+                    'payment_date' => now(),
+                    'payment_status' => 'Paid',
+                    'payment_type' => 'rental',
+                ]);
+            }
 
-            // Step 3: Update product status and increment rental count
-            $rental->product()->update([
-                'status' => 'Rented',
-            ]);
+            // --- Step 7: Reserve product and increment count ---
+            $rental->product()->update(['status' => 'Rented']);
             $rental->product()->increment('rental_count');
 
-            // Log successful creation
+            // --- Step 8: Log success ---
             \Log::info('Rental created successfully', [
                 'rental_id' => $rental->rental_id,
                 'product_id' => $rental->product_id,
                 'customer_id' => $rental->customer_id,
-                'rental_price' => $rental->rental_price
+                'user_id' => $rental->user_id,
+                'rental_price' => $rental->rental_price,
             ]);
 
             return $rental;
         } catch (\Exception $e) {
-            // Log the error for debugging
+            // --- Step 9: Log failure and rethrow ---
             \Log::error('Rental creation failed: ' . $e->getMessage(), [
                 'data' => $data,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-
-            // Re-throw the exception to show user the error
             throw $e;
         }
     }

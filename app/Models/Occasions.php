@@ -7,15 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class Occasions extends Model
 {
     protected $table = 'occasions';
-    protected $primaryKey = 'occasions_id';
+    protected $primaryKey = 'occasion_id';
 
     protected $fillable = [
         'product_id',
         'occasion_name',
-    ];
-
-    protected $casts = [
-        'occasion_name' => 'array',
     ];
 
     public function product()

@@ -13,6 +13,9 @@ class ChatMessage extends Model
         'sender_id',
         'receiver_id',
         'message',
+        'message_type',
+        'image_path',
+        'metadata',
         'is_read',
         'read_at',
     ];
@@ -20,6 +23,7 @@ class ChatMessage extends Model
     protected $casts = [
         'is_read' => 'boolean',
         'read_at' => 'datetime',
+        'metadata' => 'array',
     ];
 
     /**
@@ -47,6 +51,33 @@ class ChatMessage extends Model
             'is_read' => true,
             'read_at' => now(),
         ]);
+    }
+
+    /**
+     * Check if message has an image
+     */
+    public function hasImage()
+    {
+        return $this->message_type === 'image' && !empty($this->image_path);
+    }
+
+    /**
+     * Check if message is an inquiry
+     */
+    public function isInquiry()
+    {
+        return $this->message_type === 'inquiry';
+    }
+
+    /**
+     * Get the full image URL
+     */
+    public function getImageUrl()
+    {
+        if ($this->hasImage()) {
+            return asset('storage/' . $this->image_path);
+        }
+        return null;
     }
 
     /**
@@ -91,13 +122,13 @@ class ChatMessage extends Model
         $senderIds = self::where('receiver_id', $userId)
             ->distinct()
             ->pluck('sender_id');
-            
+
         $receiverIds = self::where('sender_id', $userId)
             ->distinct()
             ->pluck('receiver_id');
-            
+
         $partnerIds = $senderIds->merge($receiverIds)->unique();
-        
+
         return User::whereIn('id', $partnerIds)->get();
     }
 }

@@ -1,41 +1,63 @@
 <?php
 
 use App\Filament\Pages\View3DModel;
+use App\Http\Controllers\FavoriteController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\KiriWebhookController;
+use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\Product3DModelController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RegistrationController;
+use App\Http\Controllers\ShopPageController;
 use App\Http\Controllers\UserController;
+use App\Models\Bookings;
 use App\Models\Products;
 use App\Models\Shops;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
-
-// Route::get('/', function () {
-//     return view('welcome');
-// });
+use Spatie\ResponseCache\Facades\ResponseCache;
 
 Route::get('/', function () {
-    $products = Products::where('visibility', 'Yes')
-        ->with('product_images')
-        ->limit(8)
-        ->get();
+    try {
+        $products = Cache::remember('homepage_products', 300, function () {
+            return Products::where('visibility', 'Yes')
+                ->where('status', 'Available')
+                ->with(['product_images' => function ($query) {
+                    $query
+                        ->whereNotNull('thumbnail_image')
+                        ->orderBy('created_at', 'asc');
+                }])
+                ->select(
+                    'product_id',
+                    'name',
+                    'type',
+                    'subtype',
+                )
+                ->limit(5)
+                ->get();
+        });
 
-    return view('Home', compact('products'));
+        return view('Home', compact('products'));
+    } catch (\Exception $e) {
+        // Fallback if cache fails
+        $products = Products::where('visibility', 'Yes')
+            ->where('status', 'Available')
+            ->with('product_images')
+            ->select('product_id', 'name', 'type', 'subtype')
+            ->limit(5)
+            ->get();
+
+        return view('Home', compact('products'));
+    }
 });
 
-Route::get('/login', function () {
-    return view('Login');
-});
-Route::post('/login', [RegistrationController::class, 'login'])->name('login');
-
-Route::get('/register', function () {
-    return view('Register');
-});
-
-Route::post('/register', [RegistrationController::class, 'register'])->name('register.submit');
+// Home Controller Routes
+Route::get('/login', [HomeController::class, 'showLogin'])->name('login.show');
+Route::get('/register', [HomeController::class, 'showRegister'])->name('register.show');
 
 Route::post('/logout', function (Request $request) {
     Auth::logout();
@@ -44,102 +66,50 @@ Route::post('/logout', function (Request $request) {
     return redirect('/');
 })->name('logout');
 
+Route::get('/forgot-password', [HomeController::class, 'showForgotPassword'])->name('forgot.password.show');
+
+// Registration Controller Routes
+Route::post('/login', [RegistrationController::class, 'login'])->name('login');
+Route::post('/register', [RegistrationController::class, 'register'])->name('register.submit');
+Route::get('/check-email', [RegistrationController::class, 'checkEmail'])->name('check.email');
+Route::post('/forgot-password', [RegistrationController::class, 'forgotPassword'])->name('forgot.password');
+
+// Password Reset Routes
+Route::post('/password/send-code', [PasswordResetController::class, 'sendResetCode']);
+Route::post('/password/verify-code', [PasswordResetController::class, 'verifyCode']);
+Route::post('/password/reset', [PasswordResetController::class, 'resetPassword']);
+
+// Product Routes
+Route::get('/product-list', [ProductController::class, 'productList'])->name('product.list');
 Route::get('/product-overview/{product_id}', [ProductController::class, 'show'])->name('product.overview');
 
-Route::get('/shop-overview/{shop}', [ProductController::class, 'shopOverview'])->name('shop.overview');
+// Route::get('/shop-overview/{shop}', [ProductController::class, 'shopOverview'])->name('shop.overview');
 
 Route::get('/shop-center', function () {
     return view('ShopCenter');
 });
 
-Route::get('/product-list', function (Request $request) {
-    $query = Products::where('visibility', 'Yes')
-        ->with(['product_images', 'occasions', 'user.shop']);
-
-    // Category filter
-    if ($request->filled('category') && $request->category !== 'all') {
-        $query->where('type', $request->category);
-    }
-
-    // Subtype filter
-    if ($request->filled('subtype')) {
-        $subtypes = is_array($request->subtype) ? $request->subtype : [$request->subtype];
-        $query->whereIn('subtype', $subtypes);
-    }
-
-    // Size filter
-    if ($request->filled('size')) {
-        $sizes = is_array($request->size) ? $request->size : [$request->size];
-
-        // Size mapping: display name => database value
-        $sizeMapping = [
-            'XS' => 'Extra Small',
-            'S' => 'Small',
-            'M' => 'Medium',
-            'L' => 'Large',
-            'XL' => 'Extra Large',
-            'XXL' => 'Extra Extra Large'
-        ];
-
-        // Convert abbreviated sizes to full names for database query
-        $dbSizes = [];
-        foreach ($sizes as $size) {
-            if (isset($sizeMapping[$size])) {
-                $dbSizes[] = $sizeMapping[$size];
-            }
-        }
-
-        if (!empty($dbSizes)) {
-            $query->whereIn('size', $dbSizes);
-        }
-    }
-
-    // Color filter
-    if ($request->filled('color')) {
-        $colors = is_array($request->color) ? $request->color : [$request->color];
-        $query->where(function ($q) use ($colors) {
-            foreach ($colors as $color) {
-                $q->orWhere('colors', 'LIKE', '%' . $color . '%');
-            }
-        });
-    }
-
-    // Occasion filter
-    if ($request->filled('occasion')) {
-        $occasions = is_array($request->occasion) ? $request->occasion : [$request->occasion];
-        $query->whereHas('occasions', function ($q) use ($occasions) {
-            $q->where(function ($subQ) use ($occasions) {
-                foreach ($occasions as $occasion) {
-                    $subQ->orWhereJsonContains('occasion_name', $occasion);
-                }
-            });
-        });
-    }
-
-    // Body type filter (only for authenticated users)
-    if ($request->filled('measurements_filter') && auth()->check()) {
-        $userBodyType = auth()->user()->bodytype;
-        if ($userBodyType) {
-            // Add logic to filter products based on body type compatibility
-            // This would require additional logic based on your business rules
-            $query->whereHas('product_measurements', function ($q) use ($userBodyType) {
-                // Add your body type matching logic here
-                // For now, this is a placeholder
-            });
-        }
-    }
-
-    $products = $query->paginate(12)->appends($request->query());
-
-    return view('ProductList', compact('products'));
-});
-
-Route::get('/account', function () {
-    return view('AccountPage');
-});
+// account page route
+Route::get('/account', [UserController::class, 'accountPage'])->name('account.page');
+// profile route
 Route::put('/profile/update', [UserController::class, 'update'])->name('profile.update');
 
-Route::post('/user/bodytype', [UserController::class, 'updateBodyType'])->name('user.updateBodyType');
+// measurements route
+Route::post('/account/measurements/update', [UserController::class, 'updateMeasurements'])->name('measurements.update');
+// password route
+Route::post('/account/update-password', [UserController::class, 'updatePassword'])->name('account.updatePassword');
+// preferences route
+Route::post('/account/update-preferences', [UserController::class, 'updatePreferences'])->name('account.updatePreferences');
+
+// delete account
+Route::delete('/account/delete', [UserController::class, 'deleteAccount'])->name('account.delete');
+// review route
+Route::post('/submit-review', [UserController::class, 'submitReview'])->name('user.submitReview');
+// review data route
+Route::get('/user/review-data/{shop}', [UserController::class, 'getReviewData']);
+// Account deletion routes
+Route::post('/account/request-deletion', [UserController::class, 'requestAccountDeletion'])->name('account.request-deletion');
+Route::delete('/account/cancel-deletion', [UserController::class, 'cancelAccountDeletion'])->name('account.cancel-deletion');
 
 // Chat routes (only for authenticated users)
 Route::middleware('auth')->group(function () {
@@ -150,88 +120,50 @@ Route::middleware('auth')->group(function () {
     Route::get('/chat/admins', [App\Http\Controllers\ChatController::class, 'getAdmins'])->name('chat.admins');
     Route::get('/chat/users', [App\Http\Controllers\ChatController::class, 'getAllUsers'])->name('chat.users');
     Route::get('/chat/unread-count', [App\Http\Controllers\ChatController::class, 'getUnreadCount'])->name('chat.unread');
-});
 
-Route::get('/shops', function () {
-    $shops = Shops::with('user', 'products')->get();
+    Route::get('/public/shop-policy/{id}', function ($id) {
+        try {
+            $shop = null;
 
-    return view('Shops', compact('shops'));
-});
+            $shop = Shops::where('shop_id', $id)->first();
 
-Route::get('/shop-overview/{shop}', function (Request $request, Shops $shop) {
-    $query = Products::where('visibility', 'Yes')
-        ->where('user_id', $shop->user_id)
-        ->with(['product_images', 'occasions', 'user.shop']);
-
-    // Category filter
-    if ($request->filled('category') && $request->category !== 'all') {
-        $query->where('type', $request->category);
-    }
-
-    // Subtype filter
-    if ($request->filled('subtype')) {
-        $subtypes = is_array($request->subtype) ? $request->subtype : [$request->subtype];
-        $query->whereIn('subtype', $subtypes);
-    }
-
-    // Size filter
-    if ($request->filled('size')) {
-        $sizes = is_array($request->size) ? $request->size : [$request->size];
-
-        // Size mapping: display name => database value
-        $sizeMapping = [
-            'XS' => 'Extra Small',
-            'S' => 'Small',
-            'M' => 'Medium',
-            'L' => 'Large',
-            'XL' => 'Extra Large',
-            'XXL' => 'Extra Extra Large'
-        ];
-
-        // Convert abbreviated sizes to full names for database query
-        $dbSizes = [];
-        foreach ($sizes as $size) {
-            if (isset($sizeMapping[$size])) {
-                $dbSizes[] = $sizeMapping[$size];
-            }
-        }
-
-        if (!empty($dbSizes)) {
-            $query->whereIn('size', $dbSizes);
-        }
-    }
-
-    // Color filter
-    if ($request->filled('color')) {
-        $colors = is_array($request->color) ? $request->color : [$request->color];
-        $query->where(function ($q) use ($colors) {
-            foreach ($colors as $color) {
-                $q->orWhere('colors', 'LIKE', '%' . $color . '%');
-            }
-        });
-    }
-
-    // Occasion filter
-    if ($request->filled('occasion')) {
-        $occasions = is_array($request->occasion) ? $request->occasion : [$request->occasion];
-        $query->whereHas('occasions', function ($q) use ($occasions) {
-            $q->where(function ($subQ) use ($occasions) {
-                foreach ($occasions as $occasion) {
-                    $subQ->orWhereJsonContains('occasion_name', $occasion);
+            if (!$shop) {
+                $product = Products::with('user.shop')->where('product_id', $id)->first();
+                if ($product && $product->user && $product->user->shop) {
+                    $shop = $product->user->shop;
                 }
-            });
-        });
-    }
+            }
 
-    $products = $query->paginate(12)->appends($request->query());
+            if (!$shop) {
+                return response()->json(['error' => 'Shop not found'], 404);
+            }
 
-    return view('ShopOverview', compact('shop', 'products'));
-})->name('shop.overview');
+            return response()->json([
+                'policy' => $shop->shop_policy ?: 'No specific policy provided by this shop.'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Shop policy fetch error: ' . $e->getMessage());
+            return response()->json(['error' => 'Unable to fetch shop policy'], 500);
+        }
+    });
+
+    // Booking routes (admin only)
+    Route::get('/chat/available-products', [App\Http\Controllers\ChatController::class, 'getAvailableProducts'])->name('chat.available-products');
+    Route::post('/chat/create-booking', [App\Http\Controllers\ChatController::class, 'createBooking'])->name('chat.create-booking');
+});
+
+// Shop pages routes
+Route::get('/shops', [ShopPageController::class, 'list'])->name('shops.list');
+Route::get('/shop-overview/{shop}', [ShopPageController::class, 'overview'])->name('shop.overview');
 
 Route::middleware(['auth'])->group(function () {
     Route::put('/user/measurements', [UserController::class, 'updateMeasurements'])
         ->name('user.measurements.update');
 });
+
+Route::post('/products/{product}/favorite', [FavoriteController::class, 'store'])->name('products.favorite');
+Route::delete('/products/{product}/unfavorite', [FavoriteController::class, 'destroy'])->name('products.unfavorite');
+
 Route::post('/webhooks/kiri-model-ready', [KiriWebhookController::class, 'modelReady'])->name('webhooks.kiri-model-ready');
 
 Route::post('/save-clipping/{id}', [Product3DModelController::class, 'saveClipping']);
@@ -239,3 +171,13 @@ Route::post('/save-clipping/{id}', [Product3DModelController::class, 'saveClippi
 Route::get('view3-d-model/{id}', View3DModel::class)
     ->middleware(['web', 'auth'])
     ->name('view-3d-model');
+
+Route::get('/test-email', function () {
+    Mail::raw('This is a test email from Dress Up Davao.', function ($message) {
+        $message
+            ->to('decoyyv1@gmail.com')
+            ->subject('SendGrid Test');
+    });
+
+    return 'Email sent!';
+});

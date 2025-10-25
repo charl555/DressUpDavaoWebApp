@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\CustomResetPasswordNotification;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,15 +21,22 @@ class User extends Authenticatable implements FilamentUser
      */
     protected $fillable = [
         'name',
+        'gender',
+        'phone_number',
         'email',
         'password',
         'role',  // Admin, SuperAdmin, User
         'bodytype',
         'preferences',
+        'deletion_requested_at',
+        'scheduled_deletion_at',
+        'deletion_reason',
     ];
 
     protected $casts = [
         'preferences' => 'array',
+        'deletion_requested_at' => 'datetime',
+        'scheduled_deletion_at' => 'datetime',
     ];
 
     /**
@@ -51,7 +59,14 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'deletion_requested_at' => 'datetime',
+            'scheduled_deletion_at' => 'datetime',
         ];
+    }
+
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new CustomResetPasswordNotification($token));
     }
 
     public function subscription()
@@ -74,6 +89,11 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(Customers::class, 'user_id', 'id');
     }
 
+    public function rentals()
+    {
+        return $this->hasMany(Rentals::class, 'user_id', 'id');
+    }
+
     public function canAccessPanel(Panel $panel): bool
     {
         return $this->role === 'Admin' || $this->role === 'SuperAdmin';
@@ -94,8 +114,39 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasOne(Shops::class, 'user_id', 'id');
     }
 
+    public function shop_reviews()
+    {
+        return $this->hasMany(ShopReviews::class, 'user_id', 'id');
+    }
+
+    public function bookings()
+    {
+        return $this->hasMany(Bookings::class, 'user_id', 'id');
+    }
+
+    public function shop_account_requests()
+    {
+        return $this->hasOne(ShopAccountRequests::class, 'user_id', 'id');
+    }
+
     public function kiri_engine_jobs()
     {
         return $this->hasMany(KiriEngineJobs::class, 'user_id', 'id');
+    }
+
+    public function favorites()
+    {
+        return $this
+            ->belongsToMany(Products::class, 'favorites', 'user_id', 'product_id')
+            ->withTimestamps()
+            ->using(Favorites::class);
+    }
+
+    public function hasFavorited(Products $product): bool
+    {
+        // Use direct query to avoid ambiguous column issues
+        return \App\Models\Favorites::where('user_id', $this->id)
+            ->where('product_id', $product->product_id)
+            ->exists();
     }
 }

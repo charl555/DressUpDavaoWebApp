@@ -25,6 +25,8 @@ class CustomerRentalRecordsResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Customer Management';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationLabel = 'Customer Rental Records';
 
     protected static ?int $navigationSort = 2;

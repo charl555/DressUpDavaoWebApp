@@ -23,7 +23,7 @@ class ProductsResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShoppingBag;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Products';
+    protected static string|UnitEnum|null $navigationGroup = 'Inventory';
 
     protected static ?string $navigationLabel = 'Products';
 
@@ -33,13 +33,13 @@ class ProductsResource extends Resource
     {
         return parent::getEloquentQuery()
             ->where('user_id', auth()->id())
-            ->with(['occasions', 'product_images', 'user']);
+            ->with(['occasions', 'product_images', 'product_measurements', 'user']);
     }
 
     public static function getTableQuery(): Builder
     {
         return static::getEloquentQuery()
-            ->with(['occasions', 'product_images', 'user']);
+            ->with(['occasions', 'product_images', 'product_measurements', 'user']);
     }
 
     public static function canViewAny(): bool

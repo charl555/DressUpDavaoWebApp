@@ -21,6 +21,7 @@ class SubscriptionPage extends Page implements HasSchemas
     protected static string|UnitEnum|null $navigationGroup = 'Others';
     protected string $view = 'filament.pages.subscription-page';
     protected static ?string $navigationLabel = 'Subscription';
+    protected static bool $shouldRegisterNavigation = false;
 
     public function getTitle(): string
     {

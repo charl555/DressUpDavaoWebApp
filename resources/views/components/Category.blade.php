@@ -1,77 +1,106 @@
-{{-- <div class="flex flex-col lg:flex-row text-black p-10 gap-10 justify-items-center items-center lg:justify-center">
-    <div class="w-[300px] lg:w-[400px] aspect-square flex flex-col items-center justify-center 
-                shadow-md cursor-pointer relative overflow-hidden
-                group"
-        style="background-image: url('{{ asset('frontend-images/gown-category.jpg') }}'); background-size: cover; background-position: center;">
-        <div class="absolute inset-0 bg-black bg-opacity-30 ">
+<div class="py-20 bg-gradient-to-b from-gray-50 to-white px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4" style="font-family: 'Playfair Display', serif;">
+                Browse Collections
+            </h2>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                Discover the perfect outfit for your special occasion
+            </p>
         </div>
-        <h1 class="text-4xl text-white z-10 relative 
-                   group-hover:text-purple-600 transition-colors duration-300 ease-in-out"
-            style="font-family: 'Playfair Display', serif;">
-            Gowns
-        </h1>
-    </div>
 
-    <div class="w-[300px] lg:w-[400px]  aspect-square flex flex-col items-center justify-center 
-                shadow-md cursor-pointer relative overflow-hidden
-                group"
-        style="background-image: url('{{ asset('frontend-images/suit-category.jpg') }}'); background-size: cover; background-position: center;">
-        <div class="absolute inset-0 bg-black bg-opacity-30 ">
-        </div>
-        <h1 class="text-4xl text-white z-10 relative
-                   group-hover:text-purple-600 transition-colors duration-300 ease-in-out"
-            style="font-family: 'Playfair Display', serif;">
-            Suits
-        </h1>
-    </div>
-</div> --}}
-<div class="py-16 px-4 sm:px-6 lg:px-8">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10 justify-items-center">
+        <!-- Categories Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 max-w-6xl mx-auto">
+            <!-- Gowns Category -->
+            <div
+                class="group relative bg-white rounded-2xl overflow-hidden shadow-lg transform transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl cursor-pointer">
+                <div class="relative aspect-[4/5] overflow-hidden">
+                    <img src="{{ asset('frontend-images/gown-category.webp') }}"
+                        data-src="{{ asset('frontend-images/gown-category.webp') }}" alt="Gowns Collection"
+                        class="lazy absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-out"
+                        loading="lazy" width="600" height="750">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+                    <div
+                        class="absolute inset-0 bg-gradient-to-r from-purple-900/20 to-indigo-900/20 group-hover:from-purple-900/30 group-hover:to-indigo-900/30 transition-all duration-300">
+                    </div>
 
-        {{-- Gowns Card --}}
-        <div
-            class="w-full max-w-lg bg-white rounded-xl overflow-hidden shadow-lg transform transition-transform duration-300 hover:scale-[1.01] cursor-pointer">
-            <div class="relative aspect-video">
-                <img src="{{ asset('frontend-images/gown-category.jpg') }}" alt="Gowns"
-                    class="absolute inset-0 w-full h-full object-cover">
-                <div class="absolute inset-0 bg-black bg-opacity-30"></div>
-                <div class="absolute inset-x-0 bottom-4 text-white p-4">
-                    <h2 class="text-3xl font-bold" style="font-family: 'Playfair Display', serif;">Gowns</h2>
-                    <p class="text-sm mt-1">Wedding, Evening & Formal</p>
-                    <a href="#"
-                        class="mt-4 inline-flex items-center space-x-2 text-white border-b-2 border-purple-600 hover:text-purple-600 transition-colors duration-300 ease-in-out">
-                        <span>Explore Gowns</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="w-4 h-4">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                        </svg>
-                    </a>
+                    <!-- Content Overlay -->
+                    <div class="absolute inset-x-0 bottom-0 p-8 text-white">
+                        <div
+                            class="transform group-hover:translate-y-0 translate-y-2 transition-transform duration-300">
+                            <h2 class="text-4xl font-bold mb-2" style="font-family: 'Playfair Display', serif;">Gowns
+                            </h2>
+                            <p class="text-lg text-gray-200 mb-6">Wedding, Evening & Formal Attire</p>
+                            <div
+                                class="flex items-center space-x-2 text-white group-hover:text-purple-200 transition-colors duration-300">
+                                <span class="font-semibold text-lg">Explore Collection</span>
+                                <svg class="w-5 h-5 transform group-hover:translate-x-2 transition-transform duration-300"
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hover Effect Border -->
+                    <div
+                        class="absolute inset-0 border-2 border-transparent group-hover:border-purple-400/30 rounded-2xl transition-all duration-300">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suits Category -->
+            <div
+                class="group relative bg-white rounded-2xl overflow-hidden shadow-lg transform transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl cursor-pointer">
+                <div class="relative aspect-[4/5] overflow-hidden">
+                    <img src="{{ asset('frontend-images/suit-category.webp') }}"
+                        data-src="{{ asset('frontend-images/suit-category.webp') }}" alt="Suits Collection"
+                        class="lazy absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-out"
+                        loading="lazy" width="600" height="750">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+                    <div
+                        class="absolute inset-0 bg-gradient-to-r from-purple-900/20 to-indigo-900/20 group-hover:from-purple-900/30 group-hover:to-indigo-900/30 transition-all duration-300">
+                    </div>
+
+                    <!-- Content Overlay -->
+                    <div class="absolute inset-x-0 bottom-0 p-8 text-white">
+                        <div
+                            class="transform group-hover:translate-y-0 translate-y-2 transition-transform duration-300">
+                            <h2 class="text-4xl font-bold mb-2" style="font-family: 'Playfair Display', serif;">Suits
+                            </h2>
+                            <p class="text-lg text-gray-200 mb-6">Tuxedos, Business & Casual Wear</p>
+                            <div
+                                class="flex items-center space-x-2 text-white group-hover:text-purple-200 transition-colors duration-300">
+                                <span class="font-semibold text-lg">Explore Collection</span>
+                                <svg class="w-5 h-5 transform group-hover:translate-x-2 transition-transform duration-300"
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hover Effect Border -->
+                    <div
+                        class="absolute inset-0 border-2 border-transparent group-hover:border-purple-400/30 rounded-2xl transition-all duration-300">
+                    </div>
                 </div>
             </div>
         </div>
 
-        {{-- Suits Card --}}
-        <div
-            class="w-full max-w-lg bg-white rounded-xl overflow-hidden shadow-lg transform transition-transform duration-300 hover:scale-[1.01] cursor-pointer">
-            <div class="relative aspect-video">
-                <img src="{{ asset('frontend-images/suit-category.jpg') }}" alt="Suits"
-                    class="absolute inset-0 w-full h-full object-cover">
-                <div class="absolute inset-0 bg-black bg-opacity-30"></div>
-                <div class="absolute inset-x-0 bottom-4 text-white p-4">
-                    <h2 class="text-3xl font-bold" style="font-family: 'Playfair Display', serif;">Suits</h2>
-                    <p class="text-sm mt-1">Tuxedos, Business & Casual</p>
-                    <a href="#"
-                        class="mt-4 inline-flex items-center space-x-2 text-white border-b-2 border-purple-600 hover:text-purple-600 transition-colors duration-300 ease-in-out">
-                        <span>Explore Suits</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="w-4 h-4">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                        </svg>
-                    </a>
-                </div>
-            </div>
+        <!-- Bottom CTA -->
+        <div class="text-center mt-12">
+            <a href="/product-list"
+                class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:from-purple-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-300">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                View All Products
+            </a>
         </div>
     </div>
 </div>

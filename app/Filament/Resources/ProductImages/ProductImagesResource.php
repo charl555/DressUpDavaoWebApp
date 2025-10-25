@@ -25,6 +25,8 @@ class ProductImagesResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Products';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationLabel = 'Product Image';
 
     protected static ?int $navigationSort = 3;

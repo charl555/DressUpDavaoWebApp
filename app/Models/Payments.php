@@ -15,6 +15,7 @@ class Payments extends Model
         'payment_status',
         'amount_paid',
         'payment_date',
+        'payment_type',
     ];
 
     public function rental()

@@ -1,4 +1,3 @@
-<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -9,6 +8,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
 </head>
 
 <body class="bg-white min-h-screen flex flex-col">
@@ -16,9 +16,10 @@
         <x-Navbar />
         <x-Overview :product="$product" />
         <x-Chatwindow />
-
         <x-Inquire />
     </main>
+    <x-Footer />
+    <x-Toast />
 </body>
 
 </html>

@@ -2,9 +2,11 @@
     <div class="w-full max-w-md space-y-8">
         <!-- Header -->
         <div class="text-center">
-            <img class="mx-auto h-18 w-auto" src="{{ asset('images/Dressupdavaologo.png') }}" alt="DressUp Davao" />
-            <h2 class="mt-6 text-3xl font-bold tracking-tight text-gray-900">Sign in to your account</h2>
-            <p class="mt-2 text-sm text-gray-600">Welcome back! Please enter your details.</p>
+            <a href="/">
+                <img class="mx-auto h-18 w-auto" src="{{ asset('images/Dressupdavaologo.png') }}" alt="DressUp Davao" />
+                <h2 class="mt-6 text-3xl font-bold tracking-tight text-gray-900">Sign in to your account</h2>
+                <p class="mt-2 text-sm text-gray-600">Welcome back! Please enter your details.</p>
+            </a>
         </div>
 
         <!-- Form Card -->
@@ -70,7 +72,7 @@
                         </label>
                     </div>
                     <div class="text-sm">
-                        <a href="#"
+                        <a href="/forgot-password"
                             class="font-medium text-violet-600 hover:text-violet-500 transition-colors duration-200">
                             Forgot your password?
                         </a>
@@ -128,6 +130,7 @@
             </p>
         </div>
     </div>
+
 </div>
 
 <script>
@@ -204,12 +207,25 @@
                     const data = await response.json();
 
                     if (response.ok && data.success) {
-                        window.location.href = data.redirect || '/';
+                        // Show success toast before redirect
+                        if (typeof showToast === 'function') {
+                            showToast(data.message || 'Login successful! Welcome back!', 'success');
+                            // Delay redirect to show toast
+                            setTimeout(() => {
+                                window.location.href = data.redirect || '/';
+                            }, 1000);
+                        } else {
+                            window.location.href = data.redirect || '/';
+                        }
                     } else {
                         if (data.errors) {
                             this.errors = data.errors;
                         } else {
                             this.generalError = data.message || 'Invalid credentials. Please try again.';
+                            // Show error toast
+                            if (typeof showToast === 'function') {
+                                showToast(this.generalError, 'error');
+                            }
                         }
                     }
                 } catch (error) {
@@ -222,5 +238,4 @@
     }
 </script>
 
-{{-- Alpine.js --}}
-<script src="//unpkg.com/alpinejs" defer></script>
+{{-- Alpine.js is loaded globally via app.js --}}

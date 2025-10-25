@@ -25,6 +25,8 @@ class ProductMaintenanceResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Products';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationLabel = 'Product Maintenance';
 
     protected static ?int $navigationSort = 4;
