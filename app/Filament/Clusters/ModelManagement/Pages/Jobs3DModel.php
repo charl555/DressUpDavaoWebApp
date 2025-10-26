@@ -64,40 +64,28 @@ class Jobs3DModel extends Page implements HasTable
                         default => 'gray',
                     }),
                 TextColumn::make('model_url')
-                    ->label('Download Status')
-                    ->formatStateUsing(function ($state, $record) {
-                        if (!$state)
-                            return 'Not Ready';
-                        return 'Ready';
+                    ->label('Download Ready')
+                    ->formatStateUsing(function ($state) {
+                        return $state ? 'Yes' : 'No';
                     })
                     ->badge()
-                    ->color(function ($state, $record) {
-                        if (!$state)
-                            return 'gray';
-                        return 'success';
+                    ->color(function ($state) {
+                        return $state ? 'success' : 'gray';
                     }),
             ])
             ->actions([
                 Action::make('download')
                     ->label('Download')
                     ->icon('heroicon-o-arrow-down-tray')
-                    ->visible(function ($record) {
-                        // Only show if we have a model URL and status is finished
-                        return $record->status === 'finished' && $record->model_url;
-                    })
-                    ->action(function ($record) {
-                        return redirect()->away($record->model_url);
-                    }),
-                Action::make('checkAndDownload')
-                    ->label('Check & Download')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->visible(function ($record) {
-                        // Show for processing jobs or finished jobs without URL
-                        return $record->status === 'processing' ||
-                            ($record->status === 'finished' && !$record->model_url);
-                    })
+                    ->visible(true)  // Always visible
                     ->action(function ($record) {
                         try {
+                            // If we already have a valid model URL, use it
+                            if ($record->model_url) {
+                                return redirect()->away($record->model_url);
+                            }
+
+                            // Otherwise, try to get the download URL from Kiri Engine
                             $apiKey = config('services.kiri.key');
                             $response = Http::withToken($apiKey)
                                 ->timeout(30)
@@ -107,7 +95,7 @@ class Jobs3DModel extends Page implements HasTable
                                 $data = $response->json();
 
                                 if (isset($data['data']['modelUrl'])) {
-                                    // Update record with new download URL
+                                    // Update record with new download URL and mark as finished
                                     $record->update([
                                         'model_url' => $data['data']['modelUrl'],
                                         'status' => 'finished',
@@ -126,14 +114,14 @@ class Jobs3DModel extends Page implements HasTable
                             } else {
                                 Notification::make()
                                     ->title('Download Failed')
-                                    ->body('Unable to check download status. Please try again later.')
-                                    ->danger()
+                                    ->body('Unable to get download link. The file may still be processing.')
+                                    ->warning()
                                     ->send();
                             }
                         } catch (\Exception $e) {
                             Notification::make()
                                 ->title('Error')
-                                ->body('Failed to check download status: ' . $e->getMessage())
+                                ->body('Failed to download: ' . $e->getMessage())
                                 ->danger()
                                 ->send();
                         }
