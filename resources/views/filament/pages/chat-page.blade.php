@@ -1,126 +1,125 @@
 <x-filament-panels::page>
     <div class="fi-section-content-ctn">
-        <x-filament::section>
-            <div id="chatRoot"
-                style="display: flex; height: 600px; background: white; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border: 1px solid #e5e7eb; overflow: hidden;">
 
-                <!-- Contacts Sidebar -->
-                <div id="contactsSidebar"
-                    style="width: 33.333333%; border-right: 1px solid #e5e7eb; overflow-y: auto; background: white;">
-                    <div style="padding: 1rem; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">
-                        <x-filament::input.wrapper>
-                            <x-filament::input type="text" id="searchContacts" placeholder="Search users..."
-                                style="width: 100%;" />
-                        </x-filament::input.wrapper>
-                    </div>
+        <div id="chatRoot"
+            style="display: flex; height: 600px; background: white; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border: 1px solid #e5e7eb; overflow: hidden;">
 
-                    <div id="contactsList" style="min-height: 0;">
-                        <!-- Contacts will be loaded dynamically -->
-                        <div
-                            style="display: flex; align-items: center; justify-content: center; padding: 2rem; color: #6b7280;">
-                            <div style="text-align: center;">
-                                <div
-                                    style="width: 2rem; height: 2rem; border: 2px solid #3b82f6; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 0.5rem;">
-                                </div>
-                                <p>Loading users...</p>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Contacts Sidebar -->
+            <div id="contactsSidebar"
+                style="width: 33.333333%; border-right: 1px solid #e5e7eb; overflow-y: auto; background: white;">
+                <div style="padding: 1rem; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">
+                    <x-filament::input.wrapper>
+                        <x-filament::input type="text" id="searchContacts" placeholder="Search users..."
+                            style="width: 100%;" />
+                    </x-filament::input.wrapper>
                 </div>
 
-                <!-- Chat Area -->
-                <div id="chatArea" style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0;">
-                    <div id="chatHeader"
-                        style="background-color: #f9fafb; border-bottom: 1px solid #e5e7eb; padding: 1rem; display: flex; align-items: center; gap: 0.75rem;">
-                        <!-- Back button (mobile only) -->
-                        <button id="backToContactsBtn" aria-label="Back to contacts"
-                            style="display:none; border: none; background: none; padding: 0.25rem 0.5rem; cursor: pointer;">
-                            <!-- simple chevron -->
-                            <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 19l-7-7 7-7"></path>
-                            </svg>
-                        </button>
-
-                        <div
-                            style="width: 2.5rem; height: 2.5rem; border-radius: 50%; margin-right: 0.25rem; background-color: #d1d5db; display: flex; align-items: center; justify-content: center;">
-                            <span style="color: #4b5563; font-weight: 600;" id="activeChatInitial">?</span>
-                        </div>
-                        <div style="flex: 1; min-width: 0;">
-                            <p style="font-weight: 600; font-size: 1.125rem; color: #1f2937; margin:0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
-                                id="activeChatName">Select a user to chat</p>
-                            {{-- <p style="font-size: 0.875rem; color: #6b7280;" id="activeChatRole"></p> --}}
-                        </div>
-                    </div>
-
-                    <!-- Chat messages container -->
-                    <div id="chatMessagesContainer"
-                        style="flex-grow: 1; padding: 1rem; overflow-y: auto; min-height: 0;">
-                        <div
-                            style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280;">
-                            <div style="text-align: center;">
-                                <svg style="width: 4rem; height: 4rem; margin: 0 auto 1rem; color: #d1d5db;" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
-                                    </path>
-                                </svg>
-                                <p>Select a user to start chatting</p>
+                <div id="contactsList" style="min-height: 0;">
+                    <!-- Contacts will be loaded dynamically -->
+                    <div
+                        style="display: flex; align-items: center; justify-content: center; padding: 2rem; color: #6b7280;">
+                        <div style="text-align: center;">
+                            <div
+                                style="width: 2rem; height: 2rem; border: 2px solid #3b82f6; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 0.5rem;">
                             </div>
-                        </div>
-                    </div>
-
-                    <div id="messageInputArea" style="border-top: 1px solid #e5e7eb; padding: 1rem;">
-                        <div id="imagePreview" style="margin-bottom: 0.5rem; display: none;">
-                            <div style="position: relative; display: inline-block;">
-                                <img id="previewImg"
-                                    style="max-width: 8rem; max-height: 8rem; border-radius: 0.5rem; border: 1px solid #d1d5db;">
-                                <button id="removeImageBtn"
-                                    style="position: absolute; top: -0.5rem; right: -0.5rem; background-color: #ef4444; color: white; border-radius: 50%; width: 1.5rem; height: 1.5rem; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; border: none; cursor: pointer;">×</button>
-                            </div>
-                        </div>
-
-                        <div style="display: flex; align-items: center;">
-                            <input type="file" id="imageInput" accept="image/*" style="display: none;">
-                            <button id="imageBtn"
-                                style="padding: 0.5rem; color: #6b7280; border: none; background: none; cursor: pointer; margin-right: 0.5rem;"
-                                title="Upload Image">
-                                <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                    </path>
-                                </svg>
-                            </button>
-                            <button id="bookingBtn"
-                                style="padding: 0.5rem; color:#8E24AA; border: none; background: none; cursor: pointer; margin-right: 0.5rem;"
-                                title="Book Reservation">
-                                <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                    </path>
-                                </svg>
-                            </button>
-
-                            <x-filament::input.wrapper style="flex-grow: 1; margin-right: 0.5rem;">
-                                <x-filament::input type="text" id="messageInput" placeholder="Type a message..."
-                                    disabled style="width: 100%;" />
-                            </x-filament::input.wrapper>
-
-                            <x-filament::button id="sendMessageBtn" disabled color="primary" style="padding: 0.5rem;">
-                                <svg style="width: 1.5rem; height: 1.5rem;" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                                </svg>
-                            </x-filament::button>
+                            <p>Loading users...</p>
                         </div>
                     </div>
                 </div>
             </div>
-        </x-filament::section>
+
+            <!-- Chat Area -->
+            <div id="chatArea" style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0;">
+                <div id="chatHeader"
+                    style="background-color: #f9fafb; border-bottom: 1px solid #e5e7eb; padding: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                    <!-- Back button (mobile only) -->
+                    <button id="backToContactsBtn" aria-label="Back to contacts"
+                        style="display:none; border: none; background: none; padding: 0.25rem 0.5rem; cursor: pointer;">
+                        <!-- simple chevron -->
+                        <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                            </path>
+                        </svg>
+                    </button>
+
+                    <div
+                        style="width: 2.5rem; height: 2.5rem; border-radius: 50%; margin-right: 0.25rem; background-color: #d1d5db; display: flex; align-items: center; justify-content: center;">
+                        <span style="color: #4b5563; font-weight: 600;" id="activeChatInitial">?</span>
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                        <p style="font-weight: 600; font-size: 1.125rem; color: #1f2937; margin:0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                            id="activeChatName">Select a user to chat</p>
+                        {{-- <p style="font-size: 0.875rem; color: #6b7280;" id="activeChatRole"></p> --}}
+                    </div>
+                </div>
+
+                <!-- Chat messages container -->
+                <div id="chatMessagesContainer" style="flex-grow: 1; padding: 1rem; overflow-y: auto; min-height: 0;">
+                    <div
+                        style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280;">
+                        <div style="text-align: center;">
+                            <svg style="width: 4rem; height: 4rem; margin: 0 auto 1rem; color: #d1d5db;" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+                                </path>
+                            </svg>
+                            <p>Select a user to start chatting</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="messageInputArea" style="border-top: 1px solid #e5e7eb; padding: 1rem;">
+                    <div id="imagePreview" style="margin-bottom: 0.5rem; display: none;">
+                        <div style="position: relative; display: inline-block;">
+                            <img id="previewImg"
+                                style="max-width: 8rem; max-height: 8rem; border-radius: 0.5rem; border: 1px solid #d1d5db;">
+                            <button id="removeImageBtn"
+                                style="position: absolute; top: -0.5rem; right: -0.5rem; background-color: #ef4444; color: white; border-radius: 50%; width: 1.5rem; height: 1.5rem; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; border: none; cursor: pointer;">×</button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; align-items: center;">
+                        <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                        <button id="imageBtn"
+                            style="padding: 0.5rem; color: #6b7280; border: none; background: none; cursor: pointer; margin-right: 0.5rem;"
+                            title="Upload Image">
+                            <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                        </button>
+                        <button id="bookingBtn"
+                            style="padding: 0.5rem; color:#8E24AA; border: none; background: none; cursor: pointer; margin-right: 0.5rem;"
+                            title="Book Reservation">
+                            <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                        </button>
+
+                        <x-filament::input.wrapper style="flex-grow: 1; margin-right: 0.5rem;">
+                            <x-filament::input type="text" id="messageInput" placeholder="Type a message..." disabled
+                                style="width: 100%;" />
+                        </x-filament::input.wrapper>
+
+                        <x-filament::button id="sendMessageBtn" disabled color="primary" style="padding: 0.5rem;">
+                            <svg style="width: 1.5rem; height: 1.5rem;" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                            </svg>
+                        </x-filament::button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     {{-- Booking Modal --}}
@@ -357,23 +356,23 @@
                 }
 
                 contactsList.innerHTML = contacts.map(contact => `
-                                                                                                                                    <div class="contact-item" data-user-id="${contact.id}" style="display: flex; align-items: center; padding: 0.75rem; cursor: pointer; transition: background-color 0.15s ease-in-out; border-bottom: 1px solid #f3f4f6;">
-                                                                                                                                        <div style="width: 2.5rem; height: 2.5rem; border-radius: 50%; margin-right: 0.75rem; background-color: #dbeafe; display: flex; align-items: center; justify-content: center;">
-                                                                                                                                            <span style="color: #2563eb; font-weight: 600;">${contact.name.charAt(0).toUpperCase()}</span>
-                                                                                                                                        </div>
-                                                                                                                                        <div style="flex-grow: 1; min-width: 0;">
-                                                                                                                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                                                                                                                                <p style="font-weight: 600; color: #1f2937; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${contact.name}</p>
-                                                                                                                                                ${contact.role === 'User' ? '<span style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; background-color: #dcfce7; color: #166534; font-size: 0.75rem; border-radius: 0.25rem;">User</span>' : ''}
+                                                                                                                                        <div class="contact-item" data-user-id="${contact.id}" style="display: flex; align-items: center; padding: 0.75rem; cursor: pointer; transition: background-color 0.15s ease-in-out; border-bottom: 1px solid #f3f4f6;">
+                                                                                                                                            <div style="width: 2.5rem; height: 2.5rem; border-radius: 50%; margin-right: 0.75rem; background-color: #dbeafe; display: flex; align-items: center; justify-content: center;">
+                                                                                                                                                <span style="color: #2563eb; font-weight: 600;">${contact.name.charAt(0).toUpperCase()}</span>
                                                                                                                                             </div>
-                                                                                                                                            <p style="font-size: 0.875rem; color: #6b7280; margin: 0; word-wrap: break-word; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${contact.latest_message || 'No messages yet'}</p>
+                                                                                                                                            <div style="flex-grow: 1; min-width: 0;">
+                                                                                                                                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                                                                                                                    <p style="font-weight: 600; color: #1f2937; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${contact.name}</p>
+                                                                                                                                                    ${contact.role === 'User' ? '<span style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; background-color: #dcfce7; color: #166534; font-size: 0.75rem; border-radius: 0.25rem;">User</span>' : ''}
+                                                                                                                                                </div>
+                                                                                                                                                <p style="font-size: 0.875rem; color: #6b7280; margin: 0; word-wrap: break-word; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${contact.latest_message || 'No messages yet'}</p>
+                                                                                                                                            </div>
+                                                                                                                                            <div style="text-align: right; margin-left: 0.5rem;">
+                                                                                                                                                ${contact.unread_count > 0 ? `<span style="background-color: #ef4444; color: white; font-size: 0.75rem; border-radius: 50%; width: 1.25rem; height: 1.25rem; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.25rem;">${contact.unread_count}</span>` : ''}
+                                                                                                                                                <div style="font-size: 0.75rem; color: #9ca3af;">${contact.latest_message_time ? formatTime(contact.latest_message_time) : ''}</div>
+                                                                                                                                            </div>
                                                                                                                                         </div>
-                                                                                                                                        <div style="text-align: right; margin-left: 0.5rem;">
-                                                                                                                                            ${contact.unread_count > 0 ? `<span style="background-color: #ef4444; color: white; font-size: 0.75rem; border-radius: 50%; width: 1.25rem; height: 1.25rem; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.25rem;">${contact.unread_count}</span>` : ''}
-                                                                                                                                            <div style="font-size: 0.75rem; color: #9ca3af;">${contact.latest_message_time ? formatTime(contact.latest_message_time) : ''}</div>
-                                                                                                                                        </div>
-                                                                                                                                    </div>
-                                                                                                                                `).join('');
+                                                                                                                                    `).join('');
 
                 // Add click listeners to contact items
                 document.querySelectorAll('.contact-item').forEach(item => {
@@ -444,12 +443,12 @@
 
                     if (!data.messages || data.messages.length === 0) {
                         chatMessagesContainer.innerHTML = `
-                                                                                                                                            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280;">
-                                                                                                                                                <div style="text-align: center;">
-                                                                                                                                                    <p>No messages yet. Start the conversation!</p>
+                                                                                                                                                <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280;">
+                                                                                                                                                    <div style="text-align: center;">
+                                                                                                                                                        <p>No messages yet. Start the conversation!</p>
+                                                                                                                                                    </div>
                                                                                                                                                 </div>
-                                                                                                                                            </div>
-                                                                                                                                        `;
+                                                                                                                                            `;
                     } else {
                         data.messages.forEach(message => {
                             appendMessage(message, message.sender_id === data.current_user_id);
@@ -525,10 +524,10 @@
                 if (isImageMessage) {
                     const imageUrl = `/storage/${message.image_path}`;
                     messageContent = `
-                <div style="margin-bottom: 0.5rem; text-align: center;">
-                    <img src="${imageUrl}" alt="Shared image" style="max-width: 100%; max-height: 16rem; border-radius: 0.5rem; cursor: pointer; display: inline-block;" onclick="window.open('${imageUrl}', '_blank')">
-                </div>
-            `;
+                    <div style="margin-bottom: 0.5rem; text-align: center;">
+                        <img src="${imageUrl}" alt="Shared image" style="max-width: 100%; max-height: 16rem; border-radius: 0.5rem; cursor: pointer; display: inline-block;" onclick="window.open('${imageUrl}', '_blank')">
+                    </div>
+                `;
                     if (message.message && message.message.trim()) {
                         messageContent += `<p style="margin: 0.5rem 0 0 0; line-height: 1.4; text-align: left;">${escapeHtml(message.message)}</p>`;
                     }
@@ -538,26 +537,26 @@
                     const showBookingButton = isAdmin && !isSent && message.metadata;
 
                     messageContent = `
-                <div style="margin-bottom: 0.5rem; text-align: center;">
-                    <img src="${imageUrl}" alt="Product image" style="max-width: 100%; max-height: 12rem; border-radius: 0.5rem; display: inline-block;">
-                </div>
-                <div style="text-align: left;">
-                    <p style="margin: 0.5rem 0 0 0; line-height: 1.4;">${escapeHtml(message.message)}</p>
-                    ${showBookingButton ? `
-                        <div style="margin-top: 0.75rem; text-align: center;">
-                            <button onclick="openBookingModalFromInquiry(${JSON.stringify(message.metadata).replace(/"/g, '&quot;')})"
-                                style="padding: 0.5rem 1rem; background-color: #7f23fe; color: white; border: none; border-radius: 0.375rem; font-size: 0.875rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.375rem; transition: background-color 0.2s; white-space: nowrap;"
-                                onmouseover="this.style.backgroundColor='#6b1db8'"
-                                onmouseout="this.style.backgroundColor='#7f23fe'">
-                                <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                </svg>
-                                Create Booking
-                            </button>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
+                    <div style="margin-bottom: 0.5rem; text-align: center;">
+                        <img src="${imageUrl}" alt="Product image" style="max-width: 100%; max-height: 12rem; border-radius: 0.5rem; display: inline-block;">
+                    </div>
+                    <div style="text-align: left;">
+                        <p style="margin: 0.5rem 0 0 0; line-height: 1.4;">${escapeHtml(message.message)}</p>
+                        ${showBookingButton ? `
+                            <div style="margin-top: 0.75rem; text-align: center;">
+                                <button onclick="openBookingModalFromInquiry(${JSON.stringify(message.metadata).replace(/"/g, '&quot;')})"
+                                    style="padding: 0.5rem 1rem; background-color: #7f23fe; color: white; border: none; border-radius: 0.375rem; font-size: 0.875rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.375rem; transition: background-color 0.2s; white-space: nowrap;"
+                                    onmouseover="this.style.backgroundColor='#6b1db8'"
+                                    onmouseout="this.style.backgroundColor='#7f23fe'">
+                                    <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                    Create Booking
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
                 } else {
                     messageContent = `<p style="margin: 0; line-height: 1.4;">${escapeHtml(message.message)}</p>`;
                 }
