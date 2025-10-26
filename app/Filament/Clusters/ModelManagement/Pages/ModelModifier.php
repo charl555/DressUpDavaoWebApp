@@ -34,6 +34,6 @@ class ModelModifier extends Page
 
     public function selectModel($modelPath)
     {
-        $this->selectedModel = asset('storage/' . $modelPath);
+        $this->selectedModel = asset('uploads/' . $modelPath);
     }
 }

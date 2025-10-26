@@ -11,7 +11,7 @@
                         {{-- Shop Logo --}}
                         <div class="flex-shrink-0">
                             @if ($shop->shop_logo)
-                                <img src="{{ asset('storage/' . $shop->shop_logo) }}" alt="{{ $shop->shop_name }}"
+                                <img src="{{ asset('uploads/' . $shop->shop_logo) }}" alt="{{ $shop->shop_name }}"
                                     class="h-32 w-32 rounded-full object-cover border-4 border-white shadow-lg" />
                             @else
                                 <div

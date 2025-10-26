@@ -41,7 +41,7 @@ class ProductImagesForm
                                         // Only set default when editing
                                         if (method_exists($livewire, 'getRecord') && $record = $livewire->getRecord()) {
                                             if ($record->thumbnail_image) {
-                                                return [asset('storage/' . $record->thumbnail_image)];
+                                                return [asset('uploads/' . $record->thumbnail_image)];
                                             }
                                         }
                                         return null;
@@ -71,7 +71,7 @@ class ProductImagesForm
                                         if (method_exists($livewire, 'getRecord') && $record = $livewire->getRecord()) {
                                             if ($record->images && is_array($record->images)) {
                                                 return array_map(function ($imagePath) {
-                                                    return asset('storage/' . $imagePath);
+                                                    return asset('uploads/' . $imagePath);
                                                 }, $record->images);
                                             }
                                         }

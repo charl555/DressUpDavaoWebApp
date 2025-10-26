@@ -266,7 +266,7 @@
                         @endphp
 
                         @if ($imageRecord && $imageRecord->thumbnail_image)
-                            <img src="{{ asset('storage/' . $imageRecord->thumbnail_image) }}"
+                            <img src="{{ asset('uploads/' . $imageRecord->thumbnail_image) }}"
                                 alt="{{ $product->name }}" class="h-full w-full object-cover rounded-md shadow-md" />
                         @else
                             <div

@@ -5,7 +5,7 @@
         {{-- Shop Image --}}
         @if ($shop->shop_logo)
             <div class="relative overflow-hidden">
-                <img src="{{ asset('storage/' . $shop->shop_logo) }}" alt="{{ $shop->shop_name }}"
+                <img src="{{ asset('uploads/' . $shop->shop_logo) }}" alt="{{ $shop->shop_name }}"
                     class="w-full h-48 object-cover object-center group-hover:scale-105 transition-transform duration-300">
                 <div
                     class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">

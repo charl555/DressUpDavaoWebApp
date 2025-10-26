@@ -197,7 +197,7 @@ class ShopPage extends Page implements HasTable, HasSchemas, HasActions
                                                     // Only set default when editing existing shop
                                                     if (method_exists($livewire, 'getRecord') && $record = $livewire->getRecord()) {
                                                         if ($record->shop_logo) {
-                                                            return [asset('storage/' . $record->shop_logo)];
+                                                            return [asset('uploads/' . $record->shop_logo)];
                                                         }
                                                     }
                                                     return null;
@@ -342,7 +342,7 @@ class ShopPage extends Page implements HasTable, HasSchemas, HasActions
                             return null;
                         }
 
-                        return asset('storage/' . $firstImage->thumbnail_image);
+                        return asset('uploads/' . $firstImage->thumbnail_image);
                     }),
                 TextColumn::make('name')->label('Product Name')->searchable(),
                 TextColumn::make('type')->label('Product Type')->searchable(),
@@ -523,7 +523,7 @@ class ShopPage extends Page implements HasTable, HasSchemas, HasActions
                                     if (!$record->shop_logo) {
                                         return null;
                                     }
-                                    return asset('storage/' . $record->shop_logo);
+                                    return asset('uploads/' . $record->shop_logo);
                                 })
                                 ->columnSpan(1),
                             Group::make()

@@ -12,7 +12,7 @@
                 @endphp
 
                 @if ($imageRecord && $imageRecord->thumbnail_image)
-                    <img src="{{ asset('storage/' . $imageRecord->thumbnail_image) }}" alt="{{ $product->name }}"
+                    <img src="{{ asset('uploads/' . $imageRecord->thumbnail_image) }}" alt="{{ $product->name }}"
                         class="h-full w-full object-cover rounded-md shadow-md" />
                 @else
                     <div class="h-full w-full flex items-center justify-center bg-gray-300 text-gray-700 rounded-md shadow-md">

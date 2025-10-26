@@ -36,7 +36,7 @@ class ProductsTable
                             return null;
                         }
 
-                        return asset('storage/' . $firstImage->thumbnail_image);
+                        return asset('uploads/' . $firstImage->thumbnail_image);
                     }),
                 TextColumn::make('name'),
                 TextColumn::make('type')

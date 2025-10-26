@@ -41,7 +41,7 @@ class EditProductImages extends EditRecord
                     // Extract path from URL if it's a full URL
                     $thumbnailPath = $thumbnailData[0];
                     if (strpos($thumbnailPath, 'http') === 0) {
-                        $baseUrl = asset('storage/');
+                        $baseUrl = asset('uploads/');
                         $thumbnailPath = str_replace($baseUrl, '', $thumbnailPath);
                         $thumbnailPath = ltrim($thumbnailPath, '/');
                     }
@@ -68,7 +68,7 @@ class EditProductImages extends EditRecord
                     // It's from FileUpload with existing files
                     $imagePath = $imageInput[0];
                     if (strpos($imagePath, 'http') === 0) {
-                        $baseUrl = asset('storage/');
+                        $baseUrl = asset('uploads/');
                         $imagePath = str_replace($baseUrl, '', $imagePath);
                         $imagePath = ltrim($imagePath, '/');
                     }

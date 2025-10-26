@@ -792,7 +792,7 @@
                                 {{-- Product Image --}}
                                 <div class="relative">
                                     @if ($thumbnail)
-                                        <img src="{{  asset('storage/' . $thumbnail) }}" alt="{{ $product->name }}"
+                                        <img src="{{  asset('uploads/' . $thumbnail) }}" alt="{{ $product->name }}"
                                             class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
                                     @else
                                         <div class="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">

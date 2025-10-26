@@ -27,7 +27,7 @@ class View3DModel extends Page
         }
 
         $this->product = $product;
-        $this->modelUrl = asset('storage/' . $product->product_3d_models->model_path);
+        $this->modelUrl = asset('uploads/' . $product->product_3d_models->model_path);
         $this->clippingData = $product->product_3d_models->clipping_planes_data ?? [];
     }
 }

@@ -38,7 +38,7 @@
                             <x-filament::input.select wire:model="model-select" onchange="changeModel(this)" class="w-full">
                                 <option value="">Select a 3D Model to Modify</option>
                                 @foreach ($models as $model)
-                                    <option value="{{ asset('storage/' . $model->model_path) }}"
+                                    <option value="{{ asset('uploads/' . $model->model_path) }}"
                                         data-id="{{ $model->product_3d_model_id }}"
                                         data-clipping='@json($model->clipping_planes_data)'>
                                         {{ $model->product->name ?? 'Product ' . $model->product_id }}

@@ -133,8 +133,7 @@ class Create3dModels extends Page implements HasForms
         try {
             foreach ($data['images'] as $storedImagePath) {
                 // Get the full path to the stored image
-                $fullPath = Storage::disk('public')->path($storedImagePath);
-
+                $fullPath = public_path('uploads/' . $storedImagePath);
                 if (!file_exists($fullPath)) {
                     throw new Exception('Stored file not found: ' . $storedImagePath);
                 }
@@ -248,8 +247,9 @@ class Create3dModels extends Page implements HasForms
     {
         try {
             foreach ($imagePaths as $imagePath) {
-                if (Storage::disk('public')->exists($imagePath)) {
-                    Storage::disk('public')->delete($imagePath);
+                $fullPath = public_path('uploads/' . $imagePath);
+                if (file_exists($fullPath)) {
+                    unlink($fullPath);
                 }
             }
             Log::info('Cleaned up uploaded images', ['count' => count($imagePaths)]);

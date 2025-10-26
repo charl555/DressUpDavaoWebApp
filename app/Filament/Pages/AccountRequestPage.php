@@ -105,7 +105,7 @@ class AccountRequestPage extends Page implements HasTable, HasSchemas
                                                 'class' => 'rounded-lg shadow-md w-full object-contain',
                                                 'alt' => 'Verification Document'
                                             ])
-                                            ->url(fn($record) => $record->document_url ? asset('storage/' . $record->document_url) : null)
+                                            ->url(fn($record) => $record->document_url ? asset('uploads/' . $record->document_url) : null)
                                             ->openUrlInNewTab()
                                             ->helperText('Click image to open in new tab for closer inspection'),
                                     ]),

@@ -23,7 +23,7 @@
                             $imageUrl = null;
 
                             if ($imageRecord && $imageRecord->thumbnail_image) {
-                                $imageUrl = asset('storage/' . $imageRecord->thumbnail_image);
+                                $imageUrl = asset('uploads/' . $imageRecord->thumbnail_image);
                             }
                         @endphp
 

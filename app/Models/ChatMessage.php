@@ -75,7 +75,7 @@ class ChatMessage extends Model
     public function getImageUrl()
     {
         if ($this->hasImage()) {
-            return asset('storage/' . $this->image_path);
+            return asset('uploads/' . $this->image_path);
         }
         return null;
     }
