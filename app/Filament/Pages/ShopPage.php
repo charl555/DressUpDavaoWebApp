@@ -192,7 +192,16 @@ class ShopPage extends Page implements HasTable, HasSchemas, HasActions
                                                 ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                                                 ->deletable(true)
                                                 ->openable()
-                                                ->imageEditorAspectRatios(['1:1']),
+                                                ->imageEditorAspectRatios(['1:1'])
+                                                ->default(function ($livewire) {
+                                                    // Only set default when editing existing shop
+                                                    if (method_exists($livewire, 'getRecord') && $record = $livewire->getRecord()) {
+                                                        if ($record->shop_logo) {
+                                                            return [asset('storage/' . $record->shop_logo)];
+                                                        }
+                                                    }
+                                                    return null;
+                                                }),
                                         ]),
                                     Group::make()
                                         ->schema([
@@ -510,7 +519,12 @@ class ShopPage extends Page implements HasTable, HasSchemas, HasActions
                         ->schema([
                             ImageEntry::make('shop_logo')
                                 ->label('Shop Logo')
-                                ->disk('public')
+                                ->getStateUsing(function ($record) {
+                                    if (!$record->shop_logo) {
+                                        return null;
+                                    }
+                                    return asset('storage/' . $record->shop_logo);
+                                })
                                 ->columnSpan(1),
                             Group::make()
                                 ->schema([
