@@ -14,7 +14,7 @@ class CreateProducts extends CreateRecord
 {
     protected static string $resource = ProductsResource::class;
 
-    protected $occasionsData = [];
+    protected $eventsData = [];
     protected $measurementsData = [];
     protected $thumbnail = null;
     protected $galleryImages = [];
@@ -23,8 +23,9 @@ class CreateProducts extends CreateRecord
     {
         $data['user_id'] = auth()->id();
 
-        $this->occasionsData = $data['occasion_names'] ?? [];
-        unset($data['occasion_names']);
+        // Extract events from product_events field (comma-separated string)
+        $this->eventsData = $this->processEventsData($data['product_events'] ?? '');
+        unset($data['product_events']);
 
         $this->measurementsData = Arr::only($data, [
             'gown_length',
@@ -59,6 +60,25 @@ class CreateProducts extends CreateRecord
     }
 
     /**
+     * Process events data from comma-separated string to array
+     */
+    protected function processEventsData(?string $eventsString): array
+    {
+        if (empty($eventsString)) {
+            return [];
+        }
+
+        $events = array_map(function ($event) {
+            // Remove quotes, trim whitespace, and ensure it's not empty
+            $cleanEvent = trim($event, " \t\n\r\0\v\"'");
+            return $cleanEvent;
+        }, explode(',', $eventsString));
+
+        // Remove empty values and duplicates
+        return array_values(array_unique(array_filter($events)));
+    }
+
+    /**
      * Process thumbnail image with compression and WebP conversion
      */
     protected function processThumbnailImage($thumbnailFile)
@@ -69,10 +89,24 @@ class CreateProducts extends CreateRecord
 
         try {
             // For new uploads, it's a file object; for edits, it might be a string path
-            return ProductImages::createThumbnail($thumbnailFile, 80);
+            $thumbnailPath = ProductImages::createThumbnail($thumbnailFile, 80);
+
+            // Ensure the path includes the thumbnails directory
+            if ($thumbnailPath && strpos($thumbnailPath, 'product-images/thumbnails/') !== 0) {
+                // Move to correct directory if needed
+                $filename = basename($thumbnailPath);
+                $correctPath = 'product-images/thumbnails/' . $filename;
+
+                if (\Storage::disk('public')->exists($thumbnailPath)) {
+                    \Storage::disk('public')->move($thumbnailPath, $correctPath);
+                    $thumbnailPath = $correctPath;
+                }
+            }
+
+            return $thumbnailPath;
         } catch (\Exception $e) {
             \Log::error('Thumbnail processing failed: ' . $e->getMessage());
-            // Fallback: store original in your existing directory
+            // Fallback with correct directory
             if (is_string($thumbnailFile)) {
                 return $thumbnailFile;  // Keep existing path
             } else {
@@ -115,10 +149,13 @@ class CreateProducts extends CreateRecord
     {
         $product = $this->record;
 
-        foreach ($this->occasionsData as $occasion_name) {
-            $product->occasions()->create([
-                'occasion_name' => $occasion_name,
-            ]);
+        // Create events from processed data
+        foreach ($this->eventsData as $eventName) {
+            if (!empty($eventName)) {
+                $product->events()->create([
+                    'event_name' => $eventName,
+                ]);
+            }
         }
 
         if (!empty($this->measurementsData)) {

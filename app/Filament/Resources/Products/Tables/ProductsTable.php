@@ -2,10 +2,6 @@
 
 namespace App\Filament\Resources\Products\Tables;
 
-use App\Filament\Resources\ProductImages\ProductImagesResource;
-use App\Filament\Resources\ProductMeasurements\ProductMeasurementsResource;
-use App\Models\ProductImages;
-use App\Models\ProductMeasurements;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
@@ -16,7 +12,6 @@ use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -30,7 +25,19 @@ class ProductsTable
             ->columns([
                 ImageColumn::make('product_images.thumbnail_image')
                     ->label('Image')
-                    ->disk('public'),
+                    ->getStateUsing(function ($record) {
+                        if ($record->product_images->isEmpty()) {
+                            return null;
+                        }
+
+                        $firstImage = $record->product_images->first();
+
+                        if (!$firstImage->thumbnail_image) {
+                            return null;
+                        }
+
+                        return asset('storage/' . $firstImage->thumbnail_image);
+                    }),
                 TextColumn::make('name'),
                 TextColumn::make('type')
                     ->searchable()
@@ -39,7 +46,7 @@ class ProductsTable
                     ->label('Style')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('occasions.occasion_name')
+                TextColumn::make('events.event_name')
                     ->searchable()
                     ->label('Events')
                     ->wrap(),

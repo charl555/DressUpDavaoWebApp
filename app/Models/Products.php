@@ -34,6 +34,11 @@ class Products extends Model
         return $this->hasMany(Occasions::class, 'product_id', 'product_id');
     }
 
+    public function events()
+    {
+        return $this->hasMany(ProductEvents::class, 'product_id', 'product_id');
+    }
+
     public function product_measurements()
     {
         return $this->hasOne(ProductMeasurements::class, 'product_id', 'product_id');

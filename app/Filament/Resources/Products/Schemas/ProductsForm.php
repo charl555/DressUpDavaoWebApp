@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Products\Schemas;
 
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\TextInput;
@@ -111,44 +112,14 @@ class ProductsForm
                             ->columns(3),
                         Group::make()
                             ->schema([
-                                TagsInput::make('occasion_names')
-                                    ->label('Occasions')
-                                    ->placeholder('Type and press enter...')
-                                    ->separator(',')
-                                    ->suggestions([
-                                        'Wedding',
-                                        'Debut',
-                                        'Prom',
-                                        'Formal',
-                                        'Casual',
-                                        'Corporate',
-                                        'Birthday',
-                                        'Anniversary',
-                                        'Graduation',
-                                        'Gala',
-                                    ])
-                                    ->helperText('Add all occasions this product suits.')
-                                    ->afterStateHydrated(function ($component, $record) {
-                                        // Only run when editing (record exists)
-                                        if ($record) {
-                                            $component->state($record->occasions->pluck('occasion_name')->toArray());
-                                        }
-                                    })
-                                    ->dehydrateStateUsing(fn($state) => $state ?? [])
-                                    ->saveRelationshipsUsing(function ($state, $record) {
-                                        // Only run when editing (record exists)
-                                        if (!$record) {
-                                            return;
-                                        }
-
-                                        // Remove existing records
-                                        $record->occasions()->delete();
-
-                                        // Reinsert new records
-                                        foreach ($state as $occasion) {
-                                            $record->occasions()->create(['occasion_name' => $occasion]);
-                                        }
-                                    }),
+                                TextInput::make('product_events')
+                                    ->label('Events')
+                                    ->helperText('List all events this product is suitable for (separate with commas)')
+                                    ->required()
+                                    ->maxLength(100)
+                                    ->placeholder('e.g., Wedding, Anniversary, Formal')
+                                    ->rules(['required', 'string', 'max:100'])
+                                    ->columnSpan(1),
                                 TextInput::make('colors')
                                     ->label('Available Colors')
                                     ->helperText('List all available colors for this product (separate with commas)')

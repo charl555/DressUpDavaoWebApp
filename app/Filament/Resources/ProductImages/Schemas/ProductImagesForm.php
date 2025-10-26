@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ProductImages\Schemas;
 
+use App\Models\ProductImages;
 use App\Models\Products;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
