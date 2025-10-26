@@ -40,11 +40,11 @@ class Jobs3DModel extends Page implements HasTable
 
         if (!$shop?->allow_3d_model_access) {
             return $table
-                ->query(KiriEngineJobs::query()->where('kiri_engine_job_id', 0))  // Empty query
+                ->query(KiriEngineJobs::query()->where('kiri_engine_job_id', 0))
                 ->columns([])
                 ->emptyStateHeading('Access Denied')
                 ->emptyStateDescription('Your account currently does not have access to 3D model features. Please contact support to enable this functionality.')
-                ->actions([]);  // Remove all actions
+                ->actions([]);
         }
 
         return $table
@@ -63,37 +63,17 @@ class Jobs3DModel extends Page implements HasTable
                         'failed' => 'danger',
                         default => 'gray',
                     }),
-                TextColumn::make('url_expiry')
-                    ->label('Link Expiry Date')
-                    ->date('M j, Y g:i A')
-                    ->color(fn($state) => $this->isLinkExpired($state) ? 'danger' : 'success')
-                    ->tooltip(function ($state) {
-                        if ($this->isLinkExpired($state)) {
-                            return 'Download link has expired. Please click "Get Download Link" to regenerate.';
-                        }
-                        return null;
-                    }),
                 TextColumn::make('model_url')
                     ->label('Download Status')
                     ->formatStateUsing(function ($state, $record) {
                         if (!$state)
-                            return 'Not Available';
-
-                        if ($this->isLinkExpired($record->url_expiry) || $this->isLinkActuallyExpired($record)) {
-                            return 'Expired';
-                        }
-
+                            return 'Not Ready';
                         return 'Ready';
                     })
                     ->badge()
                     ->color(function ($state, $record) {
                         if (!$state)
                             return 'gray';
-
-                        if ($this->isLinkExpired($record->url_expiry) || $this->isLinkActuallyExpired($record)) {
-                            return 'danger';
-                        }
-
                         return 'success';
                     }),
             ])
@@ -102,65 +82,58 @@ class Jobs3DModel extends Page implements HasTable
                     ->label('Download')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->visible(function ($record) {
-                        // Only show Download button when:
-                        // - Status is finished
-                        // - Model URL exists
-                        // - Link is NOT expired
-                        return $record->status === 'finished' &&
-                            $record->model_url &&
-                            !$this->isLinkExpired($record->url_expiry) &&
-                            !$this->isLinkActuallyExpired($record);
+                        // Only show if we have a model URL and status is finished
+                        return $record->status === 'finished' && $record->model_url;
                     })
                     ->action(function ($record) {
                         return redirect()->away($record->model_url);
                     }),
-                Action::make('fetchDownloadLink')
-                    ->label('Get Download Link')
-                    ->icon('heroicon-o-link')
+                Action::make('checkAndDownload')
+                    ->label('Check & Download')
+                    ->icon('heroicon-o-arrow-down-tray')
                     ->visible(function ($record) {
-                        // Show Get Download Link button when:
-                        // - Still processing
-                        // - No model URL yet
-                        // - Link is expired (based on either check)
+                        // Show for processing jobs or finished jobs without URL
                         return $record->status === 'processing' ||
-                            ($record->status === 'finished' && !$record->model_url) ||
-                            ($record->status === 'finished' && $this->isLinkExpired($record->url_expiry)) ||
-                            ($record->status === 'finished' && $this->isLinkActuallyExpired($record));
+                            ($record->status === 'finished' && !$record->model_url);
                     })
                     ->action(function ($record) {
                         try {
                             $apiKey = config('services.kiri.key');
                             $response = Http::withToken($apiKey)
-                                ->timeout(60)
+                                ->timeout(30)
                                 ->get("https://api.kiriengine.app/api/v1/open/model/getModelZip?serialize={$record->serialize_id}");
 
-                            if ($response->successful() && isset($response['data']['modelUrl'])) {
-                                // Calculate new expiry date (3 days from now)
-                                $newExpiry = now()->addDays(3);
+                            if ($response->successful()) {
+                                $data = $response->json();
 
-                                $record->update([
-                                    'model_url' => $response['data']['modelUrl'],
-                                    'url_expiry' => $newExpiry,
-                                    'status' => 'finished',
-                                    'is_downloaded' => true,
-                                ]);
+                                if (isset($data['data']['modelUrl'])) {
+                                    // Update record with new download URL
+                                    $record->update([
+                                        'model_url' => $data['data']['modelUrl'],
+                                        'status' => 'finished',
+                                        'url_expiry' => now()->addDays(3),
+                                    ]);
 
-                                Notification::make()
-                                    ->title('Download Link Generated')
-                                    ->body('Download link generated successfully! Click the Download button to get your file.')
-                                    ->success()
-                                    ->send();
+                                    // Redirect to download
+                                    return redirect()->away($data['data']['modelUrl']);
+                                } else {
+                                    Notification::make()
+                                        ->title('Zip File Not Ready')
+                                        ->body('The 3D model is still being processed. Please try again in a few minutes.')
+                                        ->warning()
+                                        ->send();
+                                }
                             } else {
                                 Notification::make()
-                                    ->title('Download Not Ready')
-                                    ->body('Download not ready yet. Please try again later.')
+                                    ->title('Download Failed')
+                                    ->body('Unable to check download status. Please try again later.')
                                     ->danger()
                                     ->send();
                             }
                         } catch (\Exception $e) {
                             Notification::make()
                                 ->title('Error')
-                                ->body('Error fetching download link: ' . $e->getMessage())
+                                ->body('Failed to check download status: ' . $e->getMessage())
                                 ->danger()
                                 ->send();
                         }
@@ -168,37 +141,5 @@ class Jobs3DModel extends Page implements HasTable
             ])
             ->emptyStateHeading('No 3D models generated yet')
             ->emptyStateDescription('Upload images in the Create 3D Models page to get started');
-    }
-
-    /**
-     * Check if a download link has expired based on database expiry date
-     */
-    private function isLinkExpired(?string $expiryDate): bool
-    {
-        if (!$expiryDate) {
-            return true;
-        }
-
-        try {
-            $expiryTime = \Carbon\Carbon::parse($expiryDate);
-            return now()->greaterThan($expiryTime);
-        } catch (\Exception $e) {
-            return true;
-        }
-    }
-
-    /**
-     * Check if link is actually expired by testing the URL or checking creation time
-     * This handles cases where the database expiry date is incorrect
-     */
-    private function isLinkActuallyExpired(KiriEngineJobs $record): bool
-    {
-        // If the record was created more than 3 days ago, consider it expired
-        // KiriEngine links typically expire after 3 days regardless of the stored expiry date
-        if ($record->created_at && $record->created_at->diffInDays(now()) > 3) {
-            return true;
-        }
-
-        return false;
     }
 }

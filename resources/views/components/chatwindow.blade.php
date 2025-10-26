@@ -116,11 +116,20 @@
 
             <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
             <script>
+                // Global variables
+                let currentChatUserId = null;
+                let allContacts = [];
+                let selectedImage = null;
+
                 document.addEventListener('DOMContentLoaded', () => {
                     const chatWindow = document.getElementById('chatWindow');
                     const openChatBtn = document.getElementById('openChatBtn');
                     const closeChatBtn = document.getElementById('closeChatBtn');
                     const chatOverlay = document.getElementById('chatOverlay');
+                    const contactsSection = document.getElementById('contactsSection');
+                    const chatSection = document.getElementById('chatSection');
+                    const backToContactsBtn = document.getElementById('backToContactsBtn');
+
                     let isChatOpen = false;
 
                     // Function to open chat
@@ -130,6 +139,13 @@
                         openChatBtn.classList.add('hidden');
                         chatOverlay.classList.remove('hidden');
                         isChatOpen = true;
+
+                        // Set initial mobile state
+                        if (window.innerWidth <= 640) {
+                            contactsSection.classList.remove('hidden');
+                            chatSection.classList.add('hidden');
+                            backToContactsBtn.classList.add('hidden');
+                        }
 
                         // Load contacts when opening the chat
                         if (typeof loadContacts === 'function') {
@@ -166,23 +182,68 @@
                     });
 
                     /* === Mobile tab switching === */
-                    const contactsSection = document.getElementById('contactsSection');
-                    const chatSection = document.getElementById('chatSection');
-                    const backToContactsBtn = document.getElementById('backToContactsBtn');
-
-                    document.addEventListener('click', (e) => {
-                        if (e.target.closest('.contact-item')) {
-                            if (window.innerWidth <= 640) {
-                                contactsSection.classList.remove('active');
-                                chatSection.classList.remove('hidden');
-                            }
+                    function switchToChatView() {
+                        if (window.innerWidth <= 640) {
+                            contactsSection.classList.add('hidden');
+                            chatSection.classList.remove('hidden');
+                            backToContactsBtn.classList.remove('hidden');
                         }
-                    });
+                    }
 
-                    backToContactsBtn.addEventListener('click', () => {
+                    function switchToContactsView() {
                         if (window.innerWidth <= 640) {
                             chatSection.classList.add('hidden');
-                            contactsSection.classList.add('active');
+                            contactsSection.classList.remove('hidden');
+                            backToContactsBtn.classList.add('hidden');
+
+                            // Reset active chat state
+                            currentChatUserId = null;
+                            activeChatName.textContent = 'Select a contact';
+                            activeChatRole.textContent = '';
+                            activeChatInitial.textContent = '?';
+                            chatMessagesContainer.innerHTML = `
+                                                <div class="flex items-center justify-center h-full text-gray-500">
+                                                    <div class="text-center">
+                                                        <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+                                                            </path>
+                                                        </svg>
+                                                        <p>Select a contact to start chatting</p>
+                                                    </div>
+                                                </div>
+                                            `;
+
+                            // Disable message input
+                            messageInput.disabled = true;
+                            sendMessageBtn.disabled = true;
+                            imageBtn.disabled = true;
+                        }
+                    }
+
+                    // Back to contacts button event listener
+                    backToContactsBtn.addEventListener('click', switchToContactsView);
+
+                    // Handle window resize
+                    window.addEventListener('resize', () => {
+                        if (window.innerWidth > 640) {
+                            // On larger screens, show both sections
+                            contactsSection.classList.remove('hidden');
+                            chatSection.classList.remove('hidden');
+                            backToContactsBtn.classList.add('hidden');
+                        } else {
+                            // On mobile, maintain current view state
+                            if (currentChatUserId) {
+                                // If in a chat, show chat view
+                                contactsSection.classList.add('hidden');
+                                chatSection.classList.remove('hidden');
+                                backToContactsBtn.classList.remove('hidden');
+                            } else {
+                                // If no chat selected, show contacts
+                                contactsSection.classList.remove('hidden');
+                                chatSection.classList.add('hidden');
+                                backToContactsBtn.classList.add('hidden');
+                            }
                         }
                     });
 
@@ -245,10 +306,6 @@
                     const previewImg = document.getElementById('previewImg');
                     const removeImageBtn = document.getElementById('removeImageBtn');
 
-                    let currentChatUserId = null;
-                    let allContacts = [];
-                    let selectedImage = null;
-
                     // Event listeners for message sending
                     sendMessageBtn.addEventListener('click', sendMessage);
                     messageInput.addEventListener('keypress', (e) => {
@@ -308,38 +365,38 @@
                             const isAdmin = userRole === 'Admin' || userRole === 'SuperAdmin';
 
                             contactsList.innerHTML = `
-                                                    <div class="p-4 text-gray-500 text-center">
-                                                        <p>No conversations yet</p>
-                                                        <p class="text-sm mt-2">
-                                                            ${isAdmin
+                                                <div class="p-4 text-gray-500 text-center">
+                                                    <p>No conversations yet</p>
+                                                    <p class="text-sm mt-2">
+                                                        ${isAdmin
                                     ? 'Users will appear here when they start conversations with you'
                                     : 'Start a conversation by sending an inquiry or clicking "Chat with Shop" on a shop page'
                                 }
-                                                        </p>
-                                                    </div>
-                                                `;
+                                                    </p>
+                                                </div>
+                                            `;
                             return;
                         }
 
                         contactsList.innerHTML = contacts.map(contact => `
-                                                <div class="contact-item flex items-center p-3 cursor-pointer hover:bg-gray-100 transition-colors duration-150"
-                                                     data-user-id="${contact.id}">
-                                                    <div class="w-10 h-10 rounded-full mr-3 bg-purple-100 flex items-center justify-center">
-                                                        <span class="text-purple-600 font-semibold">${contact.name.charAt(0).toUpperCase()}</span>
-                                                    </div>
-                                                    <div class="flex-grow">
-                                                        <div class="flex items-center">
-                                                            <p class="font-semibold text-gray-800">${contact.name}</p>
-                                                            ${contact.role === 'Admin' || contact.role === 'SuperAdmin' ? '<span class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">Admin</span>' : ''}
-                                                        </div>
-                                                        <p class="text-sm text-gray-500 break-words overflow-hidden" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${contact.latest_message || 'No messages yet'}</p>
-                                                    </div>
-                                                    <div class="text-right">
-                                                        ${contact.unread_count > 0 ? `<span class="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center mb-1">${contact.unread_count}</span>` : ''}
-                                                        <span class="text-xs text-gray-400">${contact.latest_message_time ? formatTime(contact.latest_message_time) : ''}</span>
-                                                    </div>
+                                            <div class="contact-item flex items-center p-3 cursor-pointer hover:bg-gray-100 transition-colors duration-150"
+                                                 data-user-id="${contact.id}">
+                                                <div class="w-10 h-10 rounded-full mr-3 bg-purple-100 flex items-center justify-center">
+                                                    <span class="text-purple-600 font-semibold">${contact.name.charAt(0).toUpperCase()}</span>
                                                 </div>
-                                            `).join('');
+                                                <div class="flex-grow">
+                                                    <div class="flex items-center">
+                                                        <p class="font-semibold text-gray-800">${contact.name}</p>
+                                                        ${contact.role === 'Admin' || contact.role === 'SuperAdmin' ? '<span class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">Admin</span>' : ''}
+                                                    </div>
+                                                    <p class="text-sm text-gray-500 break-words overflow-hidden" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${contact.latest_message || 'No messages yet'}</p>
+                                                </div>
+                                                <div class="text-right">
+                                                    ${contact.unread_count > 0 ? `<span class="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center mb-1">${contact.unread_count}</span>` : ''}
+                                                    <span class="text-xs text-gray-400">${contact.latest_message_time ? formatTime(contact.latest_message_time) : ''}</span>
+                                                </div>
+                                            </div>
+                                        `).join('');
 
                         // Add click listeners to contact items
                         document.querySelectorAll('.contact-item').forEach(item => {
@@ -357,7 +414,7 @@
                     }
 
                     // Select contact function
-                    async function selectContact(contactElement) {
+                    window.selectContact = async function (contactElement) {
                         // Remove active class from all contacts
                         document.querySelectorAll('.contact-item').forEach(item => {
                             item.classList.remove('active-chat');
@@ -374,6 +431,13 @@
                         activeChatName.textContent = userName;
                         activeChatRole.textContent = userRole;
                         activeChatInitial.textContent = userName.charAt(0).toUpperCase();
+
+                        // Switch to chat view on mobile
+                        if (window.innerWidth <= 640) {
+                            document.getElementById('contactsSection').classList.add('hidden');
+                            document.getElementById('chatSection').classList.remove('hidden');
+                            document.getElementById('backToContactsBtn').classList.remove('hidden');
+                        }
 
                         // Enable message input
                         messageInput.disabled = false;
@@ -396,12 +460,12 @@
 
                             if (data.messages.length === 0) {
                                 chatMessagesContainer.innerHTML = `
-                                                        <div class="flex items-center justify-center h-full text-gray-500">
-                                                            <div class="text-center">
-                                                                <p>No messages yet. Start the conversation!</p>
-                                                            </div>
+                                                    <div class="flex items-center justify-center h-full text-gray-500">
+                                                        <div class="text-center">
+                                                            <p>No messages yet. Start the conversation!</p>
                                                         </div>
-                                                    `;
+                                                    </div>
+                                                `;
                             } else {
                                 data.messages.forEach(message => {
                                     appendMessage(message, message.sender_id === data.current_user_id);
@@ -427,31 +491,31 @@
                         if (message.message_type === 'image' && message.image_path) {
                             const imageUrl = `/storage/${message.image_path}`;
                             messageContent = `
-                                                    <div class="mb-2">
-                                                        <img src="${imageUrl}" alt="Shared image" class="max-w-64 max-h-64 rounded-lg cursor-pointer" onclick="window.open('${imageUrl}', '_blank')">
-                                                    </div>
-                                                `;
+                                                <div class="mb-2">
+                                                    <img src="${imageUrl}" alt="Shared image" class="max-w-64 max-h-64 rounded-lg cursor-pointer" onclick="window.open('${imageUrl}', '_blank')">
+                                                </div>
+                                            `;
                             if (message.message && message.message.trim()) {
                                 messageContent += `<p class="whitespace-pre-wrap break-words">${escapeHtml(message.message)}</p>`;
                             }
                         } else if (message.message_type === 'inquiry' && message.image_path) {
                             const imageUrl = `/storage/${message.image_path}`;
                             messageContent = `
-                                                    <div class="mb-2">
-                                                        <img src="${imageUrl}" alt="Product image" class="max-w-48 max-h-48 rounded-lg">
-                                                    </div>
-                                                    <p class="whitespace-pre-wrap break-words">${escapeHtml(message.message)}</p>
-                                                `;
+                                                <div class="mb-2">
+                                                    <img src="${imageUrl}" alt="Product image" class="max-w-48 max-h-48 rounded-lg">
+                                                </div>
+                                                <p class="whitespace-pre-wrap break-words">${escapeHtml(message.message)}</p>
+                                            `;
                         } else {
                             messageContent = `<p class="whitespace-pre-wrap break-words">${escapeHtml(message.message)}</p>`;
                         }
 
                         messageDiv.innerHTML = `
-                                                <div class="${isSent ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-800'} p-3 rounded-lg max-w-[75%] break-words overflow-wrap-anywhere inline-block w-fit">
-                                                    ${messageContent}
-                                                    <span class="block text-xs ${isSent ? 'text-purple-100' : 'text-gray-500'} mt-1 ${isSent ? 'text-right' : 'text-left'}">${time}</span>
-                                                </div>
-                                            `;
+                                            <div class="${isSent ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-800'} p-3 rounded-lg max-w-[75%] break-words overflow-wrap-anywhere inline-block w-fit">
+                                                ${messageContent}
+                                                <span class="block text-xs ${isSent ? 'text-purple-100' : 'text-gray-500'} mt-1 ${isSent ? 'text-right' : 'text-left'}">${time}</span>
+                                            </div>
+                                        `;
 
                         chatMessagesContainer.appendChild(messageDiv);
                         scrollToBottom();
@@ -622,7 +686,7 @@
                     }
                 }
 
-                /* Responsive layout fixes */
+                /* Mobile-specific styles */
                 @media (max-width: 640px) {
                     #chatWindow {
                         width: 100vw !important;
@@ -630,20 +694,41 @@
                         bottom: 0;
                         right: 0;
                         border-radius: 0 !important;
+                        max-width: 100vw !important;
+                        max-height: 100vh !important;
                     }
 
-                    #contactsSection.active {
-                        display: block !important;
-                        width: 100%;
+                    #contactsSection {
+                        width: 100% !important;
                     }
 
-                    #chatSection.hidden {
-                        display: none !important;
+                    #chatSection {
+                        width: 100% !important;
                     }
 
                     #backToContactsBtn {
                         display: inline-block !important;
                     }
+                }
+
+                /* Ensure proper transitions */
+                #contactsSection,
+                #chatSection {
+                    transition: all 0.3s ease;
+                }
+
+                /* Back button styling */
+                #backToContactsBtn {
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    padding: 8px 12px;
+                    border-radius: 6px;
+                    transition: background-color 0.2s;
+                }
+
+                #backToContactsBtn:hover {
+                    background-color: rgba(147, 51, 234, 0.1);
                 }
 
                 #chatWindow {
