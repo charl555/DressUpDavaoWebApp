@@ -39,6 +39,7 @@ class ProductsForm
                                     ->options([
                                         'Gown' => 'Gown',
                                         'Suit' => 'Suit',
+                                        'Other' => 'Other',
                                     ])
                                     ->required()
                                     ->reactive()
