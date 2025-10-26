@@ -15,6 +15,7 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use BackedEnum;
 
 class Jobs3DModel extends Page implements HasTable
@@ -77,48 +78,66 @@ class Jobs3DModel extends Page implements HasTable
                 Action::make('download')
                     ->label('Download')
                     ->icon('heroicon-o-arrow-down-tray')
-                    ->visible(true)  // Always visible
-                    ->action(function ($record) {
+                    ->visible(true)
+                    ->action(function ($record, $livewire) {
                         try {
-                            // If we already have a valid model URL, use it
+                            $apiKey = config('services.kiri.key');
+
+                            // Use existing URL if present
                             if ($record->model_url) {
-                                return redirect()->away($record->model_url);
+                                $livewire->js('window.open("' . $record->model_url . '", "_blank")');
+                                return;
                             }
 
-                            // Otherwise, try to get the download URL from Kiri Engine
-                            $apiKey = config('services.kiri.key');
                             $response = Http::withToken($apiKey)
                                 ->timeout(30)
                                 ->get("https://api.kiriengine.app/api/v1/open/model/getModelZip?serialize={$record->serialize_id}");
+
+                            Log::info('Kiri Engine Download API Response', [
+                                'serialize_id' => $record->serialize_id,
+                                'status' => $response->status(),
+                                'response' => $response->json()
+                            ]);
 
                             if ($response->successful()) {
                                 $data = $response->json();
 
                                 if (isset($data['data']['modelUrl'])) {
-                                    // Update record with new download URL and mark as finished
                                     $record->update([
                                         'model_url' => $data['data']['modelUrl'],
                                         'status' => 'finished',
                                         'url_expiry' => now()->addDays(3),
                                     ]);
 
-                                    // Redirect to download
-                                    return redirect()->away($data['data']['modelUrl']);
+                                    $livewire->js('window.open("' . $data['data']['modelUrl'] . '", "_blank")');
                                 } else {
+                                    $errorCode = $data['code'] ?? null;
+                                    $errorMsg = $data['msg'] ?? 'Model is still processing';
+
+                                    $message = match ($errorCode) {
+                                        2006 => 'Model not found. Please check the job ID.',
+                                        200 => '3D model is still being processed. Please try again in a few minutes.',
+                                        default => $errorMsg,
+                                    };
+
                                     Notification::make()
-                                        ->title('Zip File Not Ready')
-                                        ->body('The 3D model is still being processed. Please try again in a few minutes.')
+                                        ->title('Download Not Ready')
+                                        ->body($message)
                                         ->warning()
                                         ->send();
                                 }
                             } else {
                                 Notification::make()
                                     ->title('Download Failed')
-                                    ->body('Unable to get download link. The file may still be processing.')
+                                    ->body('Unable to connect to download service. Please try again.')
                                     ->warning()
                                     ->send();
                             }
                         } catch (\Exception $e) {
+                            Log::error('Download failed for serialize_id: ' . $record->serialize_id, [
+                                'error' => $e->getMessage()
+                            ]);
+
                             Notification::make()
                                 ->title('Error')
                                 ->body('Failed to download: ' . $e->getMessage())
