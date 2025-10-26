@@ -2,10 +2,7 @@
 
 namespace App\Filament\Resources\ProductImages\Schemas;
 
-use App\Models\ProductImages;
-use App\Models\Products;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Select;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -40,6 +37,15 @@ class ProductImagesForm
                                     ->deletable(true)
                                     ->openable()
                                     ->required()
+                                    ->default(function ($livewire) {
+                                        // Only set default when editing
+                                        if (method_exists($livewire, 'getRecord') && $record = $livewire->getRecord()) {
+                                            if ($record->thumbnail_image) {
+                                                return [asset('storage/' . $record->thumbnail_image)];
+                                            }
+                                        }
+                                        return null;
+                                    })
                                     ->columnSpan(1),
                             ])
                             ->columns(1),
@@ -60,6 +66,17 @@ class ProductImagesForm
                                     ->deletable(true)
                                     ->openable()
                                     ->reorderable()
+                                    ->default(function ($livewire) {
+                                        // Only set default when editing
+                                        if (method_exists($livewire, 'getRecord') && $record = $livewire->getRecord()) {
+                                            if ($record->images && is_array($record->images)) {
+                                                return array_map(function ($imagePath) {
+                                                    return asset('storage/' . $imagePath);
+                                                }, $record->images);
+                                            }
+                                        }
+                                        return null;
+                                    })
                                     ->columnSpan(1),
                             ])
                             ->columns(1),

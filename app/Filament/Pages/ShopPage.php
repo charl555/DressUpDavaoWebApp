@@ -322,7 +322,19 @@ class ShopPage extends Page implements HasTable, HasSchemas, HasActions
             ->columns([
                 ImageColumn::make('product_images.thumbnail_image')
                     ->label('Image')
-                    ->disk('public'),
+                    ->getStateUsing(function ($record) {
+                        if ($record->product_images->isEmpty()) {
+                            return null;
+                        }
+
+                        $firstImage = $record->product_images->first();
+
+                        if (!$firstImage->thumbnail_image) {
+                            return null;
+                        }
+
+                        return asset('storage/' . $firstImage->thumbnail_image);
+                    }),
                 TextColumn::make('name')->label('Product Name')->searchable(),
                 TextColumn::make('type')->label('Product Type')->searchable(),
                 TextColumn::make('subtype')->label('Style')->searchable(),

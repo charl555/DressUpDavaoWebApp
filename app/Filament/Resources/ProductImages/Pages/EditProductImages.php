@@ -21,6 +21,7 @@ class EditProductImages extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
+        // Only handle JSON decoding for images array, don't convert to URLs
         if (isset($data['images']) && is_string($data['images'])) {
             $data['images'] = json_decode($data['images'], true) ?: [];
         }
@@ -30,30 +31,50 @@ class EditProductImages extends EditRecord
 
     public function handleRecordUpdate(\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model
     {
-        // Process and save thumbnail
-        if (isset($data['thumbnail_image']) && $data['thumbnail_image']) {
-            // Check if it's a new file (object) or existing path (string)
-            if (is_object($data['thumbnail_image'])) {
-                // Delete old thumbnail only if we're uploading a new one
+        // Process thumbnail image
+        if (isset($data['thumbnail_image'])) {
+            if (is_array($data['thumbnail_image'])) {
+                // It's from FileUpload with existing files
+                $thumbnailData = $data['thumbnail_image'];
+
+                if (!empty($thumbnailData) && is_string($thumbnailData[0] ?? null)) {
+                    // Extract path from URL if it's a full URL
+                    $thumbnailPath = $thumbnailData[0];
+                    if (strpos($thumbnailPath, 'http') === 0) {
+                        $baseUrl = asset('storage/');
+                        $thumbnailPath = str_replace($baseUrl, '', $thumbnailPath);
+                        $thumbnailPath = ltrim($thumbnailPath, '/');
+                    }
+                    $record->thumbnail_image = $thumbnailPath;
+                }
+            } elseif (is_object($data['thumbnail_image'])) {
+                // It's a new file upload
                 if ($record->thumbnail_image && Storage::disk('public')->exists($record->thumbnail_image)) {
                     Storage::disk('public')->delete($record->thumbnail_image);
                 }
-
-                // Process new thumbnail (file object)
                 $record->thumbnail_image = $this->processThumbnailImage($data['thumbnail_image']);
-            } else {
-                // It's already a file path string, keep it as is
+            } elseif (is_string($data['thumbnail_image'])) {
+                // It's already a file path
                 $record->thumbnail_image = $data['thumbnail_image'];
             }
         }
 
-        // Process and save gallery images
+        // Process gallery images
         if (isset($data['images']) && is_array($data['images'])) {
             $newImages = [];
 
             foreach ($data['images'] as $imageInput) {
-                if (is_object($imageInput)) {
-                    // It's a new file upload (object)
+                if (is_array($imageInput) && isset($imageInput[0]) && is_string($imageInput[0])) {
+                    // It's from FileUpload with existing files
+                    $imagePath = $imageInput[0];
+                    if (strpos($imagePath, 'http') === 0) {
+                        $baseUrl = asset('storage/');
+                        $imagePath = str_replace($baseUrl, '', $imagePath);
+                        $imagePath = ltrim($imagePath, '/');
+                    }
+                    $newImages[] = $imagePath;
+                } elseif (is_object($imageInput)) {
+                    // It's a new file upload
                     try {
                         $optimizedPath = ProductImages::optimizeAndConvertToWebP($imageInput, 85);
                         $newImages[] = $optimizedPath;
@@ -61,14 +82,13 @@ class EditProductImages extends EditRecord
                         \Log::error('Gallery image processing failed: ' . $e->getMessage());
                         $newImages[] = $imageInput->store('product-images', 'public');
                     }
-                } else {
-                    // It's an existing file path (string)
+                } elseif (is_string($imageInput)) {
+                    // It's an existing file path
                     $newImages[] = $imageInput;
                 }
             }
 
-            // Delete OLD gallery images only if we're replacing them with new ones
-            // But be careful - we only want to delete images that are no longer in the new array
+            // Clean up old images that are no longer used
             $oldImages = $record->images ?? [];
             $imagesToDelete = array_diff($oldImages, $newImages);
 
