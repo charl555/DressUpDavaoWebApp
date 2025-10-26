@@ -59,9 +59,17 @@ class BookingsPage extends Page implements HasTable, hasSchemas
     {
         return $table
             ->columns([
-                ImageColumn::make('product.product_images.thumbnail_image')
+                ImageColumn::make('product.firstProductImage')
                     ->label('Product Image')
-                    ->disk('public'),
+                    ->disk('public')
+                    ->getStateUsing(function ($record) {
+                        // Get the first product image's thumbnail
+                        return $record->product->product_images->first()?->thumbnail_image;
+                    })
+                    ->defaultImageUrl(function ($record) {
+                        // Fallback to first product image if thumbnail doesn't exist
+                        return $record->product->product_images->first()?->image_path;
+                    }),
                 TextColumn::make('user.name')
                     ->label('Customer')
                     ->searchable(),

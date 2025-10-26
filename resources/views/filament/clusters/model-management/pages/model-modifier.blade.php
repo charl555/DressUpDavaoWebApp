@@ -99,9 +99,7 @@
                                 oninput="updateClipping()"
                                 class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider">
                             <div class="flex justify-between text-xs text-gray-500 mt-2">
-                                <span>-10</span>
-                                <span>0</span>
-                                <span>10</span>
+
                             </div>
                         </div>
 
@@ -116,9 +114,7 @@
                                 oninput="updateClipping()"
                                 class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider">
                             <div class="flex justify-between text-xs text-gray-500 mt-2">
-                                <span>-10</span>
-                                <span>0</span>
-                                <span>10</span>
+
                             </div>
                         </div>
                     </div>
@@ -135,9 +131,7 @@
                                 oninput="updateClipping()"
                                 class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider">
                             <div class="flex justify-between text-xs text-gray-500 mt-2">
-                                <span>-10</span>
-                                <span>0</span>
-                                <span>10</span>
+
                             </div>
                         </div>
 
@@ -152,9 +146,7 @@
                                 oninput="updateClipping()"
                                 class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider">
                             <div class="flex justify-between text-xs text-gray-500 mt-2">
-                                <span>-10</span>
-                                <span>0</span>
-                                <span>10</span>
+
                             </div>
                         </div>
                     </div>
