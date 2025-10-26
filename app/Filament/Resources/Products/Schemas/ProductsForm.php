@@ -70,7 +70,8 @@ class ProductsForm
                                                 'Trumpet Gown' => 'Trumpet Gown',
                                                 'Other' => 'Other',
                                             ];
-                                        } elseif ($get('type') === 'Suit') {
+                                        }
+                                        if ($get('type') === 'Suit') {
                                             return [
                                                 'Tuxedo' => 'Tuxedo',
                                                 'Two Piece Suit' => 'Two Piece Suit',
@@ -78,6 +79,10 @@ class ProductsForm
                                                 'Italian Suit' => 'Italian Suit',
                                                 'Single Breasted Suit' => 'Single Breasted Suit',
                                                 'Double Breasted Suit' => 'Double Breasted Suit',
+                                                'Other' => 'Other',
+                                            ];
+                                        } elseif ($get('type') === 'Other') {
+                                            return [
                                                 'Other' => 'Other',
                                             ];
                                         }
