@@ -281,23 +281,75 @@
     </div>
 </div>
 
-{{-- Keep the same JavaScript --}}
+
 @auth
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const startChatBtn = document.getElementById('startChatBtn');
+
+            if (startChatBtn) {
+                startChatBtn.addEventListener('click', async function () {
+                    const shopOwnerId = this.dataset.shopOwnerId;
+                    const shopName = this.dataset.shopName;
+
+                    try {
+                        // Send initial message to start conversation
+                        const response = await fetch('/chat/send', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({
+                                receiver_id: shopOwnerId,
+                                message: `Hi! I'm interested in your shop "${shopName}". Can you help me with some questions?`
+                            })
+                        });
+
+                        if (response.ok) {
+                            // Open chat window if it exists
+                            const openChatBtn = document.getElementById('openChatBtn');
+                            if (openChatBtn) {
+                                openChatBtn.click();
+
+                                // Wait a moment for chat to load, then try to select the conversation
+                                setTimeout(() => {
+                                    const contactItems = document.querySelectorAll('.contact-item');
+                                    const targetContact = Array.from(contactItems).find(item =>
+                                        item.dataset.userId === shopOwnerId
+                                    );
+                                    if (targetContact) {
+                                        targetContact.click();
+                                    }
+                                }, 1000);
+                            }
+
+                            // Update button to show success
+                            this.innerHTML = `
+                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                            Chat Started!
+                                        `;
+                            this.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+                            this.classList.add('bg-green-600');
+                            this.disabled = true;
+                        } else {
+                            throw new Error('Failed to start chat');
+                        }
+                    } catch (error) {
+                        console.error('Error starting chat:', error);
+                        alert('Failed to start chat. Please try again.');
+                    }
+                });
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
             const viewBtn = document.getElementById('viewReviewsBtn');
             const modal = document.getElementById('reviewsModal');
             const closeBtn = document.getElementById('closeReviewsBtn');
 
-            // Chat functionality (same as before)
-            if (startChatBtn) {
-                startChatBtn.addEventListener('click', async function () {
-                    // ... existing chat code ...
-                });
-            }
-
-            // Modal functionality (same as before)
             if (viewBtn && modal && closeBtn) {
                 viewBtn.addEventListener('click', () => {
                     modal.classList.remove('hidden');

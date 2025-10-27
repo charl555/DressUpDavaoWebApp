@@ -42,11 +42,11 @@ class ShopPageController extends Controller
         $userGender = auth()->check() ? auth()->user()->gender : null;
 
         if ($userGender === 'Female') {
-            // Show only Gowns for female users
-            $query->where('type', 'Gown');
+            // Show only Gowns and Dresses for female users
+            $query->whereIn('type', ['Gown', 'Dress']);
         } elseif ($userGender === 'Male') {
-            // Show only Suits for male users
-            $query->where('type', 'Suit');
+            // Show only Suits and Jackets for male users
+            $query->whereIn('type', ['Suit', 'Jacket']);
         }
         // For guests or users with other/prefer not to say gender, show all products
 

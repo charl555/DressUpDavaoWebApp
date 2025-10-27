@@ -38,8 +38,9 @@ class ProductsForm
                                     ->helperText('Select whether this is a gown or suit')
                                     ->options([
                                         'Gown' => 'Gown',
+                                        'Dress' => 'Dress',
                                         'Suit' => 'Suit',
-                                        'Other' => 'Other',
+                                        'Jacket' => 'Jacket',
                                     ])
                                     ->required()
                                     ->reactive()
@@ -70,8 +71,23 @@ class ProductsForm
                                                 'Trumpet Gown' => 'Trumpet Gown',
                                                 'Other' => 'Other',
                                             ];
-                                        }
-                                        if ($get('type') === 'Suit') {
+                                        } elseif ($get('type') === 'Dress') {
+                                            return [
+                                                'Wedding Dress' => 'Wedding Dress',
+                                                'Prom Dress' => 'Prom Dress',
+                                                'Evening Dress' => 'Evening Dress',
+                                                'Cocktail Dress' => 'Cocktail Dress',
+                                                'A-line Dress' => 'A-line Dress',
+                                                'Sheath Dress' => 'Sheath Dress',
+                                                'Mermaid Dress' => 'Mermaid Dress',
+                                                'Off-shoulder Dress' => 'Off-shoulder Dress',
+                                                'Princess Dress' => 'Princess Dress',
+                                                'Empire Waist Dress' => 'Empire Waist Dress',
+                                                'V-neck Dress' => 'V-neck Dress',
+                                                'Trumpet Dress' => 'Trumpet Dress',
+                                                'Other' => 'Other',
+                                            ];
+                                        } elseif ($get('type') === 'Suit') {
                                             return [
                                                 'Tuxedo' => 'Tuxedo',
                                                 'Two Piece Suit' => 'Two Piece Suit',
@@ -81,11 +97,20 @@ class ProductsForm
                                                 'Double Breasted Suit' => 'Double Breasted Suit',
                                                 'Other' => 'Other',
                                             ];
+                                        } elseif ($get('type') === 'Jacket') {
+                                            return [
+                                                'Blazer' => 'Blazer',
+                                                'Bomber Jacket' => 'Bomber Jacket',
+                                                'Leather Jacket' => 'Leather Jacket',
+                                                'Denim Jacket' => 'Denim Jacket',
+                                                'Other' => 'Other',
+                                            ];
                                         } elseif ($get('type') === 'Other') {
                                             return [
                                                 'Other' => 'Other',
                                             ];
                                         }
+                                        return [];
                                     })
                                     ->required()
                                     ->placeholder('Choose style')

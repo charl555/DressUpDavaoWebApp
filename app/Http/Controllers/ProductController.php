@@ -49,15 +49,15 @@ class ProductController extends Controller
         $userGender = auth()->check() ? auth()->user()->gender : null;
 
         if ($userGender === 'Female') {
-            // Show only Gowns for female users
-            $query->where('type', 'Gown');
+            // Show only Gowns and Dresses for female users
+            $query->whereIn('type', ['Gown', 'Dress']);
         } elseif ($userGender === 'Male') {
-            // Show only Suits for male users
-            $query->where('type', 'Suit');
+            // Show only Suits and Jackets for male users
+            $query->whereIn('type', ['Suit', 'Jacket']);
         }
         // For guests or users with other/prefer not to say gender, show all products
 
-        // Type filter - FIXED: Use whereIn for multiple selections
+        // Type filter
         if ($request->filled('type')) {
             $types = (array) $request->type;
             $query->whereIn('type', $types);
@@ -83,7 +83,7 @@ class ProductController extends Controller
             $query->whereIn('size', $dbSizes);
         }
 
-        // Color filter - FIXED: Use OR logic within the same color field
+        // Color filter
         if ($request->filled('color')) {
             $colors = (array) $request->color;
             $query->where(function ($q) use ($colors) {
@@ -93,7 +93,7 @@ class ProductController extends Controller
             });
         }
 
-        // Event filter - UPDATED: Use events relationship with event_name
+        // Event filter
         if ($request->filled('event')) {
             $events = (array) $request->event;
             $query->whereHas('events', function ($q) use ($events) {

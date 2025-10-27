@@ -1,13 +1,14 @@
 <div class="flex justify-center">
     <div
         class="w-full lg:w-[75%] flex flex-col lg:flex-row text-black pt-[100px] sm:pt-[100px] pb-[50px] justify-center lg:space-x-8 px-4 sm:px-6 lg:px-8">
-        
+
         <!-- Sidebar Navigation -->
         <div class="w-full lg:w-1/4 flex flex-col mb-8 lg:mb-0">
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
                 <h1 class="text-2xl font-bold text-gray-800 pb-2 flex items-center">
                     <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     Account Settings
                 </h1>
@@ -20,7 +21,8 @@
                         class="nav-link active flex items-center space-x-3 text-gray-700 hover:text-purple-700 hover:bg-purple-50 transition-all duration-300 ease-in-out text-base font-semibold p-3 rounded-lg"
                         data-target="profile-settings">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                         <span>Edit Profile</span>
                     </a>
@@ -28,7 +30,8 @@
                         class="nav-link flex items-center space-x-3 text-gray-700 hover:text-purple-700 hover:bg-purple-50 transition-all duration-300 ease-in-out text-base font-semibold p-3 rounded-lg"
                         data-target="change-password">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
                         <span>Change Password</span>
                     </a>
@@ -36,7 +39,8 @@
                         class="nav-link flex items-center space-x-3 text-gray-700 hover:text-purple-700 hover:bg-purple-50 transition-all duration-300 ease-in-out text-base font-semibold p-3 rounded-lg"
                         data-target="delete-account">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                         <span>Delete Account</span>
                     </a>
@@ -44,7 +48,8 @@
                         class="nav-link flex items-center space-x-3 text-gray-700 hover:text-purple-700 hover:bg-purple-50 transition-all duration-300 ease-in-out text-base font-semibold p-3 rounded-lg"
                         data-target="body-measurements">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                         </svg>
                         <span>Body Measurements</span>
                     </a>
@@ -52,8 +57,10 @@
                         class="nav-link flex items-center space-x-3 text-gray-700 hover:text-purple-700 hover:bg-purple-50 transition-all duration-300 ease-in-out text-base font-semibold p-3 rounded-lg"
                         data-target="preferences">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                         <span>Preferences</span>
                     </a>
@@ -61,7 +68,8 @@
                         class="nav-link flex items-center space-x-3 text-gray-700 hover:text-purple-700 hover:bg-purple-50 transition-all duration-300 ease-in-out text-base font-semibold p-3 rounded-lg"
                         data-target="my-bookings">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         <span>Booking History</span>
                     </a>
@@ -69,7 +77,8 @@
                         class="nav-link flex items-center space-x-3 text-gray-700 hover:text-purple-700 hover:bg-purple-50 transition-all duration-300 ease-in-out text-base font-semibold p-3 rounded-lg"
                         data-target="my-favorites">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                         </svg>
                         <span>My Favorites</span>
                     </a>
@@ -80,10 +89,12 @@
         <!-- Main Content Area -->
         <div class="w-full lg:w-3/4">
             <!-- Edit Profile -->
-            <div id="profile-settings" class="content-section active bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+            <div id="profile-settings"
+                class="content-section active bg-white rounded-xl shadow-sm border border-gray-100 p-8">
                 <div class="flex items-center mb-6">
                     <svg class="w-6 h-6 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     <h1 class="text-2xl font-bold text-gray-800">My Profile</h1>
                 </div>
@@ -96,7 +107,8 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="space-y-6">
                             <div>
-                                <label for="full-name" class="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
+                                <label for="full-name" class="block text-sm font-semibold text-gray-700 mb-2">Full
+                                    Name</label>
                                 <input type="text" id="full-name" name="name" value="{{ Auth::user()->name }}"
                                     class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200">
                             </div>
@@ -106,16 +118,20 @@
                                     class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200">
                             </div>
                             <div>
-                                <label for="gender" class="block text-sm font-semibold text-gray-700 mb-2">Gender</label>
+                                <label for="gender"
+                                    class="block text-sm font-semibold text-gray-700 mb-2">Gender</label>
                                 <select id="gender" name="gender"
                                     class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200">
-                                    <option value="Male" {{ Auth::user()->gender == 'Male' ? 'selected' : '' }}>Male</option>
-                                    <option value="Female" {{ Auth::user()->gender == 'Female' ? 'selected' : '' }}>Female</option>
+                                    <option value="Male" {{ Auth::user()->gender == 'Male' ? 'selected' : '' }}>Male
+                                    </option>
+                                    <option value="Female" {{ Auth::user()->gender == 'Female' ? 'selected' : '' }}>Female
+                                    </option>
                                 </select>
                             </div>
                             <div>
                                 <label for="phone" class="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
-                                <input type="tel" id="phone" name="phone_number" value="{{ Auth::user()->phone_number }}"
+                                <input type="tel" id="phone" name="phone_number"
+                                    value="{{ Auth::user()->phone_number }}"
                                     class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200">
                             </div>
                         </div>
@@ -125,9 +141,12 @@
                                 <img src="{{ asset('frontend-images/gown-category.jpg') }}" alt="Profile Picture"
                                     class="h-32 w-32 rounded-full object-cover shadow-lg border-4 border-white ring-2 ring-purple-200">
                                 <div class="absolute bottom-0 right-0 bg-purple-600 rounded-full p-2 shadow-lg">
-                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                                     </svg>
                                 </div>
                             </div>
@@ -148,10 +167,12 @@
             </div>
 
             <!-- Change Password -->
-            <div id="change-password" class="content-section hidden bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+            <div id="change-password"
+                class="content-section hidden bg-white rounded-xl shadow-sm border border-gray-100 p-8">
                 <div class="flex items-center mb-6">
                     <svg class="w-6 h-6 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                     <h1 class="text-2xl font-bold text-gray-800">Change Password</h1>
                 </div>
@@ -166,14 +187,17 @@
                                 Current Password
                             </label>
                             <div class="relative">
-                                <input type="password" id="current-password" name="current_password" required minlength="8"
+                                <input type="password" id="current-password" name="current_password" required
+                                    minlength="8"
                                     class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200">
                                 <button type="button"
                                     class="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-purple-600 transition-colors duration-200"
                                     onclick="togglePassword('current-password')">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                     </svg>
                                 </button>
                             </div>
@@ -194,8 +218,10 @@
                                     class="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-purple-600 transition-colors duration-200"
                                     onclick="togglePassword('new-password')">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                     </svg>
                                 </button>
                             </div>
@@ -210,14 +236,17 @@
                                 Confirm New Password
                             </label>
                             <div class="relative">
-                                <input type="password" id="confirm-password" name="new_password_confirmation" required minlength="8"
+                                <input type="password" id="confirm-password" name="new_password_confirmation" required
+                                    minlength="8"
                                     class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200">
                                 <button type="button"
                                     class="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-purple-600 transition-colors duration-200"
                                     onclick="togglePassword('confirm-password')">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                     </svg>
                                 </button>
                             </div>
@@ -244,10 +273,12 @@
             </div>
 
             <!-- Delete Account -->
-            <div id="delete-account" class="content-section hidden bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+            <div id="delete-account"
+                class="content-section hidden bg-white rounded-xl shadow-sm border border-gray-100 p-8">
                 <div class="flex items-center mb-6">
                     <svg class="w-6 h-6 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                     <h1 class="text-2xl font-bold text-gray-800">Delete Account</h1>
                 </div>
@@ -256,8 +287,10 @@
                 @if(Auth::user()->deletion_requested_at)
                     <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-6">
                         <div class="flex items-start">
-                            <svg class="w-5 h-5 text-yellow-600 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                            <svg class="w-5 h-5 text-yellow-600 mr-3 mt-0.5" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
                             </svg>
                             <div>
                                 <p class="font-bold text-yellow-800 text-sm">Account Deletion Scheduled</p>
@@ -280,12 +313,15 @@
                 @else
                     <div class="bg-red-50 border border-red-200 rounded-xl p-6 mb-6">
                         <div class="flex items-start">
-                            <svg class="w-5 h-5 text-red-600 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                            <svg class="w-5 h-5 text-red-600 mr-3 mt-0.5" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
                             </svg>
                             <div>
                                 <p class="font-bold text-red-800 text-sm">Warning:</p>
-                                <p class="text-red-700 text-sm">Deleting your account will remove all your data and preferences after 30 days.</p>
+                                <p class="text-red-700 text-sm">Deleting your account will remove all your data and
+                                    preferences after 30 days.</p>
                             </div>
                         </div>
                     </div>
@@ -294,14 +330,16 @@
                         @csrf
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label for="delete-confirmation" class="block text-sm font-semibold text-gray-700 mb-2">Type "DELETE" to confirm:</label>
+                                <label for="delete-confirmation" class="block text-sm font-semibold text-gray-700 mb-2">Type
+                                    "DELETE" to confirm:</label>
                                 <input type="text" id="delete-confirmation" name="delete_confirmation"
                                     class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
                                     autocomplete="off">
                             </div>
 
                             <div>
-                                <label for="delete-password" class="block text-sm font-semibold text-gray-700 mb-2">Enter your password to confirm:</label>
+                                <label for="delete-password" class="block text-sm font-semibold text-gray-700 mb-2">Enter
+                                    your password to confirm:</label>
                                 <input type="password" id="delete-password" name="delete_password"
                                     class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
                                     autocomplete="new-password">
@@ -319,53 +357,76 @@
             </div>
 
             <!-- Body Measurements -->
-            <div id="body-measurements" class="content-section hidden bg-white rounded-xl shadow-sm border border-gray-100 p-8" x-data="measurementsForm()">
+            <div id="body-measurements"
+                class="content-section hidden bg-white rounded-xl shadow-sm border border-gray-100 p-8"
+                x-data="measurementsForm()">
                 <div class="flex items-center mb-6">
                     <svg class="w-6 h-6 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                     </svg>
                     <h1 class="text-2xl font-bold text-gray-800">Body Measurements</h1>
                 </div>
-                <p class="text-gray-600 pb-6 text-sm">Your measurements help us recommend products that fit you perfectly.</p>
+                <p class="text-gray-600 pb-6 text-sm">Your measurements help us recommend products that fit you
+                    perfectly.</p>
+
+                <!-- Unit Toggle -->
+                <div class="flex items-center justify-center space-x-3 mb-6">
+                    <span class="text-sm font-medium text-gray-700">Units:</span>
+                    <div class="flex bg-gray-100 rounded-lg p-1">
+                        <button type="button" @click="switchToInches()" :class="measurementUnit === 'inches' 
+                ? 'bg-white shadow-sm text-violet-700' 
+                : 'text-gray-600 hover:text-gray-900'"
+                            class="px-3 py-1 text-sm font-medium rounded-md transition-all duration-200">
+                            Inches
+                        </button>
+                        <button type="button" @click="switchToCentimeters()" :class="measurementUnit === 'centimeters' 
+                ? 'bg-white shadow-sm text-violet-700' 
+                : 'text-gray-600 hover:text-gray-900'"
+                            class="px-3 py-1 text-sm font-medium rounded-md transition-all duration-200">
+                            Centimeters
+                        </button>
+                    </div>
+                </div>
 
                 <div class="bg-gray-50 rounded-xl p-6 mb-6 border border-gray-200">
                     <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                         <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         Current Measurements
                     </h2>
                     @if(Auth::user()->user_measurements()->exists())
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                             <div class="text-center bg-white rounded-lg p-4 shadow-sm border border-gray-100">
-                                <div class="text-2xl font-bold text-purple-600">
-                                    {{ Auth::user()->user_measurements->chest ?? '--' }}
-                                </div>
-                                <div class="text-sm text-gray-600 mt-1">Chest (in)</div>
+                                <div class="text-2xl font-bold text-purple-600" x-text="displayMeasurement('chest')"></div>
+                                <div class="text-sm text-gray-600 mt-1">Chest (<span
+                                        x-text="measurementUnit === 'inches' ? 'in' : 'cm'"></span>)</div>
                             </div>
                             <div class="text-center bg-white rounded-lg p-4 shadow-sm border border-gray-100">
-                                <div class="text-2xl font-bold text-purple-600">
-                                    {{ Auth::user()->user_measurements->waist ?? '--' }}
-                                </div>
-                                <div class="text-sm text-gray-600 mt-1">Waist (in)</div>
+                                <div class="text-2xl font-bold text-purple-600" x-text="displayMeasurement('waist')"></div>
+                                <div class="text-sm text-gray-600 mt-1">Waist (<span
+                                        x-text="measurementUnit === 'inches' ? 'in' : 'cm'"></span>)</div>
                             </div>
                             <div class="text-center bg-white rounded-lg p-4 shadow-sm border border-gray-100">
-                                <div class="text-2xl font-bold text-purple-600">
-                                    {{ Auth::user()->user_measurements->hips ?? '--' }}
-                                </div>
-                                <div class="text-sm text-gray-600 mt-1">Hips (in)</div>
+                                <div class="text-2xl font-bold text-purple-600" x-text="displayMeasurement('hips')"></div>
+                                <div class="text-sm text-gray-600 mt-1">Hips (<span
+                                        x-text="measurementUnit === 'inches' ? 'in' : 'cm'"></span>)</div>
                             </div>
                             <div class="text-center bg-white rounded-lg p-4 shadow-sm border border-gray-100">
-                                <div class="text-2xl font-bold text-purple-600">
-                                    {{ Auth::user()->user_measurements->shoulder ?? '--' }}
+                                <div class="text-2xl font-bold text-purple-600" x-text="displayMeasurement('shoulder')">
                                 </div>
-                                <div class="text-sm text-gray-600 mt-1">Shoulder (in)</div>
+                                <div class="text-sm text-gray-600 mt-1">Shoulder (<span
+                                        x-text="measurementUnit === 'inches' ? 'in' : 'cm'"></span>)</div>
                             </div>
                         </div>
                     @else
                         <div class="text-center py-8">
-                            <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                            <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                             </svg>
                             <div class="text-gray-500 mb-4 text-sm">No measurements recorded yet</div>
                             <button type="button" @click="showForm = true"
@@ -389,14 +450,18 @@
                 <div x-show="showForm" class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-lg font-semibold text-gray-800 flex items-center">
-                            <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                             </svg>
                             {{ Auth::user()->user_measurements ? 'Update' : 'Add' }} Measurements
                         </h3>
-                        <button type="button" @click="showForm = false" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                        <button type="button" @click="showForm = false"
+                            class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
                         </button>
                     </div>
@@ -405,68 +470,102 @@
                         @csrf
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Chest -->
                             <div>
-                                <label for="chest" class="block text-sm font-semibold text-gray-700 mb-2">
-                                    Chest (inches) <span class="text-red-500">*</span>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Chest (<span x-text="measurementUnit === 'inches' ? 'inches' : 'cm'"></span>) <span
+                                        class="text-red-500">*</span>
                                 </label>
-                                <input type="number" id="chest" x-model.number="form.chest"
-                                    @blur="validateField('chest')" step="0.5" min="20" max="60" required
+                                <input type="number" x-model="inputValues.chest"
+                                    @input="handleInput('chest', $event.target.value)" @blur="validateField('chest')"
+                                    :step="measurementUnit === 'inches' ? '0.5' : '0.1'"
+                                    :min="measurementUnit === 'inches' ? '20' : '50'"
+                                    :max="measurementUnit === 'inches' ? '60' : '152'" required
                                     class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
                                     :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.chest }"
-                                    placeholder="e.g., 36">
+                                    :placeholder="measurementUnit === 'inches' ? 'e.g., 36' : 'e.g., 91.5'">
                                 <p x-show="errors.chest" x-text="errors.chest" class="mt-2 text-sm text-red-600"></p>
                             </div>
 
+                            <!-- Waist -->
                             <div>
-                                <label for="waist" class="block text-sm font-semibold text-gray-700 mb-2">
-                                    Waist (inches) <span class="text-red-500">*</span>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Waist (<span x-text="measurementUnit === 'inches' ? 'inches' : 'cm'"></span>) <span
+                                        class="text-red-500">*</span>
                                 </label>
-                                <input type="number" id="waist" x-model.number="form.waist"
-                                    @blur="validateField('waist')" step="0.5" min="20" max="50" required
+                                <input type="number" x-model="inputValues.waist"
+                                    @input="handleInput('waist', $event.target.value)" @blur="validateField('waist')"
+                                    :step="measurementUnit === 'inches' ? '0.5' : '0.1'"
+                                    :min="measurementUnit === 'inches' ? '20' : '50'"
+                                    :max="measurementUnit === 'inches' ? '50' : '127'" required
                                     class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
                                     :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.waist }"
-                                    placeholder="e.g., 32">
+                                    :placeholder="measurementUnit === 'inches' ? 'e.g., 32' : 'e.g., 81'">
                                 <p x-show="errors.waist" x-text="errors.waist" class="mt-2 text-sm text-red-600"></p>
                             </div>
 
+                            <!-- Hips -->
                             <div>
-                                <label for="hips" class="block text-sm font-semibold text-gray-700 mb-2">
-                                    Hips (inches) <span class="text-red-500">*</span>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Hips (<span x-text="measurementUnit === 'inches' ? 'inches' : 'cm'"></span>) <span
+                                        class="text-red-500">*</span>
                                 </label>
-                                <input type="number" id="hips" x-model.number="form.hips" @blur="validateField('hips')"
-                                    step="0.5" min="20" max="60" required
+                                <input type="number" x-model="inputValues.hips"
+                                    @input="handleInput('hips', $event.target.value)" @blur="validateField('hips')"
+                                    :step="measurementUnit === 'inches' ? '0.5' : '0.1'"
+                                    :min="measurementUnit === 'inches' ? '20' : '50'"
+                                    :max="measurementUnit === 'inches' ? '60' : '152'" required
                                     class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
                                     :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.hips }"
-                                    placeholder="e.g., 38">
+                                    :placeholder="measurementUnit === 'inches' ? 'e.g., 38' : 'e.g., 96.5'">
                                 <p x-show="errors.hips" x-text="errors.hips" class="mt-2 text-sm text-red-600"></p>
                             </div>
 
+                            <!-- Shoulder -->
                             <div>
-                                <label for="shoulder" class="block text-sm font-semibold text-gray-700 mb-2">
-                                    Shoulder (inches) <span class="text-red-500">*</span>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Shoulder (<span x-text="measurementUnit === 'inches' ? 'inches' : 'cm'"></span>)
+                                    <span class="text-red-500">*</span>
                                 </label>
-                                <input type="number" id="shoulder" x-model.number="form.shoulder"
-                                    @blur="validateField('shoulder')" step="0.5" min="10" max="30" required
+                                <input type="number" x-model="inputValues.shoulder"
+                                    @input="handleInput('shoulder', $event.target.value)"
+                                    @blur="validateField('shoulder')"
+                                    :step="measurementUnit === 'inches' ? '0.5' : '0.1'"
+                                    :min="measurementUnit === 'inches' ? '10' : '25'"
+                                    :max="measurementUnit === 'inches' ? '30' : '76'" required
                                     class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
                                     :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': errors.shoulder }"
-                                    placeholder="e.g., 16">
-                                <p x-show="errors.shoulder" x-text="errors.shoulder" class="mt-2 text-sm text-red-600"></p>
+                                    :placeholder="measurementUnit === 'inches' ? 'e.g., 16' : 'e.g., 40.5'">
+                                <p x-show="errors.shoulder" x-text="errors.shoulder" class="mt-2 text-sm text-red-600">
+                                </p>
                             </div>
                         </div>
 
                         <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
                             <h4 class="text-sm font-semibold text-blue-900 mb-2 flex items-center">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 Measurement Guide:
                             </h4>
                             <ul class="text-sm text-blue-800 space-y-1">
-                                <li class="flex items-center"><span class="w-2 h-2 bg-blue-600 rounded-full mr-2"></span><strong>Chest:</strong> Measure around the fullest part of your chest</li>
-                                <li class="flex items-center"><span class="w-2 h-2 bg-blue-600 rounded-full mr-2"></span><strong>Waist:</strong> Measure around your natural waistline</li>
-                                <li class="flex items-center"><span class="w-2 h-2 bg-blue-600 rounded-full mr-2"></span><strong>Hips:</strong> Measure around the fullest part of your hips</li>
-                                <li class="flex items-center"><span class="w-2 h-2 bg-blue-600 rounded-full mr-2"></span><strong>Shoulder:</strong> Measure from shoulder point to shoulder point across your back</li>
+                                <li class="flex items-center"><span
+                                        class="w-2 h-2 bg-blue-600 rounded-full mr-2"></span><strong>Chest:</strong>
+                                    Measure around the fullest part of your chest</li>
+                                <li class="flex items-center"><span
+                                        class="w-2 h-2 bg-blue-600 rounded-full mr-2"></span><strong>Waist:</strong>
+                                    Measure around your natural waistline</li>
+                                <li class="flex items-center"><span
+                                        class="w-2 h-2 bg-blue-600 rounded-full mr-2"></span><strong>Hips:</strong>
+                                    Measure around the fullest part of your hips</li>
+                                <li class="flex items-center"><span
+                                        class="w-2 h-2 bg-blue-600 rounded-full mr-2"></span><strong>Shoulder:</strong>
+                                    Measure from shoulder point to shoulder point across your back</li>
                             </ul>
+                            <div class="mt-2 text-xs text-blue-700">
+                                <strong>Note:</strong> All measurements are stored in inches for consistency.
+                            </div>
                         </div>
 
                         <div class="flex justify-end space-x-4 pt-4">
@@ -476,10 +575,13 @@
                             </button>
                             <button type="submit" :disabled="loading"
                                 class="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 transition-all duration-300 shadow-md">
-                                <span x-show="!loading">{{ Auth::user()->user_measurements ? 'Update' : 'Save' }} Measurements</span>
+                                <span x-show="!loading">{{ Auth::user()->user_measurements ? 'Update' : 'Save' }}
+                                    Measurements</span>
                                 <span x-show="loading" class="flex items-center">
-                                    <svg class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v4m0 12v4m8-10h-4M6 12H2m15.364-7.364l-2.828 2.828M7.464 17.536l-2.828 2.828m12.728 0l-2.828-2.828M7.464 6.464L4.636 3.636"/>
+                                    <svg class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 2v4m0 12v4m8-10h-4M6 12H2m15.364-7.364l-2.828 2.828M7.464 17.536l-2.828 2.828m12.728 0l-2.828-2.828M7.464 6.464L4.636 3.636" />
                                     </svg>
                                     Saving...
                                 </span>
@@ -489,8 +591,10 @@
                         <!-- Error and Success Messages -->
                         <div x-show="generalError" class="rounded-xl bg-red-50 p-4 border border-red-200">
                             <div class="flex items-center">
-                                <svg class="w-5 h-5 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                                <svg class="w-5 h-5 text-red-500 mr-3" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
                                 </svg>
                                 <div>
                                     <h3 class="text-sm font-semibold text-red-800">Error saving measurements</h3>
@@ -501,8 +605,10 @@
 
                         <div x-show="successMessage" class="rounded-xl bg-green-50 p-4 border border-green-200">
                             <div class="flex items-center">
-                                <svg class="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                <svg class="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 <div>
                                     <h3 class="text-sm font-semibold text-green-800">Success!</h3>
@@ -512,101 +618,111 @@
                         </div>
                     </form>
                 </div>
-            </div>
-
-        <!-- Preferences -->
-<div id="preferences" class="content-section hidden bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-    <div class="flex items-center mb-6">
-        <svg class="w-6 h-6 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-        </svg>
-        <h1 class="text-2xl font-bold text-gray-800">Preferences</h1>
-    </div>
-    <p class="text-gray-600 pb-6 text-sm">Set your clothing and styling preferences.</p>
-
-    <form id="preferencesForm" class="space-y-6">
-        @csrf
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Color Preference -->
-            <div>
-                <label for="color_preference" class="block text-sm font-semibold text-gray-700 mb-2">Preferred Color</label>
-                <select name="color_preference" id="color_preference" value="{{ Auth::user()->preferences['color'] ?? '' }}"
-                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200">
-                    <option value="">Choose a color preference</option>
-                    <option value="red">Red</option>
-                    <option value="blue">Blue</option>
-                    <option value="green">Green</option>
-                    <option value="black">Black</option>
-                    <option value="white">White</option>
-                    <option value="purple">Purple</option>
-                    <option value="pink">Pink</option>
-                    <option value="neutral">Neutral Tones</option>
-                    <option value="earth">Earth Tones</option>
-                    <option value="bright">Bright Colors</option>
-                </select>
-            </div>
-
-            <!-- Occasion Preference -->
-            <div>
-                <label for="occasion_preference" class="block text-sm font-semibold text-gray-700 mb-2">Preferred Occasion</label>
-                <select name="occasion_preference" id="occasion_preference" value="{{ Auth::user()->preferences['occasion'] ?? '' }}"
-                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200">
-                    <option value="">Choose an occasion preference</option>
-                    <option value="formal">Formal</option>
-                    <option value="casual">Casual</option>
-                    <option value="business">Business</option>
-                    <option value="party">Party/Events</option>
-                    <option value="wedding">Wedding</option>
-                    <option value="everyday">Everyday Wear</option>
-                    <option value="gala">Gala</option>
-                    <option value="prom">Prom</option>
-                </select>
-            </div>
-
-            <!-- Fabric Preference -->
-            <div>
-                <label for="fabric_preference" class="block text-sm font-semibold text-gray-700 mb-2">Preferred Fabric</label>
-                <select name="fabric_preference" id="fabric_preference" value="{{ Auth::user()->preferences['fabric'] ?? '' }}"
-                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200">
-                    <option value="">Choose a fabric preference</option>
-                    <option value="cotton">Cotton</option>
-                    <option value="silk">Silk</option>
-                    <option value="linen">Linen</option>
-                    <option value="wool">Wool</option>
-                    <option value="polyester">Polyester</option>
-                    <option value="velvet">Velvet</option>
-                    <option value="satin">Satin</option>
-                    <option value="chiffon">Chiffon</option>
-                    <option value="denim">Denim</option>
-                    <option value="lace">Lace</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="pt-8 flex justify-end">
-            <button type="submit"
-                class="px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg">
-                Update Preferences
-            </button>
-        </div>
-    </form>
-</div>
-
-            <!-- Booking History -->
-            <div id="my-bookings" class="content-section hidden bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+            </div><!-- Preferences -->
+            <div id="preferences"
+                class="content-section hidden bg-white rounded-xl shadow-sm border border-gray-100 p-8">
                 <div class="flex items-center mb-6">
                     <svg class="w-6 h-6 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <h1 class="text-2xl font-bold text-gray-800">Preferences</h1>
+                </div>
+                <p class="text-gray-600 pb-6 text-sm">Set your clothing and styling preferences.</p>
+
+                <form id="preferencesForm" class="space-y-6">
+                    @csrf
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Color Preference -->
+                        <div>
+                            <label for="color_preference"
+                                class="block text-sm font-semibold text-gray-700 mb-2">Preferred Color</label>
+                            <select name="color_preference" id="color_preference"
+                                value="{{ Auth::user()->preferences['color'] ?? '' }}"
+                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200">
+                                <option value="">Choose a color preference</option>
+                                <option value="red">Red</option>
+                                <option value="blue">Blue</option>
+                                <option value="green">Green</option>
+                                <option value="black">Black</option>
+                                <option value="white">White</option>
+                                <option value="purple">Purple</option>
+                                <option value="pink">Pink</option>
+                                <option value="neutral">Neutral Tones</option>
+                                <option value="earth">Earth Tones</option>
+                                <option value="bright">Bright Colors</option>
+                            </select>
+                        </div>
+
+                        <!-- Occasion Preference -->
+                        <div>
+                            <label for="occasion_preference"
+                                class="block text-sm font-semibold text-gray-700 mb-2">Preferred Occasion</label>
+                            <select name="occasion_preference" id="occasion_preference"
+                                value="{{ Auth::user()->preferences['occasion'] ?? '' }}"
+                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200">
+                                <option value="">Choose an occasion preference</option>
+                                <option value="formal">Formal</option>
+                                <option value="casual">Casual</option>
+                                <option value="business">Business</option>
+                                <option value="party">Party/Events</option>
+                                <option value="wedding">Wedding</option>
+                                <option value="everyday">Everyday Wear</option>
+                                <option value="gala">Gala</option>
+                                <option value="prom">Prom</option>
+                            </select>
+                        </div>
+
+                        <!-- Fabric Preference -->
+                        <div>
+                            <label for="fabric_preference"
+                                class="block text-sm font-semibold text-gray-700 mb-2">Preferred Fabric</label>
+                            <select name="fabric_preference" id="fabric_preference"
+                                value="{{ Auth::user()->preferences['fabric'] ?? '' }}"
+                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200">
+                                <option value="">Choose a fabric preference</option>
+                                <option value="cotton">Cotton</option>
+                                <option value="silk">Silk</option>
+                                <option value="linen">Linen</option>
+                                <option value="wool">Wool</option>
+                                <option value="polyester">Polyester</option>
+                                <option value="velvet">Velvet</option>
+                                <option value="satin">Satin</option>
+                                <option value="chiffon">Chiffon</option>
+                                <option value="denim">Denim</option>
+                                <option value="lace">Lace</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="pt-8 flex justify-end">
+                        <button type="submit"
+                            class="px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                            Update Preferences
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Booking History -->
+            <div id="my-bookings"
+                class="content-section hidden bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+                <div class="flex items-center mb-6">
+                    <svg class="w-6 h-6 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     <h1 class="text-2xl font-bold text-gray-800">Booking History</h1>
                 </div>
                 <p class="text-gray-600 pb-6 text-sm">View and manage your upcoming and past bookings.</p>
-            
+
                 @if ($bookings->isEmpty())
                     <div class="flex flex-col items-center justify-center py-12 text-gray-500">
                         <svg class="w-16 h-16 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         <p class="text-sm font-medium mb-2">You don't have any bookings yet.</p>
                         <a href="{{ route('product.list') }}"
@@ -665,7 +781,7 @@
                                                         ->where('shop_id', $booking->product->user->shop->shop_id)
                                                         ->first();
                                                 @endphp
-            
+
                                                 @if (!$existingReview)
                                                     <button
                                                         onclick="openReviewModal('{{ $booking->product->user->shop->shop_id }}', '{{ $booking->product->user->shop->shop_name }}', false)"
@@ -686,25 +802,29 @@
                             </tbody>
                         </table>
                     </div>
-                    
+
                     <!-- Pagination -->
                     <div class="mt-8 flex justify-center">
                         <nav class="flex items-center gap-2">
                             {{-- Previous Page Link --}}
                             @if ($bookings->onFirstPage())
-                                <span class="px-4 py-2 text-gray-400 bg-white border border-gray-200 rounded-lg cursor-not-allowed">
+                                <span
+                                    class="px-4 py-2 text-gray-400 bg-white border border-gray-200 rounded-lg cursor-not-allowed">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 19l-7-7 7-7" />
                                     </svg>
                                 </span>
                             @else
-                                <a href="{{ $bookings->previousPageUrl() }}" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
+                                <a href="{{ $bookings->previousPageUrl() }}"
+                                    class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 19l-7-7 7-7" />
                                     </svg>
                                 </a>
                             @endif
-            
+
                             {{-- Pagination Elements --}}
                             @foreach ($bookings->links()->elements as $element)
                                 {{-- "Three Dots" Separator --}}
@@ -713,34 +833,40 @@
                                         {{ $element }}
                                     </span>
                                 @endif
-            
+
                                 {{-- Array Of Links --}}
                                 @if (is_array($element))
                                     @foreach ($element as $page => $url)
                                         @if ($page == $bookings->currentPage())
-                                            <span class="px-4 py-2 text-white bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-600 rounded-lg font-semibold">
+                                            <span
+                                                class="px-4 py-2 text-white bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-600 rounded-lg font-semibold">
                                                 {{ $page }}
                                             </span>
                                         @else
-                                            <a href="{{ $url }}" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
+                                            <a href="{{ $url }}"
+                                                class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
                                                 {{ $page }}
                                             </a>
                                         @endif
                                     @endforeach
                                 @endif
                             @endforeach
-            
+
                             {{-- Next Page Link --}}
                             @if ($bookings->hasMorePages())
-                                <a href="{{ $bookings->nextPageUrl() }}" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
+                                <a href="{{ $bookings->nextPageUrl() }}"
+                                    class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 5l7 7-7 7" />
                                     </svg>
                                 </a>
                             @else
-                                <span class="px-4 py-2 text-gray-400 bg-white border border-gray-200 rounded-lg cursor-not-allowed">
+                                <span
+                                    class="px-4 py-2 text-gray-400 bg-white border border-gray-200 rounded-lg cursor-not-allowed">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 5l7 7-7 7" />
                                     </svg>
                                 </span>
                             @endif
@@ -750,10 +876,12 @@
             </div>
 
             <!-- My Favorites -->
-            <div id="my-favorites" class="content-section hidden bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+            <div id="my-favorites"
+                class="content-section hidden bg-white rounded-xl shadow-sm border border-gray-100 p-8">
                 <div class="flex items-center mb-6">
                     <svg class="w-6 h-6 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
                     <h1 class="text-2xl font-bold text-gray-800">My Favorites</h1>
                 </div>
@@ -762,7 +890,8 @@
                 @if ($favorites->isEmpty())
                     <div class="flex flex-col items-center justify-center py-12 text-gray-500">
                         <svg class="w-16 h-16 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                         </svg>
                         <p class="text-sm font-medium mb-2">You haven't added any products to your favorites yet.</p>
                         <a href="{{ route('product.list') }}"
@@ -788,16 +917,20 @@
                                 }
                             @endphp
 
-                            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 group">
+                            <div
+                                class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 group">
                                 {{-- Product Image --}}
                                 <div class="relative">
                                     @if ($thumbnail)
                                         <img src="{{  asset('uploads/' . $thumbnail) }}" alt="{{ $product->name }}"
                                             class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
                                     @else
-                                        <div class="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                                            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        <div
+                                            class="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                                            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                             </svg>
                                         </div>
                                     @endif
@@ -810,8 +943,10 @@
                                         <button type="submit"
                                             class="bg-white rounded-full p-2 shadow-lg hover:bg-red-50 transition-all duration-200 group/fav"
                                             title="Remove from favorites">
-                                            <svg class="w-5 h-5 text-purple-600 group-hover/fav:text-red-600 transition-colors duration-200" fill="currentColor" viewBox="0 0 24 24">
-                                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                            <svg class="w-5 h-5 text-purple-600 group-hover/fav:text-red-600 transition-colors duration-200"
+                                                fill="currentColor" viewBox="0 0 24 24">
+                                                <path
+                                                    d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                                             </svg>
                                         </button>
                                     </form>
@@ -820,7 +955,8 @@
                                 {{-- Product Info --}}
                                 <div class="p-4">
                                     <a href="{{ route('product.overview', $product) }}" class="block">
-                                        <h3 class="font-semibold text-lg text-gray-800 mb-2 line-clamp-2 hover:text-purple-600 transition-colors duration-200">
+                                        <h3
+                                            class="font-semibold text-lg text-gray-800 mb-2 line-clamp-2 hover:text-purple-600 transition-colors duration-200">
                                             {{ $product->name }}
                                         </h3>
                                     </a>
@@ -862,19 +998,21 @@
 
 <!-- Delete Confirmation Modal -->
 <div id="deleteModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 relative transform transition-all duration-300 scale-100">
+    <div
+        class="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 relative transform transition-all duration-300 scale-100">
         <!-- Close Button -->
         <button onclick="closeDeleteModal()"
             class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors duration-200 p-1 rounded-full hover:bg-gray-100">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
         </button>
 
         <!-- Warning Icon -->
         <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full">
             <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
         </div>
 
@@ -885,10 +1023,14 @@
                 Your account will be scheduled for deletion in <strong>30 days</strong>. During this period:
             </p>
             <ul class="text-sm text-gray-600 text-left space-y-2 mb-6">
-                <li class="flex items-center"><span class="w-2 h-2 bg-red-600 rounded-full mr-3"></span>You can still cancel the deletion request</li>
-                <li class="flex items-center"><span class="w-2 h-2 bg-red-600 rounded-full mr-3"></span>Your account will remain active until the deletion date</li>
-                <li class="flex items-center"><span class="w-2 h-2 bg-red-600 rounded-full mr-3"></span>All your data will be permanently removed after 30 days</li>
-                <li class="flex items-center"><span class="w-2 h-2 bg-red-600 rounded-full mr-3"></span>This action cannot be undone once completed</li>
+                <li class="flex items-center"><span class="w-2 h-2 bg-red-600 rounded-full mr-3"></span>You can still
+                    cancel the deletion request</li>
+                <li class="flex items-center"><span class="w-2 h-2 bg-red-600 rounded-full mr-3"></span>Your account
+                    will remain active until the deletion date</li>
+                <li class="flex items-center"><span class="w-2 h-2 bg-red-600 rounded-full mr-3"></span>All your data
+                    will be permanently removed after 30 days</li>
+                <li class="flex items-center"><span class="w-2 h-2 bg-red-600 rounded-full mr-3"></span>This action
+                    cannot be undone once completed</li>
             </ul>
             <p class="text-sm text-gray-600 mb-6 font-medium">
                 Are you sure you want to proceed?
@@ -911,12 +1053,13 @@
 
 <!-- Review Modal -->
 <div id="reviewModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 relative transform transition-all duration-300 scale-100">
+    <div
+        class="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 relative transform transition-all duration-300 scale-100">
         <!-- Close Button -->
         <button onclick="closeReviewModal()"
             class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors duration-200 p-1 rounded-full hover:bg-gray-100">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
         </button>
 
@@ -935,7 +1078,8 @@
             <!-- Rating -->
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-3">Rating</label>
-                <select name="rating" id="modalRating" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200">
+                <select name="rating" id="modalRating" required
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200">
                     <option value="">Select Rating</option>
                     <option value="5">★★★★★ (5) - Excellent</option>
                     <option value="4">★★★★ (4) - Very Good</option>
@@ -948,7 +1092,8 @@
             <!-- Comment -->
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-3">Comment</label>
-                <textarea name="comment" id="modalComment" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200 resize-none"
+                <textarea name="comment" id="modalComment" rows="4"
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200 resize-none"
                     placeholder="Share your experience with this shop..."></textarea>
             </div>
 
@@ -1046,19 +1191,96 @@
     function measurementsForm() {
         return {
             showForm: false,
-            form: {
+            measurementUnit: 'inches',
+            // Store inch values from database
+            inchValues: {
                 chest: Number('{{ Auth::user()->user_measurements->chest ?? 0 }}') || '',
                 waist: Number('{{ Auth::user()->user_measurements->waist ?? 0 }}') || '',
                 hips: Number('{{ Auth::user()->user_measurements->hips ?? 0 }}') || '',
                 shoulder: Number('{{ Auth::user()->user_measurements->shoulder ?? 0 }}') || ''
+            },
+            // Store current input values (either inches or cm based on toggle)
+            inputValues: {
+                chest: '',
+                waist: '',
+                hips: '',
+                shoulder: ''
             },
             errors: {},
             generalError: '',
             successMessage: '',
             loading: false,
 
+            // Initialize when component loads
+            init() {
+                this.switchToInches(); // Start in inches mode
+            },
+
+            // Conversion functions
+            convertToCm(inches) {
+                if (!inches || inches === '' || isNaN(inches)) return '';
+                return (parseFloat(inches) * 2.54).toFixed(1);
+            },
+
+            convertToInches(cm) {
+                if (!cm || cm === '' || isNaN(cm)) return '';
+                return (parseFloat(cm) / 2.54).toFixed(1);
+            },
+
+            // Switch to inches mode
+            switchToInches() {
+                this.measurementUnit = 'inches';
+                // Display inch values directly from database
+                this.inputValues.chest = this.inchValues.chest || '';
+                this.inputValues.waist = this.inchValues.waist || '';
+                this.inputValues.hips = this.inchValues.hips || '';
+                this.inputValues.shoulder = this.inchValues.shoulder || '';
+            },
+
+            // Switch to centimeters mode
+            switchToCentimeters() {
+                this.measurementUnit = 'centimeters';
+                // Convert inch values to cm for display
+                this.inputValues.chest = this.inchValues.chest ? this.convertToCm(this.inchValues.chest) : '';
+                this.inputValues.waist = this.inchValues.waist ? this.convertToCm(this.inchValues.waist) : '';
+                this.inputValues.hips = this.inchValues.hips ? this.convertToCm(this.inchValues.hips) : '';
+                this.inputValues.shoulder = this.inchValues.shoulder ? this.convertToCm(this.inchValues.shoulder) : '';
+            },
+
+            // Handle input changes
+            handleInput(field, value) {
+                if (!value || value === '' || isNaN(value)) {
+                    this.inputValues[field] = '';
+                    this.inchValues[field] = '';
+                    return;
+                }
+
+                if (this.measurementUnit === 'inches') {
+                    // In inches mode: store directly to inchValues
+                    this.inchValues[field] = parseFloat(value);
+                    this.inputValues[field] = value;
+                } else {
+                    // In centimeters mode: convert to inches and store
+                    const inchValue = this.convertToInches(value);
+                    this.inchValues[field] = inchValue;
+                    this.inputValues[field] = value; // Keep cm value for display
+                }
+            },
+
+            // Display measurement in current unit for the summary
+            displayMeasurement(field) {
+                const value = this.inchValues[field];
+                if (!value || value === '' || isNaN(value)) return '--';
+
+                if (this.measurementUnit === 'inches') {
+                    return parseFloat(value).toFixed(1);
+                } else {
+                    return this.convertToCm(value);
+                }
+            },
+
             validateField(field) {
-                let value = this.form[field];
+                const value = this.inchValues[field];
                 this.errors[field] = '';
 
                 if (value === '' || value === null || (typeof value === 'number' && isNaN(value))) {
@@ -1100,22 +1322,35 @@
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
-                            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+                            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+                            "X-Requested-With": "XMLHttpRequest"
                         },
-                        body: JSON.stringify(this.form)
+                        body: JSON.stringify(this.inchValues)
                     });
 
                     const data = await response.json();
 
                     if (response.ok) {
-                        this.successMessage = data.message || 'Measurements saved successfully!';
+                        // Use your toast system
+                        if (typeof showToast === 'function') {
+                            showToast(data.message || 'Measurements updated successfully!', 'success');
+                        }
                         this.showForm = false;
-                        setTimeout(() => window.location.reload(), 1500);
+                        // Reload the page after a short delay to show updated measurements
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
                     } else {
                         this.generalError = data.message || 'Failed to save measurements.';
+                        if (typeof showToast === 'function') {
+                            showToast(this.generalError, 'error');
+                        }
                     }
                 } catch (err) {
                     this.generalError = 'An error occurred. Please try again.';
+                    if (typeof showToast === 'function') {
+                        showToast(this.generalError, 'error');
+                    }
                 } finally {
                     this.loading = false;
                 }

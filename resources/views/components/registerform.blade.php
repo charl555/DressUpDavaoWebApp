@@ -326,6 +326,25 @@
                     <div class="text-center mb-6">
                         <h3 class="text-lg font-semibold text-gray-900">Body Measurements</h3>
                         <p class="text-sm text-gray-600">Help us recommend the perfect fit (optional)</p>
+
+                        <!-- Unit Toggle -->
+                        <div class="flex items-center justify-center space-x-3 mt-4">
+                            <span class="text-sm font-medium text-gray-700">Units:</span>
+                            <div class="flex bg-gray-100 rounded-lg p-1">
+                                <button type="button" @click="measurementUnit = 'inches'" :class="measurementUnit === 'inches' 
+                    ? 'bg-white shadow-sm text-violet-700' 
+                    : 'text-gray-600 hover:text-gray-900'"
+                                    class="px-3 py-1 text-sm font-medium rounded-md transition-all duration-200">
+                                    Inches
+                                </button>
+                                <button type="button" @click="measurementUnit = 'centimeters'" :class="measurementUnit === 'centimeters' 
+                    ? 'bg-white shadow-sm text-violet-700' 
+                    : 'text-gray-600 hover:text-gray-900'"
+                                    class="px-3 py-1 text-sm font-medium rounded-md transition-all duration-200">
+                                    Centimeters
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Measurements Grid -->
@@ -333,45 +352,69 @@
                         <!-- Chest -->
                         <div>
                             <label for="chest" class="block text-sm font-medium text-gray-700 mb-2">
-                                Chest (inches)
+                                Chest (<span x-text="measurementUnit === 'inches' ? 'inches' : 'cm'"></span>)
                             </label>
-                            <input type="number" name="chest" id="chest" x-model="form.measurements.chest" step="0.5"
-                                min="20" max="60" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
-                                       focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
-                                       transition-colors duration-200" placeholder="e.g., 36" />
+                            <input type="number" :name="measurementUnit === 'inches' ? 'chest' : 'chest_cm'"
+                                :id="measurementUnit === 'inches' ? 'chest' : 'chest_cm'"
+                                x-model="measurementUnit === 'inches' ? form.measurements.chest : chestCm"
+                                @input="measurementUnit === 'centimeters' ? updateMeasurementFromCm('chest', $event.target.value) : null"
+                                :step="measurementUnit === 'inches' ? '0.5' : '0.1'"
+                                :min="measurementUnit === 'inches' ? '20' : '50'"
+                                :max="measurementUnit === 'inches' ? '60' : '152'" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+                   transition-colors duration-200"
+                                :placeholder="measurementUnit === 'inches' ? 'e.g., 36' : 'e.g., 91.5'" />
                         </div>
 
                         <!-- Waist -->
                         <div>
                             <label for="waist" class="block text-sm font-medium text-gray-700 mb-2">
-                                Waist (inches)
+                                Waist (<span x-text="measurementUnit === 'inches' ? 'inches' : 'cm'"></span>)
                             </label>
-                            <input type="number" name="waist" id="waist" x-model="form.measurements.waist" step="0.5"
-                                min="20" max="50" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
-                                       focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
-                                       transition-colors duration-200" placeholder="e.g., 32" />
+                            <input type="number" :name="measurementUnit === 'inches' ? 'waist' : 'waist_cm'"
+                                :id="measurementUnit === 'inches' ? 'waist' : 'waist_cm'"
+                                x-model="measurementUnit === 'inches' ? form.measurements.waist : waistCm"
+                                @input="measurementUnit === 'centimeters' ? updateMeasurementFromCm('waist', $event.target.value) : null"
+                                :step="measurementUnit === 'inches' ? '0.5' : '0.1'"
+                                :min="measurementUnit === 'inches' ? '20' : '50'"
+                                :max="measurementUnit === 'inches' ? '50' : '127'" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+                   transition-colors duration-200"
+                                :placeholder="measurementUnit === 'inches' ? 'e.g., 32' : 'e.g., 81'" />
                         </div>
 
                         <!-- Hips -->
                         <div>
                             <label for="hips" class="block text-sm font-medium text-gray-700 mb-2">
-                                Hips (inches)
+                                Hips (<span x-text="measurementUnit === 'inches' ? 'inches' : 'cm'"></span>)
                             </label>
-                            <input type="number" name="hips" id="hips" x-model="form.measurements.hips" step="0.5"
-                                min="20" max="60" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
-                                       focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
-                                       transition-colors duration-200" placeholder="e.g., 38" />
+                            <input type="number" :name="measurementUnit === 'inches' ? 'hips' : 'hips_cm'"
+                                :id="measurementUnit === 'inches' ? 'hips' : 'hips_cm'"
+                                x-model="measurementUnit === 'inches' ? form.measurements.hips : hipsCm"
+                                @input="measurementUnit === 'centimeters' ? updateMeasurementFromCm('hips', $event.target.value) : null"
+                                :step="measurementUnit === 'inches' ? '0.5' : '0.1'"
+                                :min="measurementUnit === 'inches' ? '20' : '50'"
+                                :max="measurementUnit === 'inches' ? '60' : '152'" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+                   transition-colors duration-200"
+                                :placeholder="measurementUnit === 'inches' ? 'e.g., 38' : 'e.g., 96.5'" />
                         </div>
 
                         <!-- Shoulder -->
                         <div>
                             <label for="shoulder" class="block text-sm font-medium text-gray-700 mb-2">
-                                Shoulder (inches)
+                                Shoulder (<span x-text="measurementUnit === 'inches' ? 'inches' : 'cm'"></span>)
                             </label>
-                            <input type="number" name="shoulder" id="shoulder" x-model="form.measurements.shoulder"
-                                step="0.5" min="10" max="30" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
-                                       focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
-                                       transition-colors duration-200" placeholder="e.g., 16" />
+                            <input type="number" :name="measurementUnit === 'inches' ? 'shoulder' : 'shoulder_cm'"
+                                :id="measurementUnit === 'inches' ? 'shoulder' : 'shoulder_cm'"
+                                x-model="measurementUnit === 'inches' ? form.measurements.shoulder : shoulderCm"
+                                @input="measurementUnit === 'centimeters' ? updateMeasurementFromCm('shoulder', $event.target.value) : null"
+                                :step="measurementUnit === 'inches' ? '0.5' : '0.1'"
+                                :min="measurementUnit === 'inches' ? '10' : '25'"
+                                :max="measurementUnit === 'inches' ? '30' : '76'" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+                   transition-colors duration-200"
+                                :placeholder="measurementUnit === 'inches' ? 'e.g., 16' : 'e.g., 40.5'" />
                         </div>
                     </div>
 
@@ -382,23 +425,25 @@
                             <li><strong>Chest:</strong> Measure around the fullest part of your chest</li>
                             <li><strong>Waist:</strong> Measure around your natural waistline</li>
                             <li><strong>Hips:</strong> Measure around the fullest part of your hips</li>
-                            <li><strong>Shoulder:</strong> Measure from shoulder point to shoulder point across
-                                your back</li>
+                            <li><strong>Shoulder:</strong> Measure from shoulder point to shoulder point across your
+                                back</li>
                         </ul>
+                        <div class="mt-2 text-xs text-blue-700">
+                            <strong>Note:</strong> All measurements are stored in inches for consistency.
+                        </div>
                     </div>
 
                     <!-- Navigation -->
                     <div class="flex justify-between pt-6">
                         <button type="button" @click="prevStep()" class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50
-                                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500
-                                       transition-colors duration-200">
+                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500
+                   transition-colors duration-200">
                             Back
                         </button>
                         <div class="flex space-x-3">
-                            <button type="submit" :disabled="loading"
-                                class="px-6 py-3 bg-violet-600 text-white font-medium rounded-md hover:bg-violet-700
-                                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500
-                                           disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                            <button type="submit" :disabled="loading" class="px-6 py-3 bg-violet-600 text-white font-medium rounded-md hover:bg-violet-700
+                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500
+                       disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
                                 <span x-show="!loading">Create Account</span>
                                 <span x-show="loading" class="flex items-center">
                                     <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
@@ -452,6 +497,7 @@
     function registerForm() {
         return {
             currentStep: 1,
+            measurementUnit: 'inches',
             form: {
                 name: '',
                 email: '',
@@ -464,6 +510,10 @@
                 fabric_preference: '',
                 measurements: { chest: '', waist: '', hips: '', shoulder: '' }
             },
+            chestCm: '',
+            waistCm: '',
+            hipsCm: '',
+            shoulderCm: '',
             errors: {},
             showPassword: false,
             showConfirmPassword: false,
@@ -471,6 +521,50 @@
             generalError: '',
             emailStatus: '',
             passwordStrength: { label: '', percent: 0, class: '', textClass: '' },
+
+            // Initialize centimeter values when component loads
+            init() {
+                // Set up centimeter values based on existing inch values
+                if (this.form.measurements.chest) {
+                    this.chestCm = this.convertToCm(this.form.measurements.chest);
+                }
+                if (this.form.measurements.waist) {
+                    this.waistCm = this.convertToCm(this.form.measurements.waist);
+                }
+                if (this.form.measurements.hips) {
+                    this.hipsCm = this.convertToCm(this.form.measurements.hips);
+                }
+                if (this.form.measurements.shoulder) {
+                    this.shoulderCm = this.convertToCm(this.form.measurements.shoulder);
+                }
+            },
+
+            // Conversion functions
+            convertToCm(inches) {
+                if (!inches || inches === '' || isNaN(inches)) return '';
+                return (parseFloat(inches) * 2.54).toFixed(1);
+            },
+
+            convertToInches(cm) {
+                if (!cm || cm === '' || isNaN(cm)) return '';
+                return (parseFloat(cm) / 2.54).toFixed(1);
+            },
+
+            // Update measurement when user inputs in centimeters
+            updateMeasurementFromCm(field, cmValue) {
+                if (!cmValue || cmValue === '' || isNaN(cmValue)) {
+                    this.form.measurements[field] = '';
+                    this[field + 'Cm'] = '';
+                    return;
+                }
+
+                // Convert to inches and store
+                const inchesValue = (parseFloat(cmValue) / 2.54).toFixed(1);
+                this.form.measurements[field] = inchesValue;
+
+                // Update the display value (in case of rounding)
+                this[field + 'Cm'] = cmValue;
+            },
 
             formatPhoneNumber() {
                 // Remove all non-digit characters
