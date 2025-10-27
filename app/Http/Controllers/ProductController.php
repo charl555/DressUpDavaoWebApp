@@ -43,7 +43,7 @@ class ProductController extends Controller
     public function productList(Request $request)
     {
         $query = Products::where('visibility', 'Yes')
-            ->with(['product_images', 'occasions', 'user.shop', 'product_3d_models']);
+            ->with(['product_images', 'events', 'user.shop', 'product_3d_models']);
 
         // Gender-based category filtering
         $userGender = auth()->check() ? auth()->user()->gender : null;
@@ -57,9 +57,16 @@ class ProductController extends Controller
         }
         // For guests or users with other/prefer not to say gender, show all products
 
+        // Type filter - FIXED: Use whereIn for multiple selections
+        if ($request->filled('type')) {
+            $types = (array) $request->type;
+            $query->whereIn('type', $types);
+        }
+
         // Subtype filter
         if ($request->filled('subtype')) {
-            $query->whereIn('subtype', (array) $request->subtype);
+            $subtypes = (array) $request->subtype;
+            $query->whereIn('subtype', $subtypes);
         }
 
         // Size filter
@@ -76,7 +83,7 @@ class ProductController extends Controller
             $query->whereIn('size', $dbSizes);
         }
 
-        // Color filter
+        // Color filter - FIXED: Use OR logic within the same color field
         if ($request->filled('color')) {
             $colors = (array) $request->color;
             $query->where(function ($q) use ($colors) {
@@ -86,11 +93,11 @@ class ProductController extends Controller
             });
         }
 
-        // Occasion filter
-        if ($request->filled('occasion')) {
-            $occasions = (array) $request->occasion;
-            $query->whereHas('occasions', function ($q) use ($occasions) {
-                $q->whereIn('occasion_name', $occasions);
+        // Event filter - UPDATED: Use events relationship with event_name
+        if ($request->filled('event')) {
+            $events = (array) $request->event;
+            $query->whereHas('events', function ($q) use ($events) {
+                $q->whereIn('event_name', $events);
             });
         }
 

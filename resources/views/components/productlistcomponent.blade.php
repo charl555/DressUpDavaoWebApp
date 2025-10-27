@@ -7,7 +7,8 @@
             Filter Products
         </h2>
 
-        <!-- Type Filter - Gender Based -->
+        @guest
+        <!-- Type Filter -->
         <div class="mb-6 border-b border-gray-200 pb-4">
             <details class="group">
                 <summary
@@ -17,6 +18,46 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                         </svg>
                         Type
+                    </span>
+                    <span class="transform transition-transform duration-200 group-open:rotate-180">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </span>
+                </summary>
+                <div class="mt-3 space-y-3 pl-2">
+                    @php
+                        $types = ['Gown', 'Suit'];
+                        $selectedTypes = request('type', []);
+                        if (!is_array($selectedTypes)) {
+                            $selectedTypes = [$selectedTypes];
+                        }
+                    @endphp
+                    @foreach($types as $type)
+                        <label class="flex items-center p-2 rounded-lg hover:bg-purple-50 transition-colors duration-200 cursor-pointer">
+                            <input type="checkbox" name="type[]" value="{{ $type }}"
+                                class="form-checkbox text-purple-600 rounded focus:ring-purple-500 filter-input"
+                                {{ in_array($type, $selectedTypes) ? 'checked' : '' }}>
+                            <span class="ml-3 text-gray-700 font-medium">{{ $type }}</span>
+                        </label>
+                    @endforeach
+                </div>
+            </details>
+        </div>
+        @endguest
+
+        <!-- Subtype Filter -->
+        <div class="mb-6 border-b border-gray-200 pb-4">
+            <details class="group">
+                <summary
+                    class="flex justify-between items-center cursor-pointer py-3 text-lg font-semibold text-gray-800 hover:text-purple-700 transition-colors duration-200 bg-gray-50 rounded-lg px-4">
+                    <span class="flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                        Style
                     </span>
                     <span class="transform transition-transform duration-200 group-open:rotate-180">
                         <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -72,6 +113,7 @@
             </details>
         </div>
 
+        <!-- Size Filter -->
         <div class="mb-6 border-b border-gray-200 pb-4">
             <details class="group">
                 <summary
@@ -121,6 +163,7 @@
             </details>
         </div>
 
+        <!-- Color Filter -->
         <div class="mb-6 border-b border-gray-200 pb-4">
             <details class="group">
                 <summary
@@ -170,6 +213,7 @@
             </details>
         </div>
 
+        <!-- Event Filter (Updated from Occasion) -->
         <div class="mb-6 border-b border-gray-200 pb-4">
             <details class="group">
                 <summary
@@ -178,7 +222,7 @@
                         <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
                         </svg>
-                        Occasion
+                        Event
                     </span>
                     <span class="transform transition-transform duration-200 group-open:rotate-180">
                         <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -190,18 +234,18 @@
                 </summary>
                 <div class="mt-3 space-y-3 pl-2">
                     @php
-                        $occasions = ['Formal', 'Wedding', 'Prom', 'Business', 'Party', 'Graduation', 'Anniversary', 'Debut', 'Gala'];
-                        $selectedOccasions = request('occasion', []);
-                        if (!is_array($selectedOccasions)) {
-                            $selectedOccasions = [$selectedOccasions];
+                        $events = ['Formal', 'Wedding', 'Prom', 'Business', 'Party', 'Graduation', 'Anniversary', 'Debut', 'Gala'];
+                        $selectedEvents = request('event', []);
+                        if (!is_array($selectedEvents)) {
+                            $selectedEvents = [$selectedEvents];
                         }
                     @endphp
-                    @foreach($occasions as $occasion)
+                    @foreach($events as $event)
                         <label class="flex items-center p-2 rounded-lg hover:bg-purple-50 transition-colors duration-200 cursor-pointer">
-                            <input type="checkbox" name="occasion[]" value="{{ $occasion }}"
+                            <input type="checkbox" name="event[]" value="{{ $event }}"
                                 class="form-checkbox text-purple-600 rounded focus:ring-purple-500 filter-input"
-                                {{ in_array($occasion, $selectedOccasions) ? 'checked' : '' }}>
-                            <span class="ml-3 text-gray-700 font-medium">{{ $occasion }}</span>
+                                {{ in_array($event, $selectedEvents) ? 'checked' : '' }}>
+                            <span class="ml-3 text-gray-700 font-medium">{{ $event }}</span>
                         </label>
                     @endforeach
                 </div>
@@ -269,21 +313,14 @@
             </div>
         @endif
 
-        <!-- Action Buttons -->
-        <div class="flex space-x-4">
+        <!-- Clear Filters Button Only -->
+        <div class="flex">
             <button type="button" id="clearFiltersBtn"
-                class="flex-1 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 flex items-center justify-center">
+                class="w-full py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 flex items-center justify-center">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                 </svg>
-                Clear All
-            </button>
-            <button type="submit"
-                class="flex-1 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-                Apply
+                Clear All Filters
             </button>
         </div>
     </form>
@@ -294,7 +331,7 @@
             <p class="text-gray-600 mt-2 text-center sm:text-left">Discover the perfect outfit for every occasion</p>
         </div>
     
-        <!-- Products Grid -->
+        <!-- Products Grid with Skeleton Loading -->
         <div id="productsContainer">
             @include('partials.products-grid', ['products' => $products])
         </div>
@@ -344,6 +381,16 @@
     .filter-section::-webkit-scrollbar-thumb:hover {
         background: #8b5cf6;
     }
+
+    .fade-out {
+        opacity: 0;
+        transition: opacity 0.3s ease-out;
+    }
+
+    .fade-in {
+        opacity: 1;
+        transition: opacity 0.3s ease-in;
+    }
 </style>
 
 <script>
@@ -355,6 +402,29 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let isLoading = false;
     let currentRequest = null;
+
+    // Show skeleton loading
+    function showSkeletonLoading() {
+        const skeletonHTML = `
+            <div id="skeleton-loading">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8 px-4 justify-items-center lg:justify-items-start">
+                    ${Array(8).fill(0).map(() => `
+                        <div class="max-w-[400px] w-full animate-pulse">
+                            <div class="h-96 sm:h-[400px] md:h-[400px] lg:h-[400px] xl:h-[400px] w-full bg-gray-300 rounded-md shadow-md"></div>
+                            <div class="mt-4 space-y-2">
+                                <div class="h-5 bg-gray-300 rounded w-3/4"></div>
+                                <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                                <div class="h-4 bg-gray-200 rounded w-1/3"></div>
+                                <div class="h-3 bg-gray-200 rounded w-2/3"></div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        
+        productsContainer.innerHTML = skeletonHTML;
+    }
 
     // Update URL without page reload
     function updateURL(params) {
@@ -369,42 +439,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = {};
         
         for (let [key, value] of formData.entries()) {
-            if (data[key]) {
-                if (Array.isArray(data[key])) {
-                    data[key].push(value);
-                } else {
-                    data[key] = [data[key], value];
+            if (key.endsWith('[]')) {
+                if (!data[key]) {
+                    data[key] = [];
                 }
+                data[key].push(value);
             } else {
                 data[key] = value;
             }
         }
         
-        // Handle checkboxes properly
-        filterInputs.forEach(input => {
-            if (input.type === 'checkbox') {
-                if (input.checked) {
-                    if (input.name.endsWith('[]')) {
-                        if (!data[input.name] || !Array.isArray(data[input.name])) {
-                            data[input.name] = [];
-                        }
-                        if (!data[input.name].includes(input.value)) {
-                            data[input.name].push(input.value);
-                        }
-                    } else {
-                        data[input.name] = input.value;
-                    }
-                } else if (input.name.endsWith('[]') && data[input.name] && Array.isArray(data[input.name])) {
-                    data[input.name] = data[input.name].filter(val => val !== input.value);
-                    if (data[input.name].length === 0) {
-                        delete data[input.name];
-                    }
-                } else if (!input.checked && data[input.name] === input.value) {
-                    delete data[input.name];
-                }
-            }
-        });
-
         return data;
     }
 
@@ -423,14 +467,32 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update URL
         updateURL(formData);
         
+        // Show skeleton loading
+        showSkeletonLoading();
+        
+        // Build URL with parameters
+        const params = new URLSearchParams();
+        Object.keys(formData).forEach(key => {
+            if (Array.isArray(formData[key])) {
+                formData[key].forEach(value => {
+                    params.append(key, value);
+                });
+            } else {
+                params.append(key, formData[key]);
+            }
+        });
+
         // AJAX request
         currentRequest = new XMLHttpRequest();
-        currentRequest.open('GET', '{{ route("product.list") }}?' + new URLSearchParams(formData).toString());
+        currentRequest.open('GET', '{{ route("product.list") }}?' + params.toString());
         currentRequest.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         
         currentRequest.onload = function() {
             if (currentRequest.status === 200) {
                 productsContainer.innerHTML = currentRequest.responseText;
+                
+                // Re-initialize pagination event listeners
+                initializePaginationListeners();
             } else {
                 console.error('Error loading products');
                 productsContainer.innerHTML = '<div class="col-span-full text-center text-red-500 py-8">Error loading products. Please try again.</div>';
@@ -442,6 +504,75 @@ document.addEventListener('DOMContentLoaded', function() {
         
         currentRequest.onerror = function() {
             console.error('Request failed');
+            isLoading = false;
+            currentRequest = null;
+        };
+        
+        currentRequest.send();
+    }
+
+    // Initialize pagination event listeners
+    function initializePaginationListeners() {
+        const paginationLinks = document.querySelectorAll('.pagination-link');
+        paginationLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const url = this.getAttribute('href');
+                if (url) {
+                    loadPage(url);
+                }
+            });
+        });
+    }
+
+    // Load page via AJAX
+    function loadPage(url) {
+        if (isLoading) {
+            if (currentRequest) {
+                currentRequest.abort();
+            }
+        }
+
+        isLoading = true;
+        
+        // Show skeleton loading
+        showSkeletonLoading();
+        
+        // AJAX request
+        currentRequest = new XMLHttpRequest();
+        currentRequest.open('GET', url);
+        currentRequest.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        
+        currentRequest.onload = function() {
+            if (currentRequest.status === 200) {
+                productsContainer.innerHTML = currentRequest.responseText;
+                
+                // Update URL without page reload
+                if (history.pushState) {
+                    const newUrl = new URL(url, window.location.origin);
+                    window.history.pushState({ path: newUrl.href }, '', newUrl.href);
+                }
+                
+                // Re-initialize pagination event listeners
+                initializePaginationListeners();
+                
+                // Scroll to top of products section
+                productsContainer.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            } else {
+                console.error('Error loading page');
+                window.location.href = url;
+            }
+            
+            isLoading = false;
+            currentRequest = null;
+        };
+        
+        currentRequest.onerror = function() {
+            console.error('Request failed');
+            window.location.href = url;
             isLoading = false;
             currentRequest = null;
         };
@@ -473,11 +604,12 @@ document.addEventListener('DOMContentLoaded', function() {
         loadProducts();
     });
 
-    // Prevent form submission (we're using AJAX)
-    filterForm.addEventListener('submit', function(e) {
-        e.preventDefault();
+    // Initialize pagination listeners on page load
+    initializePaginationListeners();
+
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', function(e) {
         loadProducts();
     });
-
 });
 </script>
