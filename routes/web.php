@@ -111,6 +111,47 @@ Route::get('/user/review-data/{shop}', [UserController::class, 'getReviewData'])
 Route::post('/account/request-deletion', [UserController::class, 'requestAccountDeletion'])->name('account.request-deletion');
 Route::delete('/account/cancel-deletion', [UserController::class, 'cancelAccountDeletion'])->name('account.cancel-deletion');
 
+// Shop policy route (accessible to authenticated users)
+Route::middleware('auth')->get('/public/shop-policy/{id}', function ($id) {
+    try {
+        $shop = null;
+
+        // First try to find shop by shop_id
+        $shop = Shops::where('shop_id', $id)->first();
+
+        // If not found, try to find by product_id
+        if (!$shop) {
+            $product = Products::with('user.shop')->where('product_id', $id)->first();
+            if ($product && $product->user && $product->user->shop) {
+                $shop = $product->user->shop;
+            }
+        }
+
+        if (!$shop) {
+            return response()->json(['error' => 'Shop not found for this product'], 404);
+        }
+
+        // Get the shop policy, with fallback message
+        $policy = $shop->shop_policy;
+        if (empty($policy) || trim($policy) === '') {
+            $policy = 'No specific rental policy has been set by this shop. Please contact the shop directly for rental terms and conditions.';
+        }
+
+        return response()->json([
+            'policy' => $policy,
+            'shop_name' => $shop->shop_name,
+            'shop_id' => $shop->shop_id
+        ]);
+    } catch (\Exception $e) {
+        \Log::error('Shop policy fetch error: ' . $e->getMessage(), [
+            'product_id' => $id,
+            'user_id' => auth()->id(),
+            'error' => $e->getTraceAsString()
+        ]);
+        return response()->json(['error' => 'Unable to fetch shop policy. Please try again later.'], 500);
+    }
+})->name('shop.policy');
+
 // Chat routes (only for authenticated users)
 Route::middleware('auth')->group(function () {
     Route::get('/chat/conversation/{userId}', [App\Http\Controllers\ChatController::class, 'getConversation'])->name('chat.conversation');
@@ -120,32 +161,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/chat/admins', [App\Http\Controllers\ChatController::class, 'getAdmins'])->name('chat.admins');
     Route::get('/chat/users', [App\Http\Controllers\ChatController::class, 'getAllUsers'])->name('chat.users');
     Route::get('/chat/unread-count', [App\Http\Controllers\ChatController::class, 'getUnreadCount'])->name('chat.unread');
-
-    Route::get('/public/shop-policy/{id}', function ($id) {
-        try {
-            $shop = null;
-
-            $shop = Shops::where('shop_id', $id)->first();
-
-            if (!$shop) {
-                $product = Products::with('user.shop')->where('product_id', $id)->first();
-                if ($product && $product->user && $product->user->shop) {
-                    $shop = $product->user->shop;
-                }
-            }
-
-            if (!$shop) {
-                return response()->json(['error' => 'Shop not found'], 404);
-            }
-
-            return response()->json([
-                'policy' => $shop->shop_policy ?: 'No specific policy provided by this shop.'
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Shop policy fetch error: ' . $e->getMessage());
-            return response()->json(['error' => 'Unable to fetch shop policy'], 500);
-        }
-    });
 
     // Booking routes (admin only)
     Route::get('/chat/available-products', [App\Http\Controllers\ChatController::class, 'getAvailableProducts'])->name('chat.available-products');

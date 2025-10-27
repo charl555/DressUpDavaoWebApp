@@ -1,41 +1,46 @@
-<div id="inquiryModal" class="hidden fixed inset-0 bg-black/50 items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-auto p-6 relative">
+<div id="inquiryModal"
+    class="hidden fixed inset-0 bg-black/50 items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
+    <div
+        class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-auto p-4 sm:p-6 relative my-4 min-w-[280px] max-h-[90vh] overflow-y-auto">
         <button id="closeModalButton"
-            class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors duration-200 p-1 rounded-full hover:bg-gray-100">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            class="absolute top-2 right-2 sm:top-4 sm:right-4 text-gray-500 hover:text-gray-700 transition-colors duration-200 p-1 rounded-full hover:bg-gray-100 z-10">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
         </button>
 
-        <h3 class="text-2xl font-bold text-gray-900 mb-6 text-center flex items-center justify-center">
-            <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <h3
+            class="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 text-center flex items-center justify-center">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-purple-600" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
             Inquire About Rental
         </h3>
 
-        <form id="inquiryForm" action="#" method="POST" class="space-y-6">
+        <form id="inquiryForm" action="#" method="POST" class="space-y-4 sm:space-y-6">
             {{-- User Information --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-3 sm:gap-4">
                 <div>
-                    <label for="userName" class="block text-gray-700 text-sm font-semibold mb-2">Name</label>
+                    <label for="userName" class="block text-gray-700 text-sm font-semibold mb-1 sm:mb-2">Name</label>
                     <input type="text" id="userName" name="userName" readonly
-                        class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed focus:ring-2 focus:ring-purple-200"
+                        class="w-full p-2 sm:p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed focus:ring-2 focus:ring-purple-200 text-sm sm:text-base"
                         value="@auth{{ auth()->user()->name }}@else log in to inquire @endauth">
                 </div>
 
                 <div>
-                    <label for="userEmail" class="block text-gray-700 text-sm font-semibold mb-2">Email</label>
+                    <label for="userEmail" class="block text-gray-700 text-sm font-semibold mb-1 sm:mb-2">Email</label>
                     <input type="email" id="userEmail" name="userEmail" readonly
-                        class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed focus:ring-2 focus:ring-purple-200"
+                        class="w-full p-2 sm:p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed focus:ring-2 focus:ring-purple-200 text-sm sm:text-base"
                         value="@auth{{ auth()->user()->email }}@else log in to inquire @endauth">
                 </div>
             </div>
 
             {{-- Rental Date --}}
             <div>
-                <label for="rentalDate" class="block text-gray-700 text-sm font-semibold mb-2 flex items-center">
+                <label for="rentalDate"
+                    class="block text-gray-700 text-sm font-semibold mb-1 sm:mb-2 flex items-center">
                     <svg class="w-4 h-4 mr-1 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -43,26 +48,27 @@
                     Desired Rental Date
                 </label>
                 <input type="date" id="rentalDate" name="rentalDate" required
-                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200">
+                    class="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200 text-sm sm:text-base">
             </div>
 
             {{-- Message --}}
             <div>
-                <label for="inquiryMessage" class="block text-gray-700 text-sm font-semibold mb-2 flex items-center">
+                <label for="inquiryMessage"
+                    class="block text-gray-700 text-sm font-semibold mb-1 sm:mb-2 flex items-center">
                     <svg class="w-4 h-4 mr-1 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                     </svg>
                     Message
                 </label>
-                <textarea id="inquiryMessage" name="inquiryMessage" rows="4" required
-                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200 resize-none"
+                <textarea id="inquiryMessage" name="inquiryMessage" rows="3" required
+                    class="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200 resize-none text-sm sm:text-base"
                     placeholder="I would like to inquire about this product..."></textarea>
             </div>
 
             {{-- Shop Policy Section --}}
-            <div class="border-t border-gray-200 pt-4">
-                <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+            <div class="border-t border-gray-200 pt-3 sm:pt-4">
+                <h4 class="text-sm font-semibold text-gray-700 mb-2 sm:mb-3 flex items-center">
                     <svg class="w-4 h-4 mr-1 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -70,33 +76,34 @@
                     Shop Policy
                 </h4>
                 <div id="shopPolicyContent"
-                    class="bg-gray-50 p-4 rounded-lg max-h-32 overflow-y-auto text-sm text-gray-600 border border-gray-200">
+                    class="bg-gray-50 p-3 sm:p-4 rounded-lg max-h-24 sm:max-h-32 overflow-y-auto text-xs sm:text-sm text-gray-600 border border-gray-200">
                     Loading shop policy...
                 </div>
 
                 {{-- Agreement Checkbox - Hidden for guests --}}
-                <div id="agreementSection" class="mt-4 flex items-start space-x-3 @guest hidden @endguest">
+                <div id="agreementSection"
+                    class="mt-3 sm:mt-4 flex items-start space-x-2 sm:space-x-3 @guest hidden @endguest">
                     <input type="checkbox" id="agreeToPolicy" name="agreeToPolicy"
-                        class="h-5 w-5 text-purple-600 focus:ring-purple-500 border-gray-300 rounded mt-0.5">
-                    <label for="agreeToPolicy" class="block text-sm text-gray-700 leading-tight">
+                        class="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 focus:ring-purple-500 border-gray-300 rounded mt-0.5 flex-shrink-0">
+                    <label for="agreeToPolicy" class="block text-xs sm:text-sm text-gray-700 leading-tight">
                         I have read and agree to the shop's rental policy
                     </label>
                 </div>
             </div>
 
             {{-- Terms Notice --}}
-            <p class="text-sm text-gray-600 text-center border-t border-gray-200 pt-4">
+            <p class="text-xs sm:text-sm text-gray-600 text-center border-t border-gray-200 pt-3 sm:pt-4">
                 By submitting this inquiry, you agree to be contacted by DressUp Davao regarding the rental of this
                 product.
             </p>
 
             {{-- Submit Button --}}
             <button type="submit" id="submitInquiryBtn" disabled
-                class="w-full flex justify-center items-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 relative disabled:from-purple-300 disabled:to-indigo-300 disabled:cursor-not-allowed hover:from-purple-700 hover:to-indigo-700 shadow-md hover:shadow-lg">
+                class="w-full flex justify-center items-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2 sm:py-3 rounded-lg font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 relative disabled:from-purple-300 disabled:to-indigo-300 disabled:cursor-not-allowed hover:from-purple-700 hover:to-indigo-700 shadow-md hover:shadow-lg text-sm sm:text-base">
                 @auth
                     <span class="btn-text">Send Inquiry</span>
                     <span
-                        class="loading hidden absolute right-6 animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5"></span>
+                        class="loading hidden absolute right-4 sm:right-6 animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4 sm:w-5 sm:h-5"></span>
                 @else
                     Login to Inquire
                 @endauth
@@ -190,7 +197,8 @@
 
         const fetchShopPolicy = async (productId) => {
             if (!productId) {
-                shopPolicyContent.innerHTML = '<p class="text-gray-500 text-center py-4">No shop policy available.</p>';
+                shopPolicyContent.innerHTML = '<p class="text-gray-500 text-center py-4">No product ID available for policy lookup.</p>';
+                console.warn('fetchShopPolicy called without productId');
                 return;
             }
 
@@ -199,7 +207,7 @@
                 shopPolicyContent.innerHTML = `
                     <div class="text-center py-4">
                         <p class="text-gray-500 mb-3">Log in to view the shop policy</p>
-                        <button type="button" onclick="window.location.href='/login'" 
+                        <button type="button" onclick="window.location.href='/login'"
                             class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 font-medium">
                             Log In Now
                         </button>
@@ -208,20 +216,52 @@
                 return;
             }
 
-            try {
-                // Use product ID - the API will handle finding the shop
-                const policyResponse = await fetch(`/api/shop-policy/${productId}`);
-                const policyData = await policyResponse.json();
+            console.log('Fetching shop policy for product ID:', productId);
 
-                if (policyResponse.ok && policyData.policy) {
+            try {
+                // Use the correct route path that matches the backend
+                const policyResponse = await fetch(`/public/shop-policy/${productId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    }
+                });
+
+                if (!policyResponse.ok) {
+                    throw new Error(`HTTP ${policyResponse.status}: ${policyResponse.statusText}`);
+                }
+
+                const policyData = await policyResponse.json();
+                console.log('Shop policy response:', policyData);
+
+                if (policyData.policy) {
                     currentShopPolicy = policyData.policy;
-                    shopPolicyContent.innerHTML = `<p class="whitespace-pre-wrap">${currentShopPolicy}</p>`;
+                    const shopName = policyData.shop_name ? ` - ${policyData.shop_name}` : '';
+                    shopPolicyContent.innerHTML = `
+                        <div>
+                            ${policyData.shop_name ? `<p class="text-sm font-medium text-gray-700 mb-2">${policyData.shop_name} Rental Policy:</p>` : ''}
+                            <p class="whitespace-pre-wrap text-gray-600">${currentShopPolicy}</p>
+                        </div>
+                    `;
+                } else if (policyData.error) {
+                    shopPolicyContent.innerHTML = `<p class="text-gray-500 text-center py-4">${policyData.error}</p>`;
                 } else {
                     shopPolicyContent.innerHTML = '<p class="text-gray-500 text-center py-4">No shop policy available.</p>';
                 }
             } catch (error) {
                 console.error('Error fetching shop policy:', error);
-                shopPolicyContent.innerHTML = '<p class="text-gray-500 text-center py-4">Unable to load shop policy. Please try again.</p>';
+                shopPolicyContent.innerHTML = `
+                    <div class="text-center py-4">
+                        <p class="text-red-500 text-sm mb-2">Unable to load shop policy</p>
+                        <p class="text-gray-400 text-xs">${error.message}</p>
+                        <button type="button" onclick="window.retryFetchShopPolicy()"
+                            class="mt-2 text-purple-600 hover:text-purple-700 text-sm underline">
+                            Try Again
+                        </button>
+                    </div>
+                `;
             }
         };
 
@@ -352,6 +392,12 @@
                 loadingIcon.classList.add('hidden');
             }
         });
+
+        // Make retry function globally accessible
+        window.retryFetchShopPolicy = () => {
+            const { productId } = getProductInfo();
+            fetchShopPolicy(productId);
+        };
 
         // Initialize agreement section visibility and button state
         toggleAgreementSection();
