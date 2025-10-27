@@ -111,9 +111,14 @@ Route::get('/user/review-data/{shop}', [UserController::class, 'getReviewData'])
 Route::post('/account/request-deletion', [UserController::class, 'requestAccountDeletion'])->name('account.request-deletion');
 Route::delete('/account/cancel-deletion', [UserController::class, 'cancelAccountDeletion'])->name('account.cancel-deletion');
 
-// Shop policy route (accessible to authenticated users)
-Route::middleware('auth')->get('/public/shop-policy/{id}', function ($id) {
+// Shop policy route (handles auth internally)
+Route::get('/shop-policy/{id}', function ($id) {
     try {
+        // Check if user is authenticated
+        if (!auth()->check()) {
+            return response()->json(['error' => 'Authentication required'], 401);
+        }
+
         $shop = null;
 
         // First try to find shop by shop_id
@@ -122,7 +127,7 @@ Route::middleware('auth')->get('/public/shop-policy/{id}', function ($id) {
         // If not found, try to find by product_id
         if (!$shop) {
             $product = Products::with('user.shop')->where('product_id', $id)->first();
-            if ($product && $product->user && $product->user->shop) {
+            if ($product?->user?->shop) {
                 $shop = $product->user->shop;
             }
         }
@@ -145,7 +150,7 @@ Route::middleware('auth')->get('/public/shop-policy/{id}', function ($id) {
     } catch (\Exception $e) {
         \Log::error('Shop policy fetch error: ' . $e->getMessage(), [
             'product_id' => $id,
-            'user_id' => auth()->id(),
+            'user_id' => auth()->id() ?? 'guest',
             'error' => $e->getTraceAsString()
         ]);
         return response()->json(['error' => 'Unable to fetch shop policy. Please try again later.'], 500);

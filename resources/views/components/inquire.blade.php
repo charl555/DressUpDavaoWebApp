@@ -202,25 +202,11 @@
                 return;
             }
 
-            // If user is not authenticated, show login prompt instead of fetching
-            if (!isAuthenticated) {
-                shopPolicyContent.innerHTML = `
-                    <div class="text-center py-4">
-                        <p class="text-gray-500 mb-3">Log in to view the shop policy</p>
-                        <button type="button" onclick="window.location.href='/login'"
-                            class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 font-medium">
-                            Log In Now
-                        </button>
-                    </div>
-                `;
-                return;
-            }
-
-            console.log('Fetching shop policy for product ID:', productId);
+            console.log('Fetching shop policy for product ID:', productId, 'Auth status:', isAuthenticated);
 
             try {
-                // Use the correct route path that matches the backend
-                const policyResponse = await fetch(`/public/shop-policy/${productId}`, {
+                // Use the simplified route path
+                const policyResponse = await fetch(`/shop-policy/${productId}`, {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',
@@ -229,20 +215,26 @@
                     }
                 });
 
-                if (!policyResponse.ok) {
-                    throw new Error(`HTTP ${policyResponse.status}: ${policyResponse.statusText}`);
-                }
-
                 const policyData = await policyResponse.json();
-                console.log('Shop policy response:', policyData);
+                console.log('Shop policy response:', policyResponse.status, policyData);
 
-                if (policyData.policy) {
+                if (policyResponse.ok && policyData.policy) {
                     currentShopPolicy = policyData.policy;
-                    const shopName = policyData.shop_name ? ` - ${policyData.shop_name}` : '';
                     shopPolicyContent.innerHTML = `
                         <div>
                             ${policyData.shop_name ? `<p class="text-sm font-medium text-gray-700 mb-2">${policyData.shop_name} Rental Policy:</p>` : ''}
                             <p class="whitespace-pre-wrap text-gray-600">${currentShopPolicy}</p>
+                        </div>
+                    `;
+                } else if (policyResponse.status === 401) {
+                    // Handle authentication error - show login prompt
+                    shopPolicyContent.innerHTML = `
+                        <div class="text-center py-4">
+                            <p class="text-gray-500 mb-3">Please log in to view the shop policy</p>
+                            <button type="button" onclick="window.location.href='/login'"
+                                class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 font-medium">
+                                Log In Now
+                            </button>
                         </div>
                     `;
                 } else if (policyData.error) {
