@@ -73,71 +73,22 @@ class Jobs3DModel extends Page implements HasTable
                     ->color(function ($state) {
                         return $state ? 'success' : 'gray';
                     }),
+                TextColumn::make('updated_at')
+                    ->label('Last Updated')
+                    ->since()
+                    ->sortable(),
             ])
             ->actions([
                 Action::make('download')
                     ->label('Download')
                     ->icon('heroicon-o-arrow-down-tray')
-                    ->visible(true)
+                    ->visible(fn($record) => $record->model_url)
                     ->action(function ($record, $livewire) {
                         try {
-                            $apiKey = config('services.kiri.key');
-
-                            // Use existing URL if present
                             if ($record->model_url) {
                                 $livewire->js('window.open("' . $record->model_url . '", "_blank")');
-                                return;
-                            }
-
-                            $response = Http::withToken($apiKey)
-                                ->timeout(30)
-                                ->get("https://api.kiriengine.app/api/v1/open/model/getModelZip?serialize={$record->serialize_id}");
-
-                            Log::info('Kiri Engine Download API Response', [
-                                'serialize_id' => $record->serialize_id,
-                                'status' => $response->status(),
-                                'response' => $response->json()
-                            ]);
-
-                            if ($response->successful()) {
-                                $data = $response->json();
-
-                                if (isset($data['data']['modelUrl'])) {
-                                    $record->update([
-                                        'model_url' => $data['data']['modelUrl'],
-                                        'status' => 'finished',
-                                        'url_expiry' => now()->addDays(3),
-                                    ]);
-
-                                    $livewire->js('window.open("' . $data['data']['modelUrl'] . '", "_blank")');
-                                } else {
-                                    $errorCode = $data['code'] ?? null;
-                                    $errorMsg = $data['msg'] ?? 'Model is still processing';
-
-                                    $message = match ($errorCode) {
-                                        2006 => 'Model not found. Please check the job ID.',
-                                        200 => '3D model is still being processed. Please try again in a few minutes.',
-                                        default => $errorMsg,
-                                    };
-
-                                    Notification::make()
-                                        ->title('Download Not Ready')
-                                        ->body($message)
-                                        ->warning()
-                                        ->send();
-                                }
-                            } else {
-                                Notification::make()
-                                    ->title('Download Failed')
-                                    ->body('Unable to connect to download service. Please try again.')
-                                    ->warning()
-                                    ->send();
                             }
                         } catch (\Exception $e) {
-                            Log::error('Download failed for serialize_id: ' . $record->serialize_id, [
-                                'error' => $e->getMessage()
-                            ]);
-
                             Notification::make()
                                 ->title('Error')
                                 ->body('Failed to download: ' . $e->getMessage())
@@ -145,8 +96,59 @@ class Jobs3DModel extends Page implements HasTable
                                 ->send();
                         }
                     }),
+                Action::make('check_status')
+                    ->label('Check Status')
+                    ->icon('heroicon-o-arrow-path')
+                    ->visible(fn($record) => !$record->model_url && in_array($record->status, ['uploading', 'processing']))
+                    ->action(function ($record, $livewire) {
+                        $this->checkJobStatus($record);
+                    }),
             ])
             ->emptyStateHeading('No 3D models generated yet')
             ->emptyStateDescription('Upload images in the Create 3D Models page to get started');
+    }
+
+    /**
+     * Manual status check (fallback if webhook fails)
+     */
+    private function checkJobStatus(KiriEngineJobs $job)
+    {
+        try {
+            $apiKey = config('services.kiri.key');
+
+            $response = Http::withToken($apiKey)
+                ->timeout(15)
+                ->get("https://api.kiriengine.app/api/v1/open/model/getModelZip?serialize={$job->serialize_id}");
+
+            if ($response->successful()) {
+                $data = $response->json();
+
+                if (isset($data['data']['modelUrl'])) {
+                    $job->update([
+                        'model_url' => $data['data']['modelUrl'],
+                        'status' => 'finished',
+                        'url_expiry' => now()->addDays(3),
+                    ]);
+
+                    Notification::make()
+                        ->title('Model Ready!')
+                        ->body('Your 3D model is now available for download.')
+                        ->success()
+                        ->send();
+                } else {
+                    Notification::make()
+                        ->title('Still Processing')
+                        ->body('Your model is still being processed. Please check back later.')
+                        ->warning()
+                        ->send();
+                }
+            }
+        } catch (\Exception $e) {
+            Notification::make()
+                ->title('Status Check Failed')
+                ->body('Unable to check model status. Please try again.')
+                ->danger()
+                ->send();
+        }
     }
 }

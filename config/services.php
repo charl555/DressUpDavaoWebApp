@@ -31,5 +31,6 @@ return [
     ],
     'kiri' => [
         'key' => env('KIRI_API_KEY'),
+        'webhook_secret' => env('KIRI_WEBHOOK_SECRET'),
     ],
 ];

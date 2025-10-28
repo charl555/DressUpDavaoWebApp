@@ -184,7 +184,10 @@ Route::middleware(['auth'])->group(function () {
 Route::post('/products/{product}/favorite', [FavoriteController::class, 'store'])->name('products.favorite');
 Route::delete('/products/{product}/unfavorite', [FavoriteController::class, 'destroy'])->name('products.unfavorite');
 
-Route::post('/webhooks/kiri-model-ready', [KiriWebhookController::class, 'modelReady'])->name('webhooks.kiri-model-ready');
+Route::post('/webhook', [App\Http\Controllers\KiriWebhookController::class, 'handleWebhook'])
+    ->name('kiri.webhook');
+
+// Route::post('/webhooks/kiri-model-ready', [KiriWebhookController::class, 'modelReady'])->name('webhooks.kiri-model-ready');
 
 Route::post('/save-clipping/{id}', [Product3DModelController::class, 'saveClipping']);
 

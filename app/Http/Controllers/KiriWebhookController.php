@@ -4,72 +4,94 @@ namespace App\Http\Controllers;
 
 use App\Models\KiriEngineJobs;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 
 class KiriWebhookController extends Controller
 {
-    public function modelReady(Request $request)
+    public function handleWebhook(Request $request)
     {
-        // Kiri Engine typically sends 'serialize' and 'status'
-        $serialize = $request->input('serialize');
-        $status = $request->input('status');
-        // We added 'job_id' to the notifyUrl in the Livewire component for direct lookup
-        $jobId = $request->input('job_id');
+        Log::info('KIRI Webhook Received', [
+            'headers' => $request->headers->all(),
+            'payload' => $request->all()
+        ]);
 
-        // Prioritize finding by job_id if available, otherwise fallback to serialize
-        $job = null;
-        if ($jobId) {
-            $job = KiriEngineJobs::find($jobId);
-        } elseif ($serialize) {
-            $job = KiriEngineJobs::where('serialize_id', $serialize)->first();
-        }
-
-        if (!$job) {
-            Log::warning("Webhook received for unknown Kiri Engine serialize ID: $serialize or job ID: $jobId");
-            return response()->json(['message' => 'Unknown serial ID or job ID.'], 404);
-        }
-
-        if ($status === 'finished') {
-            $apiKey = config('services.kiri.key');
-            try {
-                $response = Http::withToken($apiKey)
-                    ->timeout(120)
-                    ->get("https://api.kiriengine.app/api/v1/open/model/getModelZip?serialize={$serialize}");
-
-                if ($response->successful() && isset($response['data']['modelUrl'])) {
-                    $modelUrl = $response['data']['modelUrl'];
-                    $job->update([
-                        'status' => 'finished',
-                        'model_url' => $modelUrl,
-                    ]);
-                    Cache::put("kiri_model_{$serialize}", $modelUrl, now()->addHours(2));
-                    Log::info("Model ready and job updated in DB: $modelUrl (Serial ID: $serialize)");
-                } else {
-                    $errorMsg = $response->json('message', 'Failed to retrieve model URL from Kiri Engine.');
-                    $job->update([
-                        'status' => 'failed',
-                        'notes' => 'Model retrieval failed from Kiri Engine: ' . $errorMsg,
-                    ]);
-                    Log::warning("Model retrieval failed for serialize: $serialize. Error: " . $errorMsg . ' Response: ' . $response->body());
-                }
-            } catch (\Exception $e) {
-                $job->update([
-                    'status' => 'failed',
-                    'notes' => 'API call to getModelZip failed: ' . $e->getMessage(),
+        // Verify the webhook signature if you set a signing secret
+        $signingSecret = config('services.kiri.webhook_secret');
+        if ($signingSecret) {
+            $signature = $request->header('X-Kiri-Signature');  // Adjust header name based on KIRI's docs
+            if (!$this->verifySignature($request->getContent(), $signature, $signingSecret)) {
+                Log::warning('Invalid webhook signature', [
+                    'received_signature' => $signature,
+                    'expected_secret' => $signingSecret
                 ]);
-                Log::error("Exception retrieving model for serialize: $serialize. Error: " . $e->getMessage());
+                return response()->json(['error' => 'Invalid signature'], 401);
             }
-        } else {
-            // For other statuses (e.g., 'processing', 'failed')
-            $job->update([
-                'status' => $status,
-                'notes' => 'Status update from Kiri: ' . $status,
-            ]);
-            Log::info("Kiri Engine webhook status update: $status for serialize ID: $serialize (Job ID: {$job->kiri_engine_job_id})");
         }
 
-        return response()->json(['message' => 'Webhook received and processed.']);
+        // Validate required fields
+        $data = $request->validate([
+            'serialize' => 'required|string',
+            'status' => 'required|string',
+            'modelUrl' => 'nullable|string',
+            'error' => 'nullable|string',
+        ]);
+
+        try {
+            // Find the job by serialize_id
+            $job = KiriEngineJobs::where('serialize_id', $data['serialize'])->first();
+
+            if (!$job) {
+                Log::warning('KIRI Webhook: Job not found', ['serialize_id' => $data['serialize']]);
+                return response()->json(['error' => 'Job not found'], 404);
+            }
+
+            // Update job status and model URL
+            $updateData = [
+                'status' => $data['status'],
+                'updated_at' => now(),
+            ];
+
+            if ($data['status'] === 'finished' && isset($data['modelUrl'])) {
+                $updateData['model_url'] = $data['modelUrl'];
+                $updateData['url_expiry'] = now()->addDays(3);  // URLs typically expire after 3 days
+            } elseif ($data['status'] === 'failed' && isset($data['error'])) {
+                $updateData['error_message'] = $data['error'];
+            }
+
+            $job->update($updateData);
+
+            Log::info('KIRI Webhook: Job updated successfully', [
+                'serialize_id' => $data['serialize'],
+                'status' => $data['status'],
+                'model_url_updated' => isset($data['modelUrl'])
+            ]);
+
+            return response()->json(['success' => true], 200);
+        } catch (\Exception $e) {
+            Log::error('KIRI Webhook processing failed', [
+                'serialize_id' => $data['serialize'] ?? 'unknown',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json(['error' => 'Internal server error'], 500);
+        }
+    }
+
+    /**
+     * Verify webhook signature
+     */
+    private function verifySignature(string $payload, ?string $signature, string $secret): bool
+    {
+        if (!$signature) {
+            return false;
+        }
+
+        // KIRI might use HMAC-SHA256 - adjust based on their documentation
+        $expectedSignature = hash_hmac('sha256', $payload, $secret);
+
+        return hash_equals($expectedSignature, $signature);
     }
 }
