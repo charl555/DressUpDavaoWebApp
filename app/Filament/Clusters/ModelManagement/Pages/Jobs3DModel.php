@@ -122,34 +122,96 @@ class Jobs3DModel extends Page implements HasTable
         try {
             $apiKey = config('services.kiri.key');
 
-            $response = Http::withToken($apiKey)
+            // First, check the status
+            $statusResponse = Http::withToken($apiKey)
                 ->timeout(15)
-                ->get("https://api.kiriengine.app/api/v1/open/model/getModelZip?serialize={$job->serialize_id}");
+                ->get("https://api.kiriengine.app/api/v1/open/model/getStatus?serialize={$job->serialize_id}");
 
-            if ($response->successful()) {
-                $data = $response->json();
+            Log::info('Kiri Engine status check', [
+                'job_id' => $job->kiri_engine_job_id,
+                'serialize_id' => $job->serialize_id,
+                'status_response' => $statusResponse->body()
+            ]);
 
-                if (isset($data['data']['modelUrl'])) {
+            if ($statusResponse->successful()) {
+                $statusData = $statusResponse->json();
+                $status = $statusData['data']['status'] ?? null;
+
+                // Update status based on API response
+                // Status: -1=Uploading, 0=Processing, 1=Failed, 2=Successful, 3=Queuing, 4=Expired
+                $newStatus = match ($status) {
+                    -1 => 'uploading',
+                    0, 3 => 'processing',
+                    1 => 'failed',
+                    2 => 'finished',
+                    4 => 'expired',
+                    default => $job->status
+                };
+
+                $job->update(['status' => $newStatus]);
+
+                if ($status === 2) {
+                    // Model is ready, get download URL
+                    $downloadResponse = Http::withToken($apiKey)
+                        ->timeout(15)
+                        ->get("https://api.kiriengine.app/api/v1/open/model/getModelZip?serialize={$job->serialize_id}");
+
+                    if ($downloadResponse->successful()) {
+                        $downloadData = $downloadResponse->json();
+
+                        if (isset($downloadData['data']['modelUrl'])) {
+                            $job->update([
+                                'model_url' => $downloadData['data']['modelUrl'],
+                                'status' => 'finished',
+                                'url_expiry' => now()->addHour(),  // URLs expire in 60 minutes
+                            ]);
+
+                            Notification::make()
+                                ->title('Model Ready!')
+                                ->body('Your 3D model is now available for download.')
+                                ->success()
+                                ->send();
+                        }
+                    }
+                } elseif ($status === 1) {
                     $job->update([
-                        'model_url' => $data['data']['modelUrl'],
-                        'status' => 'finished',
-                        'url_expiry' => now()->addDays(3),
+                        'error_message' => 'Model generation failed',
+                        'notes' => 'Processing failed on Kiri Engine'
                     ]);
 
                     Notification::make()
-                        ->title('Model Ready!')
-                        ->body('Your 3D model is now available for download.')
-                        ->success()
+                        ->title('Generation Failed')
+                        ->body('Your 3D model generation failed. Please try uploading again.')
+                        ->danger()
                         ->send();
                 } else {
+                    $statusText = match ($status) {
+                        -1 => 'uploading',
+                        0 => 'processing',
+                        3 => 'queued',
+                        4 => 'expired',
+                        default => 'unknown'
+                    };
+
                     Notification::make()
-                        ->title('Still Processing')
-                        ->body('Your model is still being processed. Please check back later.')
-                        ->warning()
+                        ->title('Status Updated')
+                        ->body("Your model is currently: {$statusText}")
+                        ->info()
                         ->send();
                 }
+            } else {
+                Notification::make()
+                    ->title('Status Check Failed')
+                    ->body('Unable to check model status. Please try again.')
+                    ->danger()
+                    ->send();
             }
         } catch (\Exception $e) {
+            Log::error('Status check failed', [
+                'job_id' => $job->kiri_engine_job_id,
+                'error' => $e->getMessage()
+            ]);
+
             Notification::make()
                 ->title('Status Check Failed')
                 ->body('Unable to check model status. Please try again.')

@@ -67,6 +67,7 @@ class Attach3dModelToProductsTable
                     ->color(fn($state) => filled($state) ? 'success' : 'danger')
                     ->size('lg'),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 SelectFilter::make('type')
                     ->options([
