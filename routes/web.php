@@ -184,10 +184,10 @@ Route::middleware(['auth'])->group(function () {
 Route::post('/products/{product}/favorite', [FavoriteController::class, 'store'])->name('products.favorite');
 Route::delete('/products/{product}/unfavorite', [FavoriteController::class, 'destroy'])->name('products.unfavorite');
 
+// KIRI Engine webhook - excluded from CSRF protection
 Route::post('/webhook', [App\Http\Controllers\KiriWebhookController::class, 'handleWebhook'])
-    ->name('kiri.webhook');
-
-// Route::post('/webhooks/kiri-model-ready', [KiriWebhookController::class, 'modelReady'])->name('webhooks.kiri-model-ready');
+    ->name('kiri.webhook')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
 
 Route::post('/save-clipping/{id}', [Product3DModelController::class, 'saveClipping']);
 

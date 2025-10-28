@@ -159,7 +159,7 @@ class Create3dModels extends Page implements HasForms
             $multipart[] = ['name' => 'fileFormat', 'contents' => 'GLB'];
             $multipart[] = ['name' => 'isMask', 'contents' => '0'];
             $multipart[] = ['name' => 'textureSmoothing', 'contents' => '1'];
-            $multipart[] = ['name' => 'notifyUrl', 'contents' => route('webhooks.kiri-model-ready', ['job_id' => $job->kiri_engine_job_id])];
+            $multipart[] = ['name' => 'notifyUrl', 'contents' => route('kiri.webhook')];
 
             Log::info('Sending request to Kiri Engine API', [
                 'job_id' => $job->kiri_engine_job_id,
