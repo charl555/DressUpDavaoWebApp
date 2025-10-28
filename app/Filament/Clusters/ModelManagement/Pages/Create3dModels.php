@@ -132,10 +132,15 @@ class Create3dModels extends Page implements HasForms
 
         try {
             foreach ($data['images'] as $storedImagePath) {
-                // Get the full path to the stored image
-                $fullPath = public_path('uploads/' . $storedImagePath);
+                // Get the full path to the stored image - fix the path
+                $fullPath = Storage::disk('public')->path($storedImagePath);
+
                 if (!file_exists($fullPath)) {
-                    throw new Exception('Stored file not found: ' . $storedImagePath);
+                    // Try alternative path
+                    $fullPath = public_path('storage/' . $storedImagePath);
+                    if (!file_exists($fullPath)) {
+                        throw new Exception('Stored file not found: ' . $storedImagePath);
+                    }
                 }
 
                 // Get file size and check if it's reasonable
