@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\ModelManagement\Pages;
 
 use App\Filament\Clusters\ModelManagement\ModelManagementCluster;
+use App\Jobs\Process3DModelUpload;
 use App\Models\KiriEngineJobs;
 use App\Models\Shops;
 use Carbon\Carbon;
@@ -13,7 +14,6 @@ use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use BackedEnum;
@@ -126,140 +126,52 @@ class Create3dModels extends Page implements HasForms
             return;
         }
 
-        // Prepare images for upload
-        $multipart = [];
-        $uploadedFiles = [];
-
+        // Dispatch background job for processing
         try {
-            foreach ($data['images'] as $storedImagePath) {
-                // Get the full path to the stored image - fix the path
-                $fullPath = Storage::disk('public')->path($storedImagePath);
+            // Store image paths for background processing
+            $imagePaths = $data['images'];
 
+            // Validate images exist before dispatching job
+            foreach ($imagePaths as $storedImagePath) {
+                $fullPath = Storage::disk('public')->path($storedImagePath);
                 if (!file_exists($fullPath)) {
-                    // Try alternative path
                     $fullPath = public_path('storage/' . $storedImagePath);
                     if (!file_exists($fullPath)) {
-                        throw new Exception('Stored file not found: ' . $storedImagePath);
+                        throw new Exception("Stored file not found: {$storedImagePath}");
                     }
                 }
 
-                // Get file size and check if it's reasonable
+                // Check file size
                 $fileSize = filesize($fullPath);
                 if ($fileSize > 10 * 1024 * 1024) {  // 10MB
                     throw new Exception('File too large: ' . basename($storedImagePath));
                 }
-
-                $multipart[] = [
-                    'name' => 'imagesFiles',
-                    'contents' => fopen($fullPath, 'r'),
-                    'filename' => basename($storedImagePath),
-                ];
-
-                $uploadedFiles[] = $storedImagePath;
             }
 
-            // Add required API parameters
-            $multipart[] = ['name' => 'modelQuality', 'contents' => '0'];
-            $multipart[] = ['name' => 'textureQuality', 'contents' => '0'];
-            $multipart[] = ['name' => 'fileFormat', 'contents' => 'GLB'];
-            $multipart[] = ['name' => 'isMask', 'contents' => '0'];
-            $multipart[] = ['name' => 'textureSmoothing', 'contents' => '1'];
-            $multipart[] = ['name' => 'notifyUrl', 'contents' => route('kiri.webhook')];
+            // Dispatch the background job
+            Process3DModelUpload::dispatch($job->kiri_engine_job_id, $imagePaths, $apiKey);
 
-            Log::info('Sending request to Kiri Engine API', [
+            $this->statusMessage = 'Images uploaded successfully! Processing has started in the background. Check the Download 3D Models page for progress.';
+
+            Log::info('3D Model upload job dispatched', [
                 'job_id' => $job->kiri_engine_job_id,
-                'image_count' => count($multipart) - 6,  // subtract the parameter fields
-                'api_endpoint' => 'https://api.kiriengine.app/api/v1/open/photo/image'
+                'image_count' => count($imagePaths)
             ]);
-
-            $response = Http::withToken($apiKey)
-                ->timeout(300)  // 5 minutes for upload
-                ->withHeaders([
-                    'Accept' => 'application/json',
-                ])
-                ->send('POST', 'https://api.kiriengine.app/api/v1/open/photo/image', [
-                    'multipart' => $multipart,
-                ]);
-
-            Log::info('Kiri Engine API response', [
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
-
-            if ($response->successful()) {
-                $responseBody = $response->json();
-
-                if (isset($responseBody['data']['serialize'])) {
-                    $kiriSerializeId = $responseBody['data']['serialize'];
-
-                    $job->update([
-                        'serialize_id' => $kiriSerializeId,
-                        'status' => 'processing',
-                        'notes' => 'Successfully submitted to Kiri Engine',
-                    ]);
-
-                    $this->serialize = $kiriSerializeId;
-                    $this->statusMessage = 'Upload successful! 3D model generation started. Serial ID: ' . $kiriSerializeId;
-
-                    Log::info('Kiri Engine job created successfully', [
-                        'job_id' => $job->kiri_engine_job_id,
-                        'serialize_id' => $kiriSerializeId
-                    ]);
-                } else {
-                    $errorMsg = $responseBody['msg'] ?? 'No serialize ID in response';
-                    $job->update([
-                        'status' => 'failed',
-                        'notes' => 'API response error: ' . $errorMsg
-                    ]);
-                    $this->addError('general', 'Upload failed: ' . $errorMsg);
-                    Log::error('Kiri Engine API response missing serialize ID', $responseBody);
-                }
-            } else {
-                $errorBody = $response->json();
-                $errorMsg = $errorBody['msg'] ?? 'Upload failed with status: ' . $response->status();
-                $job->update([
-                    'status' => 'failed',
-                    'notes' => 'API error: ' . $errorMsg
-                ]);
-                $this->addError('general', 'Upload failed: ' . $errorMsg);
-                Log::error('Kiri Engine API error', [
-                    'status' => $response->status(),
-                    'response' => $errorBody
-                ]);
-            }
         } catch (Exception $e) {
-            Log::error('Exception during Kiri Engine upload', [
+            $job->update([
+                'status' => 'failed',
+                'error_message' => $e->getMessage(),
+                'notes' => 'Failed to dispatch background job'
+            ]);
+            $this->addError('general', "Upload failed: {$e->getMessage()}");
+            Log::error('Failed to dispatch 3D model upload job', [
                 'job_id' => $job->kiri_engine_job_id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-
-            $job->update([
-                'status' => 'failed',
-                'notes' => 'Exception: ' . $e->getMessage()
-            ]);
-            $this->addError('general', 'Upload error: ' . $e->getMessage());
-        } finally {
-            // Clean up uploaded files regardless of outcome
-            $this->cleanupUploadedImages($uploadedFiles);
         }
 
         $this->isProcessing = false;
         $this->form->fill(['images' => []]);  // Reset the form
-    }
-
-    private function cleanupUploadedImages(array $imagePaths): void
-    {
-        try {
-            foreach ($imagePaths as $imagePath) {
-                $fullPath = public_path('uploads/' . $imagePath);
-                if (file_exists($fullPath)) {
-                    unlink($fullPath);
-                }
-            }
-            Log::info('Cleaned up uploaded images', ['count' => count($imagePaths)]);
-        } catch (Exception $e) {
-            Log::warning('Failed to clean up uploaded images: ' . $e->getMessage());
-        }
     }
 }

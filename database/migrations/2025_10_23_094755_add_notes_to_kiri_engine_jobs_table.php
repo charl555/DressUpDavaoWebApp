@@ -12,6 +12,7 @@ return new class extends Migration {
     {
         Schema::table('kiri_engine_jobs', function (Blueprint $table) {
             $table->text('notes')->nullable()->after('url_expiry');
+            $table->text('error_message')->nullable()->after('notes');
         });
     }
 
@@ -21,7 +22,7 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('kiri_engine_jobs', function (Blueprint $table) {
-            $table->dropColumn('notes');
+            $table->dropColumn(['notes', 'error_message']);
         });
     }
 };

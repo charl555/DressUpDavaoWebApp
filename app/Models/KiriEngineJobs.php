@@ -18,6 +18,7 @@ class KiriEngineJobs extends Model
         'is_downloaded',
         'url_expiry',
         'notes',
+        'error_message',
     ];
 
     protected $casts = [

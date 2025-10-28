@@ -77,6 +77,12 @@ class Jobs3DModel extends Page implements HasTable
                     ->label('Last Updated')
                     ->since()
                     ->sortable(),
+                TextColumn::make('error_message')
+                    ->label('Error Details')
+                    ->limit(50)
+                    ->tooltip(fn($record) => $record->error_message)
+                    ->visible(fn($record) => !empty($record->error_message))
+                    ->color('danger'),
             ])
             ->actions([
                 Action::make('download')
@@ -86,12 +92,12 @@ class Jobs3DModel extends Page implements HasTable
                     ->action(function ($record, $livewire) {
                         try {
                             if ($record->model_url) {
-                                $livewire->js('window.open("' . $record->model_url . '", "_blank")');
+                                $livewire->js("window.open('{$record->model_url}', '_blank')");
                             }
                         } catch (\Exception $e) {
                             Notification::make()
                                 ->title('Error')
-                                ->body('Failed to download: ' . $e->getMessage())
+                                ->body("Failed to download: {$e->getMessage()}")
                                 ->danger()
                                 ->send();
                         }
@@ -100,7 +106,7 @@ class Jobs3DModel extends Page implements HasTable
                     ->label('Check Status')
                     ->icon('heroicon-o-arrow-path')
                     ->visible(fn($record) => !$record->model_url && in_array($record->status, ['uploading', 'processing']))
-                    ->action(function ($record, $livewire) {
+                    ->action(function ($record) {
                         $this->checkJobStatus($record);
                     }),
             ])

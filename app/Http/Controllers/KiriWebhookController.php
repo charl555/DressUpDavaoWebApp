@@ -40,6 +40,7 @@ class KiriWebhookController extends Controller
             'status' => 'required|string',
             'modelUrl' => 'nullable|string',
             'error' => 'nullable|string',
+            'message' => 'nullable|string',  // Some APIs send message instead of error
         ]);
 
         try {
@@ -60,8 +61,10 @@ class KiriWebhookController extends Controller
             if ($data['status'] === 'finished' && isset($data['modelUrl'])) {
                 $updateData['model_url'] = $data['modelUrl'];
                 $updateData['url_expiry'] = now()->addDays(3);  // URLs typically expire after 3 days
-            } elseif ($data['status'] === 'failed' && isset($data['error'])) {
-                $updateData['error_message'] = $data['error'];
+            } elseif ($data['status'] === 'failed') {
+                // Handle error message from either 'error' or 'message' field
+                $errorMessage = $data['error'] ?? $data['message'] ?? 'Unknown error occurred';
+                $updateData['error_message'] = $errorMessage;
             }
 
             $job->update($updateData);
