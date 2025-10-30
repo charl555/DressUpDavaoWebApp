@@ -3,10 +3,18 @@
     <div class="relative w-full h-[500px] lg:h-[700px] overflow-hidden">
         <!-- Background Image with Gradient Overlay -->
         <div class="absolute inset-0">
-            <img src="{{ asset('frontend-images/gown-backdrop.webp') }}"
-                data-src="{{ asset('frontend-images/gown-backdrop.webp') }}" alt="Fashion Rental"
-                class="lazy absolute inset-0 w-full h-full object-cover bg-cover bg-center transform scale-105 group-hover:scale-100 transition-transform duration-700 ease-out"
-                loading="eager">
+            <picture>
+                <source media="(min-width: 1200px)"
+                    srcset="{{ asset('frontend-images/optimized-images/hero-desktop.webp') }}">
+                <source media="(min-width: 768px)"
+                    srcset="{{ asset('frontend-images/optimized-images/hero-large.webp') }}">
+                <source media="(min-width: 480px)"
+                    srcset="{{ asset('frontend-images/optimized-images/hero-tablet.webp') }}">
+                <img src="{{ asset('frontend-images/optimized-images/hero-mobile.webp') }}" alt="Fashion Rental"
+                    class="absolute inset-0 w-full h-full object-cover bg-cover bg-center transform scale-105 group-hover:scale-100 transition-transform duration-700 ease-out"
+                    loading="eager" fetchpriority="high" width="1920" height="1280" onload="this.style.opacity = '1'"
+                    style="opacity: 0; transition: opacity 0.5s ease-in">
+            </picture>
             <div class="absolute inset-0 bg-gradient-to-r from-purple-900/40 to-indigo-900/30"></div>
             <div class="absolute inset-0 bg-black/20"></div>
         </div>
@@ -14,8 +22,7 @@
         <!-- Content -->
         <div class="relative z-10 h-full flex flex-col items-center justify-center text-center px-4 sm:px-6 lg:px-8">
             <div class="max-w-4xl mx-auto">
-                <h1 class="text-white text-4xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-tight"
-                    style="font-family: 'Playfair Display', serif;">
+                <h1 class="text-white text-4xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-tight playfair-display">
                     Wear the Moment.<br>
                     <span class="bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
                         Rent with Ease.

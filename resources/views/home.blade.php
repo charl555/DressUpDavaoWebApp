@@ -8,18 +8,22 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 
-    <!-- Preload critical fonts -->
+
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap"
         as="style">
 
-    <!-- Preload critical images -->
-    <link rel="preload" href="{{ asset('frontend-images/gown-backdrop.webp') }}" as="image">
-    <link rel="preload" href="{{ asset('frontend-images/gown-category.webp') }}" as="image">
-    <link rel="preload" href="{{ asset('frontend-images/suit-category.webp') }}" as="image">
 
-    <!-- Inline critical CSS -->
+    <link rel="preload" href="{{ asset('frontend-images/optimized-images/hero-mobile.webp') }}" as="image"
+        media="(max-width: 768px)">
+    <link rel="preload" href="{{ asset('frontend-images/optimized-images/hero-desktop.webp') }}" as="image"
+        media="(min-width: 769px)">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://js.pusher.com">
+
+
     <style>
-        /* Critical above-the-fold styles */
         .bg-black {
             background-color: #000;
         }
@@ -101,7 +105,6 @@
     <main class="flex-grow">
         <x-navbar />
         <x-hero />
-        {{-- <x-threedimensionalassetviewer /> --}}
         <x-infocardscomponent />
         <x-category />
         <x-productcards :products="$products" />
@@ -112,11 +115,10 @@
     <x-toast />
 
 
-    <script src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js" defer></script>
+
 
 
     <script>
-
         document.addEventListener('DOMContentLoaded', function () {
 
             const lazyImages = [].slice.call(document.querySelectorAll('img.lazy'));

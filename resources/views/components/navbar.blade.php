@@ -16,13 +16,13 @@
             <ol class="flex items-center gap-8">
                 <li>
                     <a href="/product-list"
-                        class="hover-underline-animation font-medium text-gray-700 hover:text-purple-700 transition-colors duration-200">
+                        class="nav-link-fade font-medium text-gray-700 hover:text-white transition-all duration-300 ease-out relative overflow-hidden px-4 py-2 rounded-lg">
                         Collections
                     </a>
                 </li>
                 <li>
                     <a href="/shops"
-                        class="hover-underline-animation font-medium text-gray-700 hover:text-purple-700 transition-colors duration-200">
+                        class="nav-link-fade font-medium text-gray-700 hover:text-white transition-all duration-300 ease-out relative overflow-hidden px-4 py-2 rounded-lg">
                         Shops
                     </a>
                 </li>
@@ -31,7 +31,7 @@
                     @if(auth()->user()->role !== 'Admin' && auth()->user()->role !== 'SuperAdmin')
                         <li>
                             <a href="/account#my-bookings"
-                                class="hover-underline-animation font-medium text-gray-700 hover:text-purple-700 transition-colors duration-200">
+                                class="nav-link-fade font-medium text-gray-700 hover:text-white transition-all duration-300 ease-out relative overflow-hidden px-4 py-2 rounded-lg">
                                 Bookings
                             </a>
                         </li>
@@ -40,13 +40,13 @@
                 @guest
                     <li>
                         <a href="/login"
-                            class="hover-underline-animation font-medium text-gray-700 hover:text-purple-700 transition-colors duration-200">
+                            class="nav-link-fade font-medium text-gray-700 hover:text-white transition-all duration-300 ease-out relative overflow-hidden px-4 py-2 rounded-lg">
                             Bookings
                         </a>
                     </li>
                     <li>
                         <a href="/login"
-                            class="hover-underline-animation font-medium text-gray-700 hover:text-purple-700 transition-colors duration-200">
+                            class="nav-link-fade font-medium text-gray-700 hover:text-white transition-all duration-300 ease-out relative overflow-hidden px-4 py-2 rounded-lg">
                             Favorites
                         </a>
                     </li>
@@ -55,7 +55,7 @@
                     @if(auth()->user()->role !== 'Admin' && auth()->user()->role !== 'SuperAdmin')
                         <li>
                             <a href="/account#my-favorites"
-                                class="hover-underline-animation font-medium text-gray-700 hover:text-purple-700 transition-colors duration-200">
+                                class="nav-link-fade font-medium text-gray-700 hover:text-white transition-all duration-300 ease-out relative overflow-hidden px-4 py-2 rounded-lg">
                                 Favorites
                             </a>
                         </li>
@@ -64,7 +64,7 @@
                 @if(auth()->guest() || (auth()->check() && (auth()->user()->role === 'Admin' || auth()->user()->role === 'SuperAdmin')))
                     <li>
                         <a href="/shop-center"
-                            class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-1.5 rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg text-sm whitespace-nowrap">
+                            class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg text-sm whitespace-nowrap">
                             Register your Shop
                         </a>
                     </li>
@@ -80,7 +80,7 @@
                 @if(auth()->user()->role !== 'Admin' && auth()->user()->role !== 'SuperAdmin')
                     <div class="hidden lg:flex items-center space-x-6">
                         <a href="/account"
-                            class="font-medium text-gray-700 hover:text-purple-700 transition-colors duration-200 flex items-center space-x-1">
+                            class="nav-link-fade font-medium text-gray-700 hover:text-white transition-all duration-300 ease-out relative overflow-hidden px-4 py-2 rounded-lg flex items-center space-x-1">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -90,7 +90,7 @@
                         <form method="POST" action="{{ route('logout') }}" class="m-0">
                             @csrf
                             <button type="submit"
-                                class="font-medium text-gray-700 hover:text-purple-700 transition-colors duration-200 flex items-center space-x-1">
+                                class="nav-link-fade font-medium text-gray-700 hover:text-white transition-all duration-300 ease-out relative overflow-hidden px-4 py-2 rounded-lg flex items-center space-x-1">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -298,6 +298,78 @@
 </script>
 
 <style>
+    .nav-link-fade {
+        position: relative;
+        text-decoration: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        transition: all 0.3s ease-out;
+        z-index: 1;
+        background: transparent;
+    }
+
+    .nav-link-fade::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to right, #7c3aed, #4f46e5);
+        border-radius: 8px;
+        opacity: 0;
+        transition: opacity 0.3s ease-out;
+        z-index: -1;
+    }
+
+    .nav-link-fade:hover::before {
+        opacity: 1;
+    }
+
+    .nav-link-fade:hover {
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    }
+
+    /* Alternative version with scale animation */
+    .nav-link-scale {
+        position: relative;
+        text-decoration: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        transition: all 0.3s ease-out;
+        z-index: 1;
+        background: transparent;
+    }
+
+    .nav-link-scale::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to right, #7c3aed, #4f46e5);
+        border-radius: 8px;
+        transform: scale(0.8);
+        opacity: 0;
+        transition: all 0.3s ease-out;
+        z-index: -1;
+    }
+
+    .nav-link-scale:hover::before {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .nav-link-scale:hover {
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    }
+
+    /* Keep the original animations for reference */
     .hover-underline-animation {
         position: relative;
         text-decoration: none;
