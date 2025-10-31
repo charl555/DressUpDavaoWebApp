@@ -195,12 +195,34 @@ class ProductsTable
                         ->icon('heroicon-o-photo')
                         ->label('Edit Images')
                         ->color('gray')
-                        ->url(fn($record) => route('filament.admin.resources.product-images.edit', $record)),
+                        ->url(function ($record) {
+                            // Find the product images record for this product
+                            $productImage = $record->product_images()->first();
+                            if (!$productImage) {
+                                return null;  // Will disable the action
+                            }
+                            return route('filament.admin.resources.product-images.edit', $productImage->product_image_id);
+                        })
+                        ->disabled(fn($record) => !$record->product_images()->exists())
+                        ->tooltip(fn($record) => !$record->product_images()->exists()
+                            ? 'No images found for this product. Create images first.'
+                            : 'Edit product images'),
                     Action::make('editProductMeasurements')
                         ->icon('heroicon-o-clipboard')
                         ->label('Edit Measurements')
                         ->color('gray')
-                        ->url(fn($record) => route('filament.admin.resources.product-measurements.edit', $record)),
+                        ->url(function ($record) {
+                            // Find the product measurements record for this product
+                            $productMeasurement = $record->product_measurements;
+                            if (!$productMeasurement) {
+                                return null;  // Will disable the action
+                            }
+                            return route('filament.admin.resources.product-measurements.edit', $productMeasurement->product_measurements_id);
+                        })
+                        ->disabled(fn($record) => !$record->product_measurements)
+                        ->tooltip(fn($record) => !$record->product_measurements
+                            ? 'No measurements found for this product. Create measurements first.'
+                            : 'Edit product measurements'),
                 ])
                     ->label('Manage')
                     ->button()

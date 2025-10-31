@@ -67,7 +67,14 @@ class Attach3dModelToProductsTable
                     ->color(fn($state) => filled($state) ? 'success' : 'danger')
                     ->size('lg'),
             ])
-            ->defaultSort('created_at', 'desc')
+            ->defaultSort('has_3d_model', 'desc')
+            ->modifyQueryUsing(function (Builder $query) {
+                $query->withCount([
+                    'product_3d_models as has_3d_model' => function ($query) {
+                        $query->whereNotNull('model_path');
+                    }
+                ]);
+            })
             ->filters([
                 SelectFilter::make('type')
                     ->options([
@@ -178,6 +185,40 @@ class Attach3dModelToProductsTable
                         })
                         ->modalSubmitActionLabel('Attach Model')
                         ->modalCancelActionLabel('Cancel'),
+                    Action::make('remove3DModel')
+                        ->label('Remove 3D Model')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('Remove 3D Model')
+                        ->modalDescription('Are you sure you want to remove the 3D model from this product? This action will delete the file permanently.')
+                        ->action(function (Products $record): void {
+                            try {
+                                $existingModel = $record->product_3d_models;
+
+                                if ($existingModel) {
+                                    $filePath = $existingModel->model_path;
+
+                                    $existingModel->delete();
+
+                                    if ($filePath && \Storage::disk('public')->exists($filePath)) {
+                                        \Storage::disk('public')->delete($filePath);
+                                    }
+
+                                    Notification::make()
+                                        ->title('3D model removed successfully!')
+                                        ->success()
+                                        ->send();
+                                }
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('Failed to remove 3D model')
+                                    ->body('Error: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                                \Log::error('Failed to remove 3D model: ' . $e->getMessage());
+                            }
+                        }),
                 ])
                     ->label('Manage')
                     ->button()

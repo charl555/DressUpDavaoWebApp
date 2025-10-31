@@ -49,7 +49,7 @@ class Jobs3DModel extends Page implements HasTable
         }
 
         return $table
-            ->query(KiriEngineJobs::query()->latest())
+            ->query(KiriEngineJobs::query()->where('user_id', Auth::id())->latest())
             ->columns([
                 TextColumn::make('serialize_id')
                     ->label('Job ID')

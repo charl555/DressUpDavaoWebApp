@@ -27,6 +27,7 @@ class CreateProducts extends CreateRecord
         $this->eventsData = $this->processEventsData($data['product_events'] ?? '');
         unset($data['product_events']);
 
+        // Always extract measurement fields, even if empty
         $this->measurementsData = Arr::only($data, [
             'gown_length',
             'gown_chest',
@@ -158,11 +159,10 @@ class CreateProducts extends CreateRecord
             }
         }
 
-        if (!empty($this->measurementsData)) {
-            $product->product_measurements()->create(
-                array_merge($this->measurementsData, ['product_id' => $product->product_id])
-            );
-        }
+        // ALWAYS create a measurements record, even with empty data
+        $product->product_measurements()->create(
+            array_merge($this->measurementsData, ['product_id' => $product->product_id])
+        );
 
         $product->product_images()->create([
             'thumbnail_image' => $this->thumbnail,

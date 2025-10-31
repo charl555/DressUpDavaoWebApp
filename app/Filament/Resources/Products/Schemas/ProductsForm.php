@@ -222,7 +222,7 @@ class ProductsForm
                         Section::make('Gown Measurements (inches)')
                             ->description('Enter precise measurements for gown products')
                             ->icon('heroicon-o-sparkles')
-                            ->visible(fn($get) => $get('type') === 'Gown')
+                            ->visible(fn($get) => $get('type') === 'Gown' || $get('type') === 'Dress')
                             ->schema([
                                 Group::make()
                                     ->schema([
@@ -249,7 +249,7 @@ class ProductsForm
                         Section::make('Jacket Measurements (inches)')
                             ->description('Enter precise measurements for the jacket/blazer part of the suit')
                             ->icon('heroicon-o-squares-2x2')
-                            ->visible(fn($get) => $get('type') === 'Suit')
+                            ->visible(fn($get) => $get('type') === 'Suit' || $get('type') === 'Jacket')
                             ->schema([
                                 Group::make()
                                     ->schema([
@@ -275,7 +275,7 @@ class ProductsForm
                         Section::make('Trouser Measurements (inches)')
                             ->description('Enter precise measurements for the trouser/pants part of the suit')
                             ->icon('heroicon-o-rectangle-stack')
-                            ->visible(fn($get) => $get('type') === 'Suit')
+                            ->visible(fn($get) => $get('type') === 'Suit' || $get('type') === 'Jacket')
                             ->schema([
                                 Group::make()
                                     ->schema([

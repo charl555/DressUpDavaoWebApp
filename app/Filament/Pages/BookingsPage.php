@@ -8,10 +8,10 @@ use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
@@ -20,6 +20,8 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -92,6 +94,91 @@ class BookingsPage extends Page implements HasTable, hasSchemas
                     }),
             ])
             ->defaultSort('created_at', 'desc')
+            ->filters([
+                Filter::make('exclude_cancelled')
+                    ->label('Exclude Cancelled Bookings')
+                    ->default()
+                    ->query(fn(Builder $query): Builder => $query->where('status', '!=', 'Cancelled'))
+                    ->toggle()
+                    ->indicateUsing(function () {
+                        return 'Excluding cancelled bookings';
+                    }),
+                SelectFilter::make('status')
+                    ->options([
+                        'Pending' => 'Pending',
+                        'On Going' => 'On Going',
+                        'Confirmed' => 'Confirmed',
+                        'Cancelled' => 'Cancelled',
+                        'Completed' => 'Completed',
+                    ])
+                    ->label('Booking Status')
+                    ->placeholder('All Statuses'),
+                Filter::make('booking_date')
+                    ->form([
+                        DatePicker::make('booking_from')
+                            ->label('Booking From')
+                            ->placeholder('Select start date'),
+                        DatePicker::make('booking_until')
+                            ->label('Booking Until')
+                            ->placeholder('Select end date'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['booking_from'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('booking_date', '>=', $date),
+                            )
+                            ->when(
+                                $data['booking_until'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('booking_date', '<=', $date),
+                            );
+                    })
+                    ->label('Booking Date Range'),
+                Filter::make('exclude_cancelled')
+                    ->label('Exclude Cancelled Bookings')
+                    ->default()
+                    ->query(fn(Builder $query): Builder => $query->where('status', '!=', 'Cancelled'))
+                    ->toggle()
+                    ->indicateUsing(function () {
+                        return 'Excluding cancelled bookings';
+                    }),
+                Filter::make('exclude_cancelled')
+                    ->label('Exclude Cancelled Bookings')
+                    ->default()
+                    ->query(fn(Builder $query): Builder => $query->where('status', '!=', 'Cancelled'))
+                    ->toggle()
+                    ->indicateUsing(function () {
+                        return 'Excluding cancelled bookings';
+                    }),
+                Filter::make('exclude_completed')
+                    ->label('Exclude Completed Bookings')
+                    ->query(fn(Builder $query): Builder => $query->where('status', '!=', 'Completed'))
+                    ->toggle(),
+                Filter::make('upcoming_bookings')
+                    ->query(fn(Builder $query): Builder => $query->where('booking_date', '>=', now()))
+                    ->toggle()
+                    ->label('Upcoming Bookings Only'),
+                Filter::make('past_bookings')
+                    ->query(fn(Builder $query): Builder => $query->where('booking_date', '<', now()))
+                    ->toggle()
+                    ->label('Past Bookings Only'),
+                Filter::make('today_bookings')
+                    ->query(fn(Builder $query): Builder => $query->whereDate('booking_date', now()))
+                    ->toggle()
+                    ->label("Today's Bookings Only"),
+                Filter::make('tomorrow_bookings')
+                    ->query(fn(Builder $query): Builder => $query->whereDate('booking_date', now()->addDay()))
+                    ->toggle()
+                    ->label("Tomorrow's Bookings Only"),
+                Filter::make('yesterday_bookings')
+                    ->query(fn(Builder $query): Builder => $query->whereDate('booking_date', now()->subDay()))
+                    ->toggle()
+                    ->label("Yesterday's Bookings Only"),
+                Filter::make('this_week_bookings')
+                    ->query(fn(Builder $query): Builder => $query->whereBetween('booking_date', [now()->startOfWeek(), now()->endOfWeek()]))
+                    ->toggle()
+                    ->label("This Week's Bookings Only"),
+            ])
             ->actions([
                 ActionGroup::make([
                     // 👁 View Action — visible only when record is Completed or Cancelled
@@ -153,9 +240,10 @@ class BookingsPage extends Page implements HasTable, hasSchemas
                         }),
                     // ✅ Complete Booking — only visible if today == booking_date and not completed/cancelled
                     Action::make('completeBooking')
+                        ->hidden(fn($record) => in_array($record->status, ['Completed', 'Cancelled']))
                         ->visible(fn($record) =>
-                            !in_array($record->status, ['Completed', 'Cancelled']) &&
-                            $record->booking_date->isSameDay(now()))
+                            $record->booking_date->isSameDay(now()) ||
+                            $record->booking_date->isPast())
                         ->label('Complete Booking')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
@@ -178,7 +266,7 @@ class BookingsPage extends Page implements HasTable, hasSchemas
                         }),
                     // ⚠️ Cancel Booking — hidden when Completed or Cancelled
                     Action::make('cancelBooking')
-                        ->visible(fn($record) => !in_array($record->status, ['Completed', 'Cancelled']))
+                        ->hidden(fn($record) => in_array($record->status, ['Completed', 'Cancelled']))
                         ->label('Cancel Booking')
                         ->icon('heroicon-o-x-circle')
                         ->color('warning')
