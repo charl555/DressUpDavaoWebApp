@@ -43,8 +43,7 @@ class RentalsResource extends Resource
             ->whereHas('product', function ($query) {
                 $query->where('user_id', auth()->id());
             })
-            // Eager load relationships for the table columns
-            ->with(['product', 'customer', 'payments']);
+            ->with(['product', 'customer', 'user']);
     }
 
     public static function canViewAny(): bool

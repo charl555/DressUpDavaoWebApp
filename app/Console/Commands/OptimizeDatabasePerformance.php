@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class OptimizeDatabasePerformance extends Command
@@ -107,11 +107,11 @@ class OptimizeDatabasePerformance extends Command
     protected function runPerformanceMigration()
     {
         $this->info('📊 Running performance indexes migration...');
-        
+
         try {
             // Check if migration exists
             $migrationFile = database_path('migrations/2025_01_15_000000_add_performance_indexes.php');
-            
+
             if (!file_exists($migrationFile)) {
                 $this->error('Performance indexes migration file not found!');
                 $this->info('Please ensure the migration file exists at: ' . $migrationFile);
@@ -120,13 +120,12 @@ class OptimizeDatabasePerformance extends Command
 
             // Run the migration
             Artisan::call('migrate', ['--path' => 'database/migrations/2025_01_15_000000_add_performance_indexes.php']);
-            
+
             $this->info('✅ Performance indexes migration completed successfully!');
             $this->newLine();
-            
+
             // Show added indexes summary
             $this->showIndexesSummary();
-            
         } catch (\Exception $e) {
             $this->error('❌ Migration failed: ' . $e->getMessage());
         }
@@ -143,18 +142,17 @@ class OptimizeDatabasePerformance extends Command
         try {
             // Get database size information
             $this->showDatabaseSize();
-            
+
             // Show table sizes
             $this->showTableSizes();
-            
+
             // Show index usage (MySQL specific)
             if (DB::connection()->getDriverName() === 'mysql') {
                 $this->showIndexUsage();
             }
-            
+
             // Show slow queries if available
             $this->showSlowQueries();
-            
         } catch (\Exception $e) {
             $this->error('❌ Performance analysis failed: ' . $e->getMessage());
         }
@@ -172,13 +170,12 @@ class OptimizeDatabasePerformance extends Command
             if (DB::connection()->getDriverName() === 'mysql') {
                 $this->optimizeMySQLTables();
             }
-            
+
             $this->cleanupOldSessions();
             $this->cleanupExpiredCache();
             $this->cleanupOldNotifications();
-            
+
             $this->info('✅ Database cleanup completed!');
-            
         } catch (\Exception $e) {
             $this->error('❌ Database cleanup failed: ' . $e->getMessage());
         }
@@ -191,7 +188,7 @@ class OptimizeDatabasePerformance extends Command
     {
         $this->info('📋 Performance Indexes Added:');
         $this->newLine();
-        
+
         $indexes = [
             'Users' => ['role', 'bodytype', 'email+role', 'created_at'],
             'Products' => ['visibility', 'status', 'type', 'subtype', 'rental_price', 'visibility+status', 'user_id+visibility'],
@@ -205,7 +202,7 @@ class OptimizeDatabasePerformance extends Command
         foreach ($indexes as $table => $tableIndexes) {
             $this->line("  <fg=cyan>$table:</> " . implode(', ', $tableIndexes));
         }
-        
+
         $this->newLine();
     }
 
@@ -223,7 +220,7 @@ class OptimizeDatabasePerformance extends Command
                 FROM information_schema.tables 
                 WHERE table_schema = DATABASE()
             ");
-            
+
             if (!empty($result)) {
                 $size = $result[0];
                 $this->info("📊 Database Size: {$size->{'Database Size (MB)'}} MB (Data: {$size->{'Data Size (MB)'}} MB, Indexes: {$size->{'Index Size (MB)'}} MB)");
@@ -248,9 +245,9 @@ class OptimizeDatabasePerformance extends Command
                 ORDER BY (data_length + index_length) DESC
                 LIMIT 10
             ");
-            
+
             $this->info('📋 Largest Tables:');
-            $this->table(['Table', 'Size (MB)', 'Rows'], array_map(function($table) {
+            $this->table(['Table', 'Size (MB)', 'Rows'], array_map(function ($table) {
                 return [$table->table_name, $table->{'Size (MB)'}, number_format($table->table_rows)];
             }, $tables));
             $this->newLine();
@@ -285,13 +282,13 @@ class OptimizeDatabasePerformance extends Command
                 ORDER BY u.rows_examined DESC
                 LIMIT 10
             ");
-            
+
             if (!empty($indexes)) {
                 $this->info('📊 Most Used Indexes:');
-                $this->table(['Table', 'Index', 'Cardinality', 'Rows Examined'], array_map(function($index) {
+                $this->table(['Table', 'Index', 'Cardinality', 'Rows Examined'], array_map(function ($index) {
                     return [
-                        $index->table_name, 
-                        $index->index_name, 
+                        $index->table_name,
+                        $index->index_name,
                         number_format($index->cardinality),
                         number_format($index->rows_examined)
                     ];
@@ -318,9 +315,9 @@ class OptimizeDatabasePerformance extends Command
      */
     protected function optimizeMySQLTables()
     {
-        $tables = DB::select("SHOW TABLES");
+        $tables = DB::select('SHOW TABLES');
         $tableColumn = 'Tables_in_' . config('database.connections.mysql.database');
-        
+
         foreach ($tables as $table) {
             $tableName = $table->$tableColumn;
             DB::statement("OPTIMIZE TABLE `$tableName`");
@@ -336,7 +333,7 @@ class OptimizeDatabasePerformance extends Command
         $deleted = DB::table('sessions')
             ->where('last_activity', '<', now()->subDays(30)->timestamp)
             ->delete();
-        
+
         $this->line("  Cleaned up $deleted old sessions");
     }
 
@@ -349,7 +346,7 @@ class OptimizeDatabasePerformance extends Command
             $deleted = DB::table('cache')
                 ->where('expiration', '<', now()->timestamp)
                 ->delete();
-            
+
             $this->line("  Cleaned up $deleted expired cache entries");
         }
     }
@@ -364,7 +361,7 @@ class OptimizeDatabasePerformance extends Command
                 ->where('created_at', '<', now()->subDays(90))
                 ->whereNotNull('read_at')
                 ->delete();
-            
+
             $this->line("  Cleaned up $deleted old read notifications");
         }
     }

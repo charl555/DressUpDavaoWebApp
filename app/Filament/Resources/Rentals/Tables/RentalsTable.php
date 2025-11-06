@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Rentals\Tables;
 
+use App\Models\Rentals;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Filament\Actions\Action;
@@ -24,12 +25,28 @@ class RentalsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->query(Rentals::query()->with(['product', 'customer', 'user']))
             ->columns([
                 TextColumn::make('product.name')->label('Product')->searchable(),
-                TextColumn::make('customer.first_name')
-                    ->label('Customer')
-                    ->formatStateUsing(fn($state, $record) => ($record->customer?->first_name . ' ' . ($record->customer?->last_name ?? '')))
-                    ->searchable(),
+                TextColumn::make('rented_by')
+                    ->label('Rented By')
+                    ->getStateUsing(function ($record) {
+                        if ($record->user) {
+                            return $record->user->name;
+                        } elseif ($record->customer) {
+                            return $record->customer->first_name . ' ' . $record->customer->last_name;
+                        }
+                        return 'N/A';
+                    })
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->whereHas('user', function ($q) use ($search) {
+                            $q->where('name', 'like', "%{$search}%");
+                        })->orWhereHas('customer', function ($q) use ($search) {
+                            $q
+                                ->where('first_name', 'like', "%{$search}%")
+                                ->orWhere('last_name', 'like', "%{$search}%");
+                        });
+                    }),
                 TextColumn::make('pickup_date')
                     ->label('Pickup')
                     ->date('M j, Y')
