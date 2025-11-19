@@ -29,6 +29,11 @@ class Products extends Model
         'visibility',
     ];
 
+    public function bookings()
+    {
+        return $this->hasMany(Bookings::class, 'product_id', 'product_id')->orderBy('booking_date', 'desc');
+    }
+
     public function occasions()
     {
         return $this->hasMany(Occasions::class, 'product_id', 'product_id');

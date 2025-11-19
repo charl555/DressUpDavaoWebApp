@@ -357,7 +357,7 @@
                             <input type="number" :name="measurementUnit === 'inches' ? 'chest' : 'chest_cm'"
                                 :id="measurementUnit === 'inches' ? 'chest' : 'chest_cm'"
                                 x-model="measurementUnit === 'inches' ? form.measurements.chest : chestCm"
-                                @input="measurementUnit === 'centimeters' ? updateMeasurementFromCm('chest', $event.target.value) : null"
+                                @input="measurementUnit === 'centimeters' ? updateMeasurementFromCm('chest', $event.target.value) : (form.measurements.chest = $event.target.value)"
                                 :step="measurementUnit === 'inches' ? '0.5' : '0.1'"
                                 :min="measurementUnit === 'inches' ? '20' : '50'"
                                 :max="measurementUnit === 'inches' ? '60' : '152'" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
@@ -374,7 +374,7 @@
                             <input type="number" :name="measurementUnit === 'inches' ? 'waist' : 'waist_cm'"
                                 :id="measurementUnit === 'inches' ? 'waist' : 'waist_cm'"
                                 x-model="measurementUnit === 'inches' ? form.measurements.waist : waistCm"
-                                @input="measurementUnit === 'centimeters' ? updateMeasurementFromCm('waist', $event.target.value) : null"
+                                @input="measurementUnit === 'centimeters' ? updateMeasurementFromCm('waist', $event.target.value) : (form.measurements.waist = $event.target.value)"
                                 :step="measurementUnit === 'inches' ? '0.5' : '0.1'"
                                 :min="measurementUnit === 'inches' ? '20' : '50'"
                                 :max="measurementUnit === 'inches' ? '50' : '127'" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
@@ -391,7 +391,7 @@
                             <input type="number" :name="measurementUnit === 'inches' ? 'hips' : 'hips_cm'"
                                 :id="measurementUnit === 'inches' ? 'hips' : 'hips_cm'"
                                 x-model="measurementUnit === 'inches' ? form.measurements.hips : hipsCm"
-                                @input="measurementUnit === 'centimeters' ? updateMeasurementFromCm('hips', $event.target.value) : null"
+                                @input="measurementUnit === 'centimeters' ? updateMeasurementFromCm('hips', $event.target.value) : (form.measurements.hips = $event.target.value)"
                                 :step="measurementUnit === 'inches' ? '0.5' : '0.1'"
                                 :min="measurementUnit === 'inches' ? '20' : '50'"
                                 :max="measurementUnit === 'inches' ? '60' : '152'" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
@@ -408,7 +408,7 @@
                             <input type="number" :name="measurementUnit === 'inches' ? 'shoulder' : 'shoulder_cm'"
                                 :id="measurementUnit === 'inches' ? 'shoulder' : 'shoulder_cm'"
                                 x-model="measurementUnit === 'inches' ? form.measurements.shoulder : shoulderCm"
-                                @input="measurementUnit === 'centimeters' ? updateMeasurementFromCm('shoulder', $event.target.value) : null"
+                                @input="measurementUnit === 'centimeters' ? updateMeasurementFromCm('shoulder', $event.target.value) : (form.measurements.shoulder = $event.target.value)"
                                 :step="measurementUnit === 'inches' ? '0.5' : '0.1'"
                                 :min="measurementUnit === 'inches' ? '10' : '25'"
                                 :max="measurementUnit === 'inches' ? '30' : '76'" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400

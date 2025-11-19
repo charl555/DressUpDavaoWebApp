@@ -36,11 +36,25 @@ class RecentActivityWidget extends BaseWidget
                     ->label('Product')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('customer.first_name')
-                    ->label('Customer')
-                    ->formatStateUsing(fn($record) => $record->customer->first_name . ' ' . $record->customer->last_name)
-                    ->searchable()
-                    ->sortable(),
+                TextColumn::make('rented_by')
+                    ->label('Rented By')
+                    ->getStateUsing(function ($record) {
+                        if ($record->user) {
+                            return $record->user->name;
+                        } elseif ($record->customer) {
+                            return $record->customer->first_name . ' ' . $record->customer->last_name;
+                        }
+                        return 'N/A';
+                    })
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->whereHas('user', function ($q) use ($search) {
+                            $q->where('name', 'like', "%{$search}%");
+                        })->orWhereHas('customer', function ($q) use ($search) {
+                            $q
+                                ->where('first_name', 'like', "%{$search}%")
+                                ->orWhere('last_name', 'like', "%{$search}%");
+                        });
+                    }),
                 TextColumn::make('rental_status')
                     ->label('Status')
                     ->badge()

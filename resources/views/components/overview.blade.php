@@ -273,7 +273,7 @@
                             </svg>
                             <p class="text-yellow-800 font-medium">
                                 This product is currently rented and will be returned on
-                                <strong>{{ $returnDate ?? 'N/A' }}</strong>.
+                                <strong>{{ $product->rentals->first()->return_date->format('F j, Y') ?? 'N/A' }}</strong>.
                             </p>
                         </div>
                     </div>
@@ -284,7 +284,9 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                            <p class="text-blue-800 font-medium">This product is currently reserved.</p>
+                            <p class="text-blue-800 font-medium">This product is currently reserved on
+                                <strong>{{ $product->bookings->first()->booking_date->format('F j, Y') ?? 'N/A' }}</strong>.
+                            </p>
                         </div>
                     </div>
                 @elseif ($product->status !== 'Available')
@@ -300,18 +302,129 @@
                 @endif
             </div>
 
+            {{-- Availability Calendar --}}
+            <div class="bg-gray-50 rounded-lg p-6 mb-8">
+                <div class="flex items-center justify-between cursor-pointer" onclick="toggleCalendar()">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Availability Calendar
+                    </h3>
+                    <svg id="calendarIcon" class="w-5 h-5 text-gray-500 transition-transform duration-300" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+
+                <div id="calendarContent" class="mt-4 space-y-4 hidden">
+                    @php
+                        // Get all unavailable dates with status consideration
+                        $unavailableDates = [];
+
+                        // Get rental periods (pickup_date to return_date) - only for active rentals
+                        foreach ($product->rentals as $rental) {
+                            // Only mark dates as unavailable if rental status is active
+                            $activeRentalStatuses = ['Rented', 'Picked Up', 'Overdue'];
+                            if (in_array($rental->status, $activeRentalStatuses)) {
+                                $start = \Carbon\Carbon::parse($rental->pickup_date);
+                                $end = \Carbon\Carbon::parse($rental->return_date);
+
+                                for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+                                    $unavailableDates[$date->format('Y-m-d')] = 'rented';
+                                }
+                            }
+                            // If rental status is 'Returned', don't mark any dates as unavailable
+                        }
+
+                        // Get booking dates (booking_date only) - mark ALL bookings as reserved for calendar display
+                        foreach ($product->bookings as $booking) {
+                            $bookingDate = \Carbon\Carbon::parse($booking->booking_date);
+                            $unavailableDates[$bookingDate->format('Y-m-d')] = 'reserved';
+                        }
+                    @endphp
+
+                    {{-- Month Navigation --}}
+                    <div class="flex items-center justify-between bg-white rounded-lg border border-gray-200 p-4">
+                        <button onclick="changeMonth(-1)"
+                            class="flex items-center space-x-2 text-purple-600 hover:text-purple-700 font-medium transition-colors duration-200 p-2 rounded-lg hover:bg-purple-50">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 19l-7-7 7-7" />
+                            </svg>
+                            <span>Previous</span>
+                        </button>
+
+                        <h4 id="currentMonth" class="text-lg font-semibold text-gray-900">
+                            {{ \Carbon\Carbon::today()->format('F Y') }}
+                        </h4>
+
+                        <button onclick="changeMonth(1)"
+                            class="flex items-center space-x-2 text-purple-600 hover:text-purple-700 font-medium transition-colors duration-200 p-2 rounded-lg hover:bg-purple-50">
+                            <span>Next</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {{-- Calendar Grid --}}
+                    <div class="bg-white rounded-lg border border-gray-200 p-4">
+                        <div class="grid grid-cols-7 gap-1 mb-2">
+                            @foreach(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as $day)
+                                <div class="text-center text-sm font-medium text-gray-500 py-2">{{ $day }}</div>
+                            @endforeach
+                        </div>
+
+                        <div id="calendarGrid" class="grid grid-cols-7 gap-1">
+                            {{-- Calendar days will be populated by JavaScript --}}
+                        </div>
+                    </div>
+
+                    {{-- Legend --}}
+                    <div class="flex flex-wrap items-center justify-center gap-4 pt-4 border-t border-gray-200">
+                        <div class="flex items-center space-x-2">
+                            <span class="inline-block w-3 h-3 bg-green-500 rounded-full"></span>
+                            <span class="text-xs text-gray-600">Available</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="inline-block w-3 h-3 bg-yellow-500 rounded-full"></span>
+                            <span class="text-xs text-gray-600">Reserved</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="inline-block w-3 h-3 bg-red-500 rounded-full"></span>
+                            <span class="text-xs text-gray-600">Rented</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 border-2 border-purple-500 rounded"></div>
+                            <span class="text-xs text-gray-600">Today</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs text-gray-400 italic">Gray = Other month</span>
+                        </div>
+                    </div>
+
+                    <p class="text-sm text-gray-600 text-center">
+                        Use the navigation buttons to view availability for different months.
+                        Green dates are available, yellow dates are reserved, and red dates are rented.
+                    </p>
+                </div>
+            </div>
+
             {{-- Inquire Button --}}
             @if(auth()->guest() || (auth()->check() && auth()->user()->role !== 'Admin' && auth()->user()->role !== 'SuperAdmin'))
                 <div class="flex justify-center md:justify-start mb-8">
                     <button id="inquireButton"
                         class="text-lg px-8 py-4 w-full md:w-auto rounded-lg shadow-md transition-all duration-300 ease-in-out font-semibold flex items-center justify-center
-                                                       {{ $product->status === 'Available' ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 hover:shadow-lg' : 'bg-gray-300 text-gray-600 cursor-not-allowed' }}"
-                        {{ $product->status !== 'Available' ? 'disabled' : '' }}>
+                                                bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 hover:shadow-lg"
+                        onclick="openInquiryModal()">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
-                        {{ $product->status === 'Available' ? 'Inquire Now' : 'Currently Unavailable' }}
+                        Inquire Now
                     </button>
                 </div>
             @endif
@@ -438,5 +551,116 @@
             if (e.target.id === 'imageModal') {
                 closeImageModal();
             }
+        });
+
+        let currentDate = new Date();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const unavailableDates = @json($unavailableDates);
+
+        function toggleCalendar() {
+            const content = document.getElementById('calendarContent');
+            const icon = document.getElementById('calendarIcon');
+
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.classList.remove('rotate-0');
+                icon.classList.add('rotate-180');
+                renderCalendar();
+            } else {
+                content.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+                icon.classList.add('rotate-0');
+            }
+        }
+
+        function changeMonth(direction) {
+            const newDate = new Date(currentDate);
+            newDate.setMonth(newDate.getMonth() + direction);
+
+            // Only allow navigation to current or future months
+            const minDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            if (newDate >= minDate) {
+                currentDate = newDate;
+                renderCalendar();
+            }
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            // Update month header
+            document.getElementById('currentMonth').textContent =
+                new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+            // Update button states
+            const prevButton = document.querySelector('button[onclick="changeMonth(-1)"]');
+            const isCurrentMonth = year === today.getFullYear() && month === today.getMonth();
+
+            if (prevButton) {
+                if (isCurrentMonth) {
+                    prevButton.disabled = true;
+                    prevButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    prevButton.classList.remove('hover:bg-purple-50', 'hover:text-purple-700');
+                } else {
+                    prevButton.disabled = false;
+                    prevButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                    prevButton.classList.add('hover:bg-purple-50', 'hover:text-purple-700');
+                }
+            }
+
+            const calendarGrid = document.getElementById('calendarGrid');
+            calendarGrid.innerHTML = '';
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+            const endDate = new Date(lastDay);
+            endDate.setDate(endDate.getDate() + (6 - lastDay.getDay()));
+
+            for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
+                // Create date string in YYYY-MM-DD format for consistent comparison
+                const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+                const isCurrentMonth = date.getMonth() === month;
+                const isToday = date.toDateString() === today.toDateString();
+                const isUnavailable = unavailableDates[dateString];
+                const statusType = unavailableDates[dateString];
+
+                // Create a clean date without time for comparison
+                const cleanDate = new Date(date);
+                cleanDate.setHours(0, 0, 0, 0);
+                const isPast = cleanDate < today && !isToday;
+
+                const dayElement = document.createElement('div');
+                dayElement.className = `text-center p-2 border border-gray-100 rounded-lg
+            ${!isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white'}
+            ${isPast ? 'opacity-60' : ''}
+            ${isToday ? 'ring-2 ring-purple-500 ring-inset' : ''}
+            ${isUnavailable ? (statusType === 'rented' ? 'bg-red-100 text-red-800 border-red-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200') : ''}`;
+
+                dayElement.innerHTML = `
+            <div class="text-sm font-medium">${date.getDate()}</div>
+            ${isUnavailable ? `
+                <div class="text-xs mt-1">
+                    <span class="inline-block w-2 h-2 ${statusType === 'rented' ? 'bg-red-500' : 'bg-yellow-500'} rounded-full"></span>
+                </div>
+            ` : (isCurrentMonth && !isPast ? `
+                <div class="text-xs mt-1 text-green-600">
+                    <span class="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
+                </div>
+            ` : '')}
+        `;
+
+                calendarGrid.appendChild(dayElement);
+            }
+        }
+
+        // Initialize calendar when page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            renderCalendar();
         });
     </script>

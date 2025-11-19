@@ -12,10 +12,12 @@ class ProductController extends Controller
     {
         $product = Products::with([
             'product_images',
-            'user.shop',  // This loads user and their shop
+            'user.shop',
             'product_measurements',
             'occasions',
-            'product_3d_models'
+            'product_3d_models',
+            'bookings',
+            'rentals'
         ])->where('product_id', $product_id)->firstOrFail();
 
         echo '<script>window.productData = ' . json_encode([

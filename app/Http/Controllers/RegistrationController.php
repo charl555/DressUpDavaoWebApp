@@ -58,13 +58,30 @@ class RegistrationController extends Controller
             MailController::sendRegistrationEmail($user);
 
             // Always create a UserMeasurements record, even if fields are empty
-            UserMeasurements::create([
-                'user_id' => $user->id,
-                'chest' => $validated['chest'] ?? null,
-                'waist' => $validated['waist'] ?? null,
-                'hips' => $validated['hips'] ?? null,
-                'shoulder' => $validated['shoulder'] ?? null,
-            ]);
+            try {
+                $measurementData = [
+                    'user_id' => $user->id,
+                    'chest' => $validated['chest'] ?? null,
+                    'waist' => $validated['waist'] ?? null,
+                    'hips' => $validated['hips'] ?? null,
+                    'shoulder' => $validated['shoulder'] ?? null,
+                ];
+
+                // Log the measurement data for debugging
+                \Log::info('Creating UserMeasurements with data:', $measurementData);
+
+                $userMeasurement = UserMeasurements::create($measurementData);
+
+                \Log::info('UserMeasurements created successfully:', ['id' => $userMeasurement->user_measurements_id]);
+            } catch (\Exception $measurementException) {
+                \Log::error('Failed to create UserMeasurements:', [
+                    'error' => $measurementException->getMessage(),
+                    'user_id' => $user->id,
+                    'measurement_data' => $measurementData ?? null
+                ]);
+                // Don't fail the entire registration if measurements fail
+                // The user can add measurements later
+            }
 
             Auth::login($user);
 

@@ -63,17 +63,16 @@
         );
         camera.attachControl(canvas, true);
 
-        // 🎯 Adjust sensitivity for slower control
-        camera.wheelPrecision = 100;         // Zoom speed (higher = slower)
-        camera.panningSensibility = 2000;    // Panning sensitivity (higher = slower)
-        camera.angularSensibilityX = 4000;   // Rotation horizontal (higher = slower)
-        camera.angularSensibilityY = 4000;   // Rotation vertical (higher = slower)
+        // Sensitivity adjustments
+        camera.wheelPrecision = 100;
+        camera.panningSensibility = 2000;
+        camera.angularSensibilityX = 4000;
+        camera.angularSensibilityY = 4000;
 
-        // 📱 Adjust for mobile gestures (slower pinch & swipe)
-        camera.pinchPrecision = 200;         // Pinch zoom slower
-        camera.pinchDeltaPercentage = 0.002; // Fine-tuned pinch control
+        camera.pinchPrecision = 200;
+        camera.pinchDeltaPercentage = 0.002;
 
-        // Light setup
+        // Light
         const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(1, 1, 0), scene);
 
         // Auto rotation
@@ -85,23 +84,36 @@
             autoRotateBehavior.idleRotationSpinUpTime = 1000;
         }
 
-        // Clipping planes
+        // ---------------------------------------
+        // 🔥 HARD-CODED DEFAULT CLIPPING PLANES
+        // ---------------------------------------
         const clippingData = @json($clippingData);
-        scene.clipPlane = new BABYLON.Plane(1, 0, 0, 10);
-        scene.clipPlane2 = new BABYLON.Plane(-1, 0, 0, 10);
-        scene.clipPlane3 = new BABYLON.Plane(0, 0, 1, 10);
-        scene.clipPlane4 = new BABYLON.Plane(0, 0, -1, 10);
 
-        if (clippingData) {
-            scene.clipPlane = new BABYLON.Plane(1, 0, 0, -(clippingData.xPos ?? 100));
-            scene.clipPlane2 = new BABYLON.Plane(-1, 0, 0, clippingData.xNeg ?? -100);
-            scene.clipPlane3 = new BABYLON.Plane(0, 0, 1, -(clippingData.zPos ?? 100));
-            scene.clipPlane4 = new BABYLON.Plane(0, 0, -1, clippingData.zNeg ?? -100);
+        // Default clipping radius (closer to center)
+        const DEFAULT_X_POS = 0.4;
+        const DEFAULT_X_NEG = -0.4;
+        const DEFAULT_Z_POS = 0.4;
+        const DEFAULT_Z_NEG = -0.4;
+
+        // Apply defaults first
+        scene.clipPlane = new BABYLON.Plane(1, 0, 0, -DEFAULT_X_POS);
+        scene.clipPlane2 = new BABYLON.Plane(-1, 0, 0, DEFAULT_X_NEG);
+        scene.clipPlane3 = new BABYLON.Plane(0, 0, 1, -DEFAULT_Z_POS);
+        scene.clipPlane4 = new BABYLON.Plane(0, 0, -1, DEFAULT_Z_NEG);
+
+        // Apply saved clipping planes ONLY if they exist 
+        if (clippingData && Object.keys(clippingData).length > 0) {
+            scene.clipPlane = new BABYLON.Plane(1, 0, 0, -(clippingData.xPos ?? DEFAULT_X_POS));
+            scene.clipPlane2 = new BABYLON.Plane(-1, 0, 0, (clippingData.xNeg ?? DEFAULT_X_NEG));
+            scene.clipPlane3 = new BABYLON.Plane(0, 0, 1, -(clippingData.zPos ?? DEFAULT_Z_POS));
+            scene.clipPlane4 = new BABYLON.Plane(0, 0, -1, (clippingData.zNeg ?? DEFAULT_Z_NEG));
         }
+        // ---------------------------------------
 
-        // Load model and fit camera
+        // Load model and auto-fit camera
         BABYLON.SceneLoader.Append("", "{{ $modelUrl }}", scene, function () {
             const meshes = scene.meshes.filter(m => m.name !== "__root__");
+
             if (meshes.length > 0) {
                 const boundingInfo = meshes[0].getBoundingInfo().boundingBox;
                 const center = boundingInfo.centerWorld;
@@ -114,7 +126,7 @@
             }
         });
 
-        // ✅ Prevent page scroll when mouse is over canvas
+        // Prevent page scrolling while using canvas
         canvas.addEventListener('wheel', (event) => {
             if (document.activeElement === canvas || canvas.matches(':hover')) {
                 event.preventDefault();
@@ -124,7 +136,4 @@
         engine.runRenderLoop(() => scene.render());
         window.addEventListener('resize', () => engine.resize());
     </script>
-
-
-
 </x-filament-panels::page>

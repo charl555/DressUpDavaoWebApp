@@ -88,10 +88,49 @@ class Jobs3DModel extends Page implements HasTable
                 Action::make('download')
                     ->label('Download')
                     ->icon('heroicon-o-arrow-down-tray')
-                    ->visible(fn($record) => $record->model_url)
+                    ->visible(fn($record) => $this->canDownloadOrRegenerate($record))
                     ->action(function ($record, $livewire) {
                         try {
-                            if ($record->model_url) {
+                            // Check if URL is expired or about to expire (within 5 minutes)
+                            $isExpired = $record->url_expiry && $record->url_expiry->isPast();
+                            $isExpiringSoon = $record->url_expiry && $record->url_expiry->diffInMinutes(now()) < 5;
+                            $isOldRecord = $record->updated_at->diffInDays(now()) > 3;  // Record older than 3 days
+
+                            if ($isExpired || $isExpiringSoon || !$record->model_url || $isOldRecord) {
+                                // For old records, check if regeneration is possible
+                                if ($isOldRecord) {
+                                    $canRegenerate = $this->checkIfRegenerationPossible($record);
+
+                                    if (!$canRegenerate) {
+                                        Notification::make()
+                                            ->title('Download Expired')
+                                            ->body('This 3D model file has been deleted from the server (files are only retained for 3 days). Please generate a new model.')
+                                            ->warning()
+                                            ->send();
+                                        return;
+                                    }
+                                }
+
+                                // Regenerate the download URL
+                                $newUrl = $this->regenerateDownloadUrl($record);
+
+                                if ($newUrl) {
+                                    $livewire->js("window.open('{$newUrl}', '_blank')");
+
+                                    Notification::make()
+                                        ->title('Download Generated')
+                                        ->body('New download link created and will expire in 1 hour.')
+                                        ->success()
+                                        ->send();
+                                } else {
+                                    Notification::make()
+                                        ->title('Download Unavailable')
+                                        ->body('The 3D model file is no longer available. Files are only stored for 3 days. Please generate a new model.')
+                                        ->warning()
+                                        ->send();
+                                }
+                            } else {
+                                // Use existing URL
                                 $livewire->js("window.open('{$record->model_url}', '_blank')");
                             }
                         } catch (\Exception $e) {
@@ -112,6 +151,101 @@ class Jobs3DModel extends Page implements HasTable
             ])
             ->emptyStateHeading('No 3D models generated yet')
             ->emptyStateDescription('Upload images in the Create 3D Models page to get started');
+    }
+
+    private function canDownloadOrRegenerate($record): bool
+    {
+        if ($record->status !== 'finished') {
+            return false;
+        }
+
+        return $record->model_url ||
+            (!empty($record->serialize_id) && $record->updated_at->diffInDays(now()) <= 3);
+    }
+
+    private function checkIfRegenerationPossible(KiriEngineJobs $job): bool
+    {
+        try {
+            $apiKey = config('services.kiri.key');
+
+            $statusResponse = Http::withToken($apiKey)
+                ->timeout(10)
+                ->get("https://api.kiriengine.app/api/v1/open/model/getStatus?serialize={$job->serialize_id}");
+
+            if ($statusResponse->successful()) {
+                $statusData = $statusResponse->json();
+                $status = $statusData['data']['status'] ?? null;
+
+                return $status === 2;
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            Log::warning('Failed to check regeneration possibility', [
+                'job_id' => $job->id,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    private function regenerateDownloadUrl(KiriEngineJobs $job): ?string
+    {
+        try {
+            $apiKey = config('services.kiri.key');
+
+            $downloadResponse = Http::withToken($apiKey)
+                ->timeout(15)
+                ->get("https://api.kiriengine.app/api/v1/open/model/getModelZip?serialize={$job->serialize_id}");
+
+            if ($downloadResponse->successful()) {
+                $downloadData = $downloadResponse->json();
+
+                if (isset($downloadData['data']['modelUrl'])) {
+                    $newUrl = $downloadData['data']['modelUrl'];
+
+                    $job->update([
+                        'model_url' => $newUrl,
+                        'url_expiry' => now()->addHour(),
+                    ]);
+
+                    Log::info('Download URL regenerated', [
+                        'job_id' => $job->id,
+                        'serialize_id' => $job->serialize_id,
+                    ]);
+
+                    return $newUrl;
+                } else {
+                    $errorMsg = $downloadData['message'] ?? 'Unknown error';
+                    Log::warning('API returned no modelUrl', [
+                        'job_id' => $job->id,
+                        'api_response' => $downloadData
+                    ]);
+                }
+            } else {
+                Log::warning('API request failed for URL regeneration', [
+                    'job_id' => $job->id,
+                    'status_code' => $downloadResponse->status(),
+                    'response' => $downloadResponse->body()
+                ]);
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Failed to regenerate download URL', [
+                'job_id' => $job->id,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Check if URL can be regenerated for a record
+     */
+    private function canRegenerateUrl($record): bool
+    {
+        return $record->status === 'finished' && !empty($record->serialize_id);
     }
 
     /**

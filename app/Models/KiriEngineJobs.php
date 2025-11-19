@@ -24,6 +24,7 @@ class KiriEngineJobs extends Model
     protected $casts = [
         'kiri_options' => 'array',
         'is_downloaded' => 'boolean',
+        'url_expiry' => 'datetime',
     ];
 
     public function user()
