@@ -338,10 +338,14 @@
                             // If rental status is 'Returned', don't mark any dates as unavailable
                         }
 
-                        // Get booking dates (booking_date only) - mark ALL bookings as reserved for calendar display
+                        // Get booking dates (booking_date only) - ONLY mark bookings as reserved if status is 'On Going'
                         foreach ($product->bookings as $booking) {
-                            $bookingDate = \Carbon\Carbon::parse($booking->booking_date);
-                            $unavailableDates[$bookingDate->format('Y-m-d')] = 'reserved';
+
+                            if ($booking->status === 'On Going') {
+                                $bookingDate = \Carbon\Carbon::parse($booking->booking_date);
+                                $unavailableDates[$bookingDate->format('Y-m-d')] = 'reserved';
+                            }
+
                         }
                     @endphp
 
@@ -418,7 +422,7 @@
                 <div class="flex justify-center md:justify-start mb-8">
                     <button id="inquireButton"
                         class="text-lg px-8 py-4 w-full md:w-auto rounded-lg shadow-md transition-all duration-300 ease-in-out font-semibold flex items-center justify-center
-                                                bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 hover:shadow-lg"
+                                                    bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 hover:shadow-lg"
                         onclick="openInquiryModal()">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
