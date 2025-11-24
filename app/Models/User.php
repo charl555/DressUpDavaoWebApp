@@ -69,6 +69,11 @@ class User extends Authenticatable implements FilamentUser
         $this->notify(new CustomResetPasswordNotification($token));
     }
 
+    public function stored_3d_models()
+    {
+        return $this->hasMany(Stored3dModels::class, 'user_id', 'id');
+    }
+
     public function subscription()
     {
         return $this->hasOne(Subscriptions::class, 'user_id', 'id');

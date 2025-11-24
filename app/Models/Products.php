@@ -34,6 +34,11 @@ class Products extends Model
         return $this->hasMany(Bookings::class, 'product_id', 'product_id')->orderBy('booking_date', 'desc');
     }
 
+    public function kiriEngineJobs()
+    {
+        return $this->hasMany(KiriEngineJobs::class, 'product_id', 'product_id');
+    }
+
     public function occasions()
     {
         return $this->hasMany(Occasions::class, 'product_id', 'product_id');

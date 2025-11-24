@@ -80,7 +80,7 @@
                             ];
                         } elseif ($userGender === 'Male') {
                             $subtypes = [
-                                'Tuxedo', 'Business Suit', 'Formal Suit', 'Three-piece Suit',   
+                                'Tuxedo','Three-piece Suit',   
                                 'Two Piece Suit', 'Italian Suit', 'Single Breasted Suit', 'Double Breasted Suit',
                                 'Casual Suit', 'Denim Suit', 'Leather Suit', 'Bomber Jacket', 'Blazer'
                             ];
@@ -90,7 +90,7 @@
                                 'Ball Gown', 'Wedding Gown', 'Prom Dress', 'Evening Gown', 'Cocktail Dress',
                                 'A-line Gown', 'Sheath Gown', 'Mermaid Gown', 'Off-shoulder Gown', 'Princess Gown',
                                 'Empire Waist Gown', 'V-neck Gown', 'Trumpet Gown',
-                                'Tuxedo', 'Business Suit', 'Formal Suit', 'Three-piece Suit',
+                                'Tuxedo','Three-piece Suit',
                                 'Two Piece Suit', 'Italian Suit', 'Single Breasted Suit', 'Double Breasted Suit',
                                 'Casual Suit', 'Denim Suit', 'Leather Suit', 'Bomber Jacket', 'Blazer'
                             ];
@@ -234,7 +234,7 @@
                 </summary>
                 <div class="mt-3 space-y-3 pl-2">
                     @php
-                        $events = ['Formal', 'Wedding', 'Prom', 'Business', 'Party', 'Graduation', 'Anniversary', 'Debut', 'Gala'];
+                        $events = ['Formal', 'Wedding', 'Prom','Party', 'Graduation', 'Anniversary', 'Debut', 'Gala'];
                         $selectedEvents = request('event', []);
                         if (!is_array($selectedEvents)) {
                             $selectedEvents = [$selectedEvents];
@@ -253,7 +253,7 @@
         </div>
 
         <!-- Body Measurements Filter -->
-        @if(auth()->guest() || (auth()->check() && auth()->user()->role !== 'Admin' && auth()->user()->role !== 'SuperAdmin'))
+        {{-- @if(auth()->guest() || (auth()->check() && auth()->user()->role !== 'Admin' && auth()->user()->role !== 'SuperAdmin'))
             <div class="mb-6 pb-4">
                 <label for="measurements-toggle" class="flex items-center justify-between cursor-pointer py-3 bg-gray-50 rounded-lg px-4">
                     <span class="text-lg font-semibold text-gray-800 flex items-center">
@@ -311,7 +311,7 @@
                     </div>
                 @endguest
             </div>
-        @endif
+        @endif --}}
 
         <!-- Clear Filters Button Only -->
         <div class="flex">

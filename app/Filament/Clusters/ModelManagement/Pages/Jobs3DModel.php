@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\ModelManagement\Pages;
 use App\Filament\Clusters\ModelManagement\ModelManagementCluster;
 use App\Models\KiriEngineJobs;
 use App\Models\Shops;
+use App\Services\ModelDownloadService;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -30,9 +31,293 @@ class Jobs3DModel extends Page implements HasTable
     protected static ?int $navigationSort = 2;
     protected static ?string $cluster = ModelManagementCluster::class;
 
+    public bool $isPolling = false;
+    public int $polledCount = 0;
+
     public static function canAccess(): bool
     {
         return Auth::user()?->isAdmin();
+    }
+
+    public function mount(): void
+    {
+        // Start automatic polling when the page loads
+        $this->startAutomaticPolling();
+    }
+
+    /**
+     * Start automatic polling for ready models and job status
+     */
+    private function startAutomaticPolling(): void
+    {
+        if ($this->isPolling) {
+            return;
+        }
+
+        $this->isPolling = true;
+
+        // Use Filament's JS to set up polling for both download and status checks
+        $this->js(<<<JS
+                (function() {
+                    let pollCount = 0;
+                    const maxPolls = 30; // Poll 30 times maximum (5 minutes)
+                    const pollInterval = 10000; // 10 seconds between polls
+                    
+                    function startPolling() {
+                        const poll = setInterval(() => {
+                            pollCount++;
+                            
+                            // Check if we should stop polling
+                            if (pollCount >= maxPolls) {
+                                clearInterval(poll);
+                                console.log('Auto-polling stopped after ' + maxPolls + ' attempts');
+                                return;
+                            }
+                            
+                            // Trigger both polling actions
+                            \$wire.call('pollForReadyModels').then((downloadResult) => {
+                                console.log('Download polling attempt ' + pollCount + ': ' + downloadResult);
+                            });
+                            
+                            \$wire.call('pollForJobStatusUpdates').then((statusResult) => {
+                                console.log('Status polling attempt ' + pollCount + ': ' + statusResult);
+                                
+                                // If no more jobs to monitor, consider stopping
+                                if (statusResult === 'no_active_jobs' && pollCount > 5) {
+                                    clearInterval(poll);
+                                    console.log('Auto-polling completed - no active jobs to monitor');
+                                }
+                            });
+                            
+                        }, pollInterval);
+                    }
+                    
+                    // Start polling after a short delay
+                    setTimeout(startPolling, 2000);
+                })();
+            JS);
+    }
+
+    /**
+     * Polling method for ready models (download and store)
+     */
+    public function pollForReadyModels(): string
+    {
+        try {
+            $readyJobs = KiriEngineJobs::where('user_id', Auth::id())
+                ->where('status', 'finished')
+                ->whereNotNull('model_url')
+                ->whereDoesntHave('stored3dModel')
+                ->get();
+
+            if ($readyJobs->isEmpty()) {
+                return 'no_jobs';
+            }
+
+            $processedCount = 0;
+
+            foreach ($readyJobs as $job) {
+                if ($this->downloadAndStoreModel($job)) {
+                    $processedCount++;
+                    $this->polledCount++;
+
+                    // Auto-attach to product if job has product_id
+                    $this->autoAttachToProduct($job);
+                }
+            }
+
+            Log::info('Auto-polling processed jobs', [
+                'processed' => $processedCount,
+                'total_ready' => $readyJobs->count(),
+                'user_id' => Auth::id()
+            ]);
+
+            return "processed_{$processedCount}_jobs";
+        } catch (\Exception $e) {
+            Log::error('Auto-polling failed', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id()
+            ]);
+            return 'error';
+        }
+    }
+
+    /**
+     * Polling method for job status updates
+     */
+    public function pollForJobStatusUpdates(): string
+    {
+        try {
+            // Get jobs that are still processing (uploading or processing status)
+            $activeJobs = KiriEngineJobs::where('user_id', Auth::id())
+                ->whereIn('status', ['uploading', 'processing'])
+                ->whereNull('model_url')
+                ->get();
+
+            if ($activeJobs->isEmpty()) {
+                return 'no_active_jobs';
+            }
+
+            $updatedCount = 0;
+            $finishedCount = 0;
+
+            foreach ($activeJobs as $job) {
+                $previousStatus = $job->status;
+
+                // Check the current status via API
+                $this->checkJobStatus($job);
+
+                // Refresh the job to get updated status
+                $job->refresh();
+
+                if ($previousStatus !== $job->status) {
+                    $updatedCount++;
+
+                    // If job just finished, notify user
+                    if ($job->status === 'finished' && $job->model_url) {
+                        $finishedCount++;
+
+                        Notification::make()
+                            ->title('3D Model Ready!')
+                            ->body("Job {$job->serialize_id} has completed and is ready for download.")
+                            ->success()
+                            ->send();
+
+                        Log::info('Job completed via auto-polling', [
+                            'job_id' => $job->kiri_engine_job_id,
+                            'serialize_id' => $job->serialize_id
+                        ]);
+                    }
+                }
+            }
+
+            // Refresh table if any status changed
+            if ($updatedCount > 0) {
+                $this->dispatch('refreshTable');
+            }
+
+            Log::info('Auto-status polling completed', [
+                'active_jobs' => $activeJobs->count(),
+                'updated' => $updatedCount,
+                'finished' => $finishedCount,
+                'user_id' => Auth::id()
+            ]);
+
+            return "updated_{$updatedCount}_jobs_finished_{$finishedCount}";
+        } catch (\Exception $e) {
+            Log::error('Auto-status polling failed', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id()
+            ]);
+            return 'error';
+        }
+    }
+
+    /**
+     * Auto-attach stored 3D model to product
+     */
+    private function autoAttachToProduct(KiriEngineJobs $job): void
+    {
+        try {
+            // Check if job has a product association
+            if (!$job->product_id) {
+                return;
+            }
+
+            // Get the stored model
+            $storedModel = $job->stored3dModel;
+            if (!$storedModel) {
+                Log::warning('No stored model found for auto-attach', [
+                    'job_id' => $job->kiri_engine_job_id,
+                    'product_id' => $job->product_id
+                ]);
+                return;
+            }
+
+            // Get the product
+            $product = $job->product;
+            if (!$product) {
+                Log::warning('Product not found for auto-attach', [
+                    'job_id' => $job->kiri_engine_job_id,
+                    'product_id' => $job->product_id
+                ]);
+                return;
+            }
+
+            // Use the exact same model_path from stored3d_models
+            $modelPath = $storedModel->model_path;
+
+            // Check if a 3D model already exists for this product
+            $existingModel = $product->product_3d_models;
+
+            if ($existingModel) {
+                // Update existing model_path with the exact same path
+                $existingModel->update(['model_path' => $modelPath]);
+                $message = "3D model automatically updated for '{$product->name}'!";
+            } else {
+                // Create a new 3D model record with the exact same path
+                \App\Models\Product3dModels::create([
+                    'product_id' => $product->product_id,
+                    'model_path' => $modelPath,
+                ]);
+                $message = "3D model automatically attached to '{$product->name}'!";
+            }
+
+            // Send notification
+            Notification::make()
+                ->title('3D Model Auto-Attached')
+                ->body($message)
+                ->success()
+                ->send();
+
+            Log::info('3D model auto-attached to product', [
+                'job_id' => $job->kiri_engine_job_id,
+                'product_id' => $job->product_id,
+                'product_name' => $product->name,
+                'model_path' => $modelPath
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to auto-attach 3D model to product', [
+                'job_id' => $job->kiri_engine_job_id,
+                'product_id' => $job->product_id,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Download and store model (extracted for reuse)
+     */
+    private function downloadAndStoreModel($record): bool
+    {
+        try {
+            $downloadService = new ModelDownloadService();
+            $storedModel = $downloadService->downloadAndStoreModel($record);
+
+            if ($storedModel) {
+                Notification::make()
+                    ->title('3D Model Stored Successfully')
+                    ->body('The 3D model has been automatically downloaded and stored locally.')
+                    ->success()
+                    ->send();
+
+                // Refresh the table
+                $this->dispatch('refreshTable');
+                return true;
+            } else {
+                Log::warning('Auto-download failed for job', [
+                    'job_id' => $record->kiri_engine_job_id,
+                    'serialize_id' => $record->serialize_id
+                ]);
+                return false;
+            }
+        } catch (\Exception $e) {
+            Log::error('Auto-store locally failed', [
+                'job_id' => $record->kiri_engine_job_id,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
     }
 
     public function table(Table $table): Table
@@ -73,6 +358,15 @@ class Jobs3DModel extends Page implements HasTable
                     ->color(function ($state) {
                         return $state ? 'success' : 'gray';
                     }),
+                TextColumn::make('stored3dModel.model_name')
+                    ->label('Stored Locally')
+                    ->formatStateUsing(function ($record) {
+                        return $record->stored3dModel ? 'Yes' : 'No';
+                    })
+                    ->badge()
+                    ->color(function ($record) {
+                        return $record->stored3dModel ? 'success' : 'gray';
+                    }),
                 TextColumn::make('updated_at')
                     ->label('Last Updated')
                     ->since()
@@ -85,8 +379,51 @@ class Jobs3DModel extends Page implements HasTable
                     ->color('danger'),
             ])
             ->actions([
-                Action::make('download')
-                    ->label('Download')
+                Action::make('download_and_store')
+                    ->label('Store Locally')
+                    ->icon('heroicon-o-cloud-arrow-down')
+                    ->visible(fn($record) => $this->canDownloadOrRegenerate($record) && !$record->stored3dModel)
+                    ->action(function ($record) {
+                        try {
+                            $downloadService = new ModelDownloadService();
+                            $storedModel = $downloadService->downloadAndStoreModel($record);
+
+                            if ($storedModel) {
+                                Notification::make()
+                                    ->title('3D Model Stored Successfully')
+                                    ->body('The 3D model has been downloaded and stored locally.')
+                                    ->success()
+                                    ->send();
+
+                                // Filament v4 correct refresh
+                                $this->dispatch('filament-refresh');
+                            } else {
+                                Notification::make()
+                                    ->title('Storage Failed')
+                                    ->body('Failed to download and store the 3D model. Please try again.')
+                                    ->danger()
+                                    ->send();
+                            }
+                        } catch (\Exception $e) {
+                            Log::error('Store locally failed', [
+                                'job_id' => $record->kiri_engine_job_id,
+                                'error' => $e->getMessage()
+                            ]);
+
+                            Notification::make()
+                                ->title('Error')
+                                ->body("Failed to store model: {$e->getMessage()}")
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+                Action::make('view_stored')
+                    ->label('View 3D Model')
+                    ->icon('heroicon-o-eye')
+                    ->visible(fn($record) => $record->stored3dModel)
+                    ->url(fn($record) => route('view-3d-model', ['id' => $record->stored3dModel->stored_3d_model_id])),
+                Action::make('download_zip')
+                    ->label('Download ZIP')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->visible(fn($record) => $this->canDownloadOrRegenerate($record))
                     ->action(function ($record, $livewire) {
@@ -94,7 +431,9 @@ class Jobs3DModel extends Page implements HasTable
                             // Check if URL is expired or about to expire (within 5 minutes)
                             $isExpired = $record->url_expiry && $record->url_expiry->isPast();
                             $isExpiringSoon = $record->url_expiry && $record->url_expiry->diffInMinutes(now()) < 5;
-                            $isOldRecord = $record->updated_at->diffInDays(now()) > 3;  // Record older than 3 days
+                            $isOldRecord = $record->updated_at->diffInDays(now()) > 3;
+
+                            $downloadUrl = null;
 
                             if ($isExpired || $isExpiringSoon || !$record->model_url || $isOldRecord) {
                                 // For old records, check if regeneration is possible
@@ -112,11 +451,9 @@ class Jobs3DModel extends Page implements HasTable
                                 }
 
                                 // Regenerate the download URL
-                                $newUrl = $this->regenerateDownloadUrl($record);
+                                $downloadUrl = $this->regenerateDownloadUrl($record);
 
-                                if ($newUrl) {
-                                    $livewire->js("window.open('{$newUrl}', '_blank')");
-
+                                if ($downloadUrl) {
                                     Notification::make()
                                         ->title('Download Generated')
                                         ->body('New download link created and will expire in 1 hour.')
@@ -128,10 +465,16 @@ class Jobs3DModel extends Page implements HasTable
                                         ->body('The 3D model file is no longer available. Files are only stored for 3 days. Please generate a new model.')
                                         ->warning()
                                         ->send();
+                                    return;
                                 }
                             } else {
                                 // Use existing URL
-                                $livewire->js("window.open('{$record->model_url}', '_blank')");
+                                $downloadUrl = $record->model_url;
+                            }
+
+                            // Actually trigger the download
+                            if ($downloadUrl) {
+                                $livewire->js("window.open('{$downloadUrl}', '_blank')");
                             }
                         } catch (\Exception $e) {
                             Notification::make()
@@ -151,6 +494,11 @@ class Jobs3DModel extends Page implements HasTable
             ])
             ->emptyStateHeading('No 3D models generated yet')
             ->emptyStateDescription('Upload images in the Create 3D Models page to get started');
+    }
+
+    private function refreshTable()
+    {
+        $this->dispatch('refreshTable');
     }
 
     private function canDownloadOrRegenerate($record): bool
@@ -238,14 +586,6 @@ class Jobs3DModel extends Page implements HasTable
             ]);
             return null;
         }
-    }
-
-    /**
-     * Check if URL can be regenerated for a record
-     */
-    private function canRegenerateUrl($record): bool
-    {
-        return $record->status === 'finished' && !empty($record->serialize_id);
     }
 
     /**

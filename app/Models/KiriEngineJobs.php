@@ -11,6 +11,7 @@ class KiriEngineJobs extends Model
 
     protected $fillable = [
         'user_id',
+        'product_id',
         'serialize_id',
         'status',
         'model_url',
@@ -30,5 +31,15 @@ class KiriEngineJobs extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function stored3dModel()
+    {
+        return $this->hasOne(Stored3dModels::class, 'kiri_engine_job_id', 'kiri_engine_job_id');
+    }
+
+    public function product()
+    {
+        return $this->belongsTo(Products::class, 'product_id', 'product_id');
     }
 }

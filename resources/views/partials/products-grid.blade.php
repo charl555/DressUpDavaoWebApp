@@ -24,14 +24,22 @@
 
     <!-- Actual Products Grid -->
     <div id="products-grid">
-        <div
-            class="flex-grow grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8 px-4 justify-items-center lg:justify-items-start">
+        <div class="flex-grow grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8 px-4 justify-items-center lg:justify-items-start">
             @forelse ($products as $product)
                 <div class="group cursor-pointer max-w-[400px] w-full relative"
                     onclick="window.location.href='{{ route('product.overview', ['product_id' => $product->product_id]) }}'">
 
-                    <div
-                        class="relative h-96 sm:h-[400px] md:h-[400px] lg:h-[400px] xl:h-[400px] w-full transform transition-transform duration-300 ease-in-out group-hover:-translate-y-1">
+                    <!-- Recommendation Badge -->
+                    @if(auth()->check() && $product->fit_score > 0)
+                        <div class="absolute top-2 left-2 z-10">
+                            @include('partials.recommendation-badge', [
+                                'recommendation' => $product->recommendation_level,
+                                'fitScore' => $product->fit_score
+                            ])
+                        </div>
+                    @endif
+
+                    <div class="relative h-96 sm:h-[400px] md:h-[400px] lg:h-[400px] xl:h-[400px] w-full transform transition-transform duration-300 ease-in-out group-hover:-translate-y-1">
                         @php
                             $imageRecord = $product->product_images->first();
                         @endphp
@@ -40,8 +48,7 @@
                             <img src="{{ asset('uploads/' . $imageRecord->thumbnail_image) }}" alt="{{ $product->name }}"
                                 class="h-full w-full object-cover rounded-md shadow-md" />
                         @else
-                            <div
-                                class="h-full w-full flex items-center justify-center bg-gray-300 text-gray-700 rounded-md shadow-md">
+                            <div class="h-full w-full flex items-center justify-center bg-gray-300 text-gray-700 rounded-md shadow-md">
                                 Image not available
                             </div>
                         @endif
@@ -54,12 +61,19 @@
                     </div>
 
                     <div class="mt-2 space-y-1">
-                        <p
-                            class="text-left text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors duration-300">
+                        <p class="text-left text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors duration-300">
                             {{ $product->name }}
                         </p>
                         <p class="text-left text-gray-600 text-sm">{{ $product->subtype }}</p>
                         <p class="text-left text-gray-600 text-sm">{{ $product->size }}</p>
+@if(!$product->has_actual_measurements)
+    <div class="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full mt-1">
+        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+        </svg>
+        No measurements
+    </div>
+@endif
                         <p class="text-left text-gray-500 text-xs italic">{{ $product->user->shop->shop_name }}</p>
                     </div>
                 </div>

@@ -25,7 +25,21 @@
         }
 
         $model3D = $product->product_3d_models()->first();
-        $modelPath = $model3D ? asset('uploads/' . $model3D->model_path) : null;
+        $modelPath = null;
+        if ($model3D && $model3D->model_path) {
+            // If path already starts with 'uploads/', use as is
+            if (str_starts_with($model3D->model_path, 'uploads/')) {
+                $modelPath = asset($model3D->model_path);
+            }
+            // If path starts with '3d-models/', add 'uploads/' prefix
+            else if (str_starts_with($model3D->model_path, '3d-models/')) {
+                $modelPath = asset('uploads/' . $model3D->model_path);
+            }
+            // For any other format, try to construct the path
+            else {
+                $modelPath = asset('uploads/3d-models/' . $model3D->model_path);
+            }
+        }
         $clippingData = $model3D ? $model3D->clipping_planes_data : null;
         $imagesCount = count($galleryImages);
 
@@ -109,7 +123,6 @@
                 @endif
             </div>
         </div>
-
         {{-- Product Information --}}
         <div class="space-y-6 mb-8">
             <div class="bg-gray-50 rounded-lg p-6">
@@ -218,6 +231,18 @@
                     </div>
                 </div>
             @endif
+
+              {{-- Recommendation Section --}}
+@auth
+    @if($product->fit_score > 0)
+        <div class="mb-6">
+            @include('partials.recommendation-card', [
+                'recommendation' => $product->recommendation,
+                'fitScore' => $product->fit_score
+            ])
+        </div>
+    @endif
+@endauth
 
             {{-- Favorites Section --}}
             @auth
@@ -422,7 +447,7 @@
                 <div class="flex justify-center md:justify-start mb-8">
                     <button id="inquireButton"
                         class="text-lg px-8 py-4 w-full md:w-auto rounded-lg shadow-md transition-all duration-300 ease-in-out font-semibold flex items-center justify-center
-                                                    bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 hover:shadow-lg"
+                                                                                    bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 hover:shadow-lg"
                         onclick="openInquiryModal()">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -473,10 +498,23 @@
                     Math.PI / 2, Math.PI / 3, 3, BABYLON.Vector3.Zero(), scene);
                 camera.attachControl(canvas, true);
 
-                camera.wheelPrecision = 50;
-                camera.panningSensibility = 1500;
-                camera.angularSensibilityX = 2000;
-                camera.angularSensibilityY = 2000;
+                // Smooth controls for desktop and mobile
+                camera.wheelPrecision = 25; // Faster zoom
+                camera.panningSensibility = 5000; // Slower panning
+                camera.angularSensibilityX = 8000; // Slower rotation
+                camera.angularSensibilityY = 8000; // Slower rotation
+
+                // Pinch controls for mobile
+                camera.pinchPrecision = 80; // Faster pinch zoom
+                camera.pinchDeltaPercentage = 0.002;
+
+                // Inertia for smooth stops
+                camera.inertia = 0.9;
+                camera.panningInertia = 0.9;
+
+
+                camera.minZ = 0.001;
+                camera.maxZ = 1000;
 
                 const light = new BABYLON.HemisphericLight("light",
                     new BABYLON.Vector3(1, 1, 0), scene);
@@ -484,27 +522,15 @@
                 camera.useAutoRotationBehavior = true;
                 const autoRotate = camera.autoRotationBehavior;
                 if (autoRotate) {
-                    autoRotate.idleRotationSpeed = 0.2;
-                    autoRotate.idleRotationWaitTime = 2000;
-                    autoRotate.idleRotationSpinUpTime = 1000;
+                    autoRotate.idleRotationSpeed = 0.1;
+                    autoRotate.idleRotationWaitTime = 3000;
+                    autoRotate.idleRotationSpinUpTime = 2000;
+                    autoRotate.zoomStopsAnimation = false;
                 }
-
-                camera.pinchPrecision = 200;
-                camera.pinchDeltaPercentage = 0.001;
-                camera.inputs.attached.pointers.multiTouchPanning = false;
-                camera.inputs.attached.pointers.multiTouchPanAndZoom = true;
 
                 canvas.addEventListener('wheel', (event) => {
                     event.preventDefault();
                 }, { passive: false });
-
-                const clippingData = @json($clippingData);
-                if (clippingData) {
-                    scene.clipPlane = new BABYLON.Plane(1, 0, 0, -(clippingData.xPos ?? 100));
-                    scene.clipPlane2 = new BABYLON.Plane(-1, 0, 0, clippingData.xNeg ?? -100);
-                    scene.clipPlane3 = new BABYLON.Plane(0, 0, 1, -(clippingData.zPos ?? 100));
-                    scene.clipPlane4 = new BABYLON.Plane(0, 0, -1, clippingData.zNeg ?? -100);
-                }
 
                 BABYLON.SceneLoader.Append("", "{{ $modelPath }}", scene, function () {
                     const meshes = scene.meshes.filter(m => m.name !== "__root__");
@@ -514,9 +540,9 @@
                         const radius = boundingInfo.extendSizeWorld.length();
 
                         camera.target = center;
-                        camera.radius = radius * 1.5;
-                        camera.lowerRadiusLimit = radius * 0.8;
-                        camera.upperRadiusLimit = radius * 5;
+                        camera.radius = radius * 2;
+                        camera.lowerRadiusLimit = radius * 0.001; // Very close zoom
+                        camera.upperRadiusLimit = radius * 10;
                     }
                 });
 

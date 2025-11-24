@@ -204,3 +204,22 @@ Route::get('/test-email', function () {
 
     return 'Email sent!';
 });
+
+Route::get('/test-storage', function () {
+    $testPath = 'temp/test.txt';
+
+    // Test writing
+    Storage::disk('local')->put($testPath, 'test content');
+
+    // Test reading
+    $content = Storage::disk('local')->get($testPath);
+    $absolutePath = Storage::disk('local')->path($testPath);
+
+    return [
+        'written' => true,
+        'read' => $content,
+        'absolute_path' => $absolutePath,
+        'file_exists' => file_exists($absolutePath),
+        'storage_exists' => Storage::disk('local')->exists($testPath),
+    ];
+});

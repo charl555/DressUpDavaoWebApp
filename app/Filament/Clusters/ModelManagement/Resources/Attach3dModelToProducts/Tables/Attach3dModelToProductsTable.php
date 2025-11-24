@@ -2,15 +2,19 @@
 
 namespace App\Filament\Clusters\ModelManagement\Resources\Attach3dModelToProducts\Tables;
 
+use App\Models\KiriEngineJobs;
 use App\Models\Product3dModels;
 use App\Models\Products;
 use App\Models\Shops;
-use App\Rules\ThreeDModelFileRule;
+use App\Models\Stored3dModels;
+use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Fieldset;
@@ -22,6 +26,10 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Exception;
 
 class Attach3dModelToProductsTable
 {
@@ -32,13 +40,13 @@ class Attach3dModelToProductsTable
 
         if (!$hasAccess) {
             return $table
-                ->query(Products::query()->where('product_id', 0))  // Empty query
-                ->columns([])  // No columns
-                ->filters([])  // No filters
-                ->actions([])  // No actions
-                ->bulkActions([])  // No bulk actions
-                ->headerActions([])  // No header actions
-                ->paginated(false)  // Disable pagination
+                ->query(Products::query()->where('product_id', 0))
+                ->columns([])
+                ->filters([])
+                ->actions([])
+                ->bulkActions([])
+                ->headerActions([])
+                ->paginated(false)
                 ->emptyStateHeading('Access Denied')
                 ->emptyStateDescription('Your account currently does not have access to 3D model features. Please contact support to enable this functionality.')
                 ->emptyStateIcon('heroicon-o-lock-closed');
@@ -105,15 +113,14 @@ class Attach3dModelToProductsTable
             ])
             ->actions([
                 ActionGroup::make([
-                    Action::make('View3DModel')
-                        ->label('View 3D Model')
-                        ->icon('heroicon-o-eye')
-                        ->visible(fn(Products $record) => $record->product_3d_models !== null)
-                        ->url(fn(Products $record) => route('view-3d-model', ['id' => $record->product_id])),
-                    Action::make('attach3DModel')
-                        ->label('Attach 3D Model')
-                        ->icon('heroicon-o-cube')
-                        ->modalHeading(fn(Products $record) => 'Attach 3D Model to ' . $record->name)
+                    // UPDATED: Create 3D Model Action - Now opens modal instead of redirecting
+                    Action::make('create3DModel')
+                        ->label('Create 3D Model')
+                        ->icon('heroicon-o-photo')
+                        ->color('success')
+                        ->visible(fn(Products $record) => !$record->product_3d_models)
+                        ->modalHeading(fn(Products $record) => 'Create 3D Model for ' . $record->name)
+                        ->modalDescription(fn(Products $record) => 'Upload 20-100 high-quality images from all angles. The 3D model will be automatically generated and attached to this product when ready.')
                         ->form(function (Products $record): array {
                             return [
                                 Fieldset::make('Product Details')
@@ -129,40 +136,85 @@ class Attach3dModelToProductsTable
                                             ->disabled(),
                                     ])
                                     ->columns(3),
-                                FileUpload::make('model_file')
-                                    ->label('3D Model File')
-                                    ->helperText(function () {
-                                        $maxSizeMB = round(config('3d-models.max_file_size', 104857600) / 1024 / 1024);
-                                        $extensions = implode(' or ', array_map(fn($ext) => ".$ext", config('3d-models.allowed_extensions', ['glb', 'gltf'])));
-                                        return "Upload a 3D model file ({$extensions}). GLB format is recommended for web use. Maximum file size: {$maxSizeMB}MB.";
-                                    })
-                                    ->disk(config('3d-models.storage.disk', 'public'))
-                                    ->visibility(config('3d-models.storage.visibility', 'public'))
-                                    ->directory(config('3d-models.storage.directory', 'product-models'))
-                                    ->visibility('public')
+                                Hidden::make('product_id')
+                                    ->default($record->product_id),
+                                FileUpload::make('images')
+                                    ->label('Upload Images')
+                                    ->helperText('Upload 20-100 high-quality images from all angles. Images should be clear and show the product from different perspectives.')
+                                    ->multiple()
+                                    ->image()
                                     ->required()
-                                    ->appendFiles()
-                                    ->maxSize(config('3d-models.max_file_size_kb', 102400))
-                                    ->rules([
-                                        'required',
-                                        'file',
-                                        new ThreeDModelFileRule(),
-                                    ]),
+                                    ->minFiles(20)
+                                    ->maxFiles(100)
+                                    ->maxSize(10240)
+                                    ->disk('public')
+                                    ->directory('3d-model-images')
+                                    ->visibility('public')
+                                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                                    ->columnSpanFull(),
+                            ];
+                        })
+                        ->action(function (array $data, Products $record): void {
+                            self::handle3DModelCreation($data, $record);
+                        })
+                        ->modalSubmitActionLabel('Start 3D Model Generation')
+                        ->modalCancelActionLabel('Cancel'),
+                    Action::make('View3DModel')
+                        ->label('View 3D Model')
+                        ->icon('heroicon-o-eye')
+                        ->visible(fn(Products $record) => $record->product_3d_models !== null)
+                        ->url(fn(Products $record) => route('view-3d-model', ['id' => $record->product_id])),
+                    Action::make('attach3DModel')
+                        ->label('Attach Existing 3D Model')
+                        ->icon('heroicon-o-cube')
+                        ->modalHeading(fn(Products $record) => 'Attach 3D Model to ' . $record->name)
+                        ->form(function (Products $record): array {
+                            $userModels = Stored3dModels::where('user_id', Auth::id())
+                                ->get()
+                                ->mapWithKeys(function ($model) {
+                                    return [$model->stored_3d_model_id => $model->model_name . ' (' . $model->original_filename . ')'];
+                                })
+                                ->toArray();
+
+                            return [
+                                Fieldset::make('Product Details')
+                                    ->components([
+                                        TextInput::make('name')
+                                            ->default($record->name)
+                                            ->disabled(),
+                                        TextInput::make('type')
+                                            ->default($record->type)
+                                            ->disabled(),
+                                        TextInput::make('subtype')
+                                            ->default($record->subtype)
+                                            ->disabled(),
+                                    ])
+                                    ->columns(3),
+                                Select::make('stored_model_id')
+                                    ->label('Select 3D Model')
+                                    ->options($userModels)
+                                    ->required()
+                                    ->searchable()
+                                    ->helperText('Select a 3D model from your stored models collection.')
+                                    ->placeholder('Choose a 3D model...'),
                             ];
                         })
                         ->action(function (array $data, Products $record): void {
                             try {
-                                $modelPath = $data['model_file'];
+                                $storedModelId = $data['stored_model_id'];
+                                $storedModel = Stored3dModels::find($storedModelId);
 
-                                // Check if a 3D model already exists for this product
+                                if (!$storedModel) {
+                                    throw new \Exception('Selected 3D model not found.');
+                                }
+
+                                $modelPath = $storedModel->model_path;
                                 $existingModel = $record->product_3d_models;
 
                                 if ($existingModel) {
-                                    // Update existing model_path
                                     $existingModel->update(['model_path' => $modelPath]);
                                     $message = '3D model updated successfully!';
                                 } else {
-                                    // Create a new 3D model record
                                     Product3dModels::create([
                                         'product_id' => $record->product_id,
                                         'model_path' => $modelPath,
@@ -190,21 +242,14 @@ class Attach3dModelToProductsTable
                         ->icon('heroicon-o-trash')
                         ->color('danger')
                         ->requiresConfirmation()
-                        ->modalHeading('Remove 3D Model')
-                        ->modalDescription('Are you sure you want to remove the 3D model from this product? This action will delete the file permanently.')
+                        ->modalHeading(fn(Products $record) => 'Remove 3D Model from ' . $record->name)
+                        ->modalDescription('Are you sure you want to remove the 3D model from this product? This will only remove the association, not the actual model file.')
                         ->action(function (Products $record): void {
                             try {
                                 $existingModel = $record->product_3d_models;
 
                                 if ($existingModel) {
-                                    $filePath = $existingModel->model_path;
-
                                     $existingModel->delete();
-
-                                    if ($filePath && \Storage::disk('public')->exists($filePath)) {
-                                        \Storage::disk('public')->delete($filePath);
-                                    }
-
                                     Notification::make()
                                         ->title('3D model removed successfully!')
                                         ->success()
@@ -231,5 +276,163 @@ class Attach3dModelToProductsTable
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /**
+     * Handle 3D model creation from modal form
+     */
+    private static function handle3DModelCreation(array $data, Products $record): void
+    {
+        try {
+            $productId = $data['product_id'];
+            $images = $data['images'];
+
+            $apiKey = config('services.kiri.key');
+
+            if (empty($apiKey)) {
+                throw new \Exception('API configuration error. Please contact support.');
+            }
+
+            // Create job record with product_id
+            $job = KiriEngineJobs::create([
+                'user_id' => Auth::id(),
+                'product_id' => $productId,
+                'serialize_id' => 'temp_' . uniqid(),
+                'status' => 'uploading',
+                'kiri_options' => [],
+                'is_downloaded' => false,
+                'url_expiry' => Carbon::now()->addDays(7),
+            ]);
+
+            Log::info('KiriEngine job created from modal', [
+                'job_id' => $job->kiri_engine_job_id,
+                'product_id' => $productId,
+                'user_id' => Auth::id(),
+                'image_count' => count($images)
+            ]);
+
+            // Prepare images for direct API upload
+            $multipart = [];
+            $uploadedFiles = [];
+
+            // Process each uploaded image
+            foreach ($images as $storedImagePath) {
+                $fullPath = Storage::disk('public')->path($storedImagePath);
+
+                if (!file_exists($fullPath)) {
+                    $fullPath = public_path("storage/{$storedImagePath}");
+                    if (!file_exists($fullPath)) {
+                        throw new Exception("Stored file not found: {$storedImagePath}");
+                    }
+                }
+
+                $fileSize = filesize($fullPath);
+                if ($fileSize > 10 * 1024 * 1024) {
+                    throw new Exception('File too large: ' . basename($storedImagePath));
+                }
+
+                $multipart[] = [
+                    'name' => 'imagesFiles',
+                    'contents' => fopen($fullPath, 'r'),
+                    'filename' => basename($storedImagePath),
+                ];
+
+                $uploadedFiles[] = $storedImagePath;
+            }
+
+            // Add required API parameters
+            $multipart[] = ['name' => 'modelQuality', 'contents' => '3'];
+            $multipart[] = ['name' => 'textureQuality', 'contents' => '3'];
+            $multipart[] = ['name' => 'fileFormat', 'contents' => 'GLB'];
+            $multipart[] = ['name' => 'isMask', 'contents' => '1'];
+            $multipart[] = ['name' => 'textureSmoothing', 'contents' => '1'];
+
+            Log::info('Sending request to Kiri Engine API from modal', [
+                'job_id' => $job->kiri_engine_job_id,
+                'product_id' => $productId,
+                'image_count' => count($uploadedFiles),
+            ]);
+
+            // Send request to Kiri Engine API
+            $response = Http::withToken($apiKey)
+                ->timeout(300)
+                ->withHeaders([
+                    'Accept' => 'application/json',
+                ])
+                ->send('POST', 'https://api.kiriengine.app/api/v1/open/photo/image', [
+                    'multipart' => $multipart,
+                ]);
+
+            Log::info('Kiri Engine API response from modal', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            if ($response->successful()) {
+                $responseBody = $response->json();
+
+                if (isset($responseBody['data']['serialize'])) {
+                    $kiriSerializeId = $responseBody['data']['serialize'];
+
+                    // Update job with serialize ID
+                    $job->update([
+                        'serialize_id' => $kiriSerializeId,
+                        'status' => 'processing',
+                        'notes' => 'Successfully submitted to Kiri Engine',
+                    ]);
+
+                    Log::info('Kiri Engine job created successfully from modal', [
+                        'job_id' => $job->kiri_engine_job_id,
+                        'product_id' => $productId,
+                        'serialize_id' => $kiriSerializeId
+                    ]);
+
+                    // Show success notification
+                    Notification::make()
+                        ->title('3D Model Generation Started')
+                        ->body("3D model generation started for '{$record->name}'. It will be automatically attached when ready. You can check the progress in the 'Download 3D Models' page.")
+                        ->success()
+                        ->send();
+                } else {
+                    $errorMsg = $responseBody['msg'] ?? 'No serialize ID in response';
+                    $job->update([
+                        'status' => 'failed',
+                        'error_message' => $errorMsg,
+                        'notes' => 'API response error'
+                    ]);
+                    throw new \Exception("Upload failed: {$errorMsg}");
+                }
+            } else {
+                $errorBody = $response->json();
+                $errorMsg = $errorBody['msg'] ?? "Upload failed with status: {$response->status()}";
+                $job->update([
+                    'status' => 'failed',
+                    'error_message' => $errorMsg,
+                    'notes' => 'API request failed'
+                ]);
+                throw new \Exception("Upload failed: {$errorMsg}");
+            }
+
+            // Clean up uploaded files
+            foreach ($uploadedFiles as $filePath) {
+                try {
+                    Storage::disk('public')->delete($filePath);
+                } catch (\Exception $e) {
+                    Log::warning("Failed to delete uploaded file: {$filePath}", ['error' => $e->getMessage()]);
+                }
+            }
+        } catch (Exception $e) {
+            Log::error('3D model creation failed from modal', [
+                'product_id' => $record->product_id,
+                'product_name' => $record->name,
+                'error' => $e->getMessage(),
+            ]);
+
+            Notification::make()
+                ->title('3D Model Creation Failed')
+                ->body('Error: ' . $e->getMessage())
+                ->danger()
+                ->send();
+        }
     }
 }

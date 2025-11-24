@@ -18,6 +18,7 @@ class ModelModifier extends Page
     protected static ?string $navigationLabel = 'Model Modifier';
     protected static ?string $title = 'Model Modifier';
     protected static ?int $navigationSort = 4;
+    protected static bool $shouldRegisterNavigation = false;
 
     public static function canViewAny(): bool
     {

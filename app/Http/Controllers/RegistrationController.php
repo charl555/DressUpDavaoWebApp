@@ -54,9 +54,6 @@ class RegistrationController extends Controller
                 ],
             ]);
 
-            // Send welcome email
-            MailController::sendRegistrationEmail($user);
-
             // Always create a UserMeasurements record, even if fields are empty
             try {
                 $measurementData = [
