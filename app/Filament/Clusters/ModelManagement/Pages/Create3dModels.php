@@ -39,6 +39,8 @@ class Create3dModels extends Page implements HasForms
     public ?int $productId = null;
     public ?Products $product = null;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function canAccess(): bool
     {
         return Auth::user()?->isAdmin();

@@ -27,7 +27,7 @@ class Attach3dModelToProductResource extends Resource
 
     protected static ?string $navigationLabel = 'Add 3D Model to Products';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 1;
 
     public static function getTitle(): string
     {

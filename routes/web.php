@@ -59,6 +59,41 @@ Route::get('/', function () {
 Route::get('/login', [HomeController::class, 'showLogin'])->name('login.show');
 Route::get('/register', [HomeController::class, 'showRegister'])->name('register.show');
 
+Route::get('/about-us', function () {
+    return view('aboutus');
+});
+
+Route::get('/faq', function () {
+    return view('faq');
+});
+
+Route::get('/contact', function () {
+    return view('contact');
+});
+
+Route::get('/terms-and-services', function () {
+    return view('termsandservice');
+});
+Route::get('/privacy-policy', function () {
+    return view('privacypolicy');
+});
+
+Route::get('/terms-of-use', function () {
+    return view('termsofuse');
+});
+
+Route::get('/forum', function () {
+    return view('forum');
+});
+
+Route::get('/downloads', function () {
+    return view('downloads');
+});
+
+Route::get('/how-it-works', function () {
+    return view('howitworks');
+});
+
 Route::post('/logout', function (Request $request) {
     Auth::logout();
     $request->session()->invalidate();

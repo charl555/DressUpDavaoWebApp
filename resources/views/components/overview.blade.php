@@ -435,10 +435,10 @@
                         </div>
                     </div>
 
-                    <p class="text-sm text-gray-600 text-center">
+                    {{-- <p class="text-sm text-gray-600 text-center">
                         Use the navigation buttons to view availability for different months.
                         Green dates are available, yellow dates are reserved, and red dates are rented.
-                    </p>
+                    </p> --}}
                 </div>
             </div>
 

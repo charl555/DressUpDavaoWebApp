@@ -422,68 +422,62 @@ class Jobs3DModel extends Page implements HasTable
                     ->icon('heroicon-o-eye')
                     ->visible(fn($record) => $record->stored3dModel)
                     ->url(fn($record) => route('view-3d-model', ['id' => $record->stored3dModel->stored_3d_model_id])),
-                Action::make('download_zip')
-                    ->label('Download ZIP')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->visible(fn($record) => $this->canDownloadOrRegenerate($record))
-                    ->action(function ($record, $livewire) {
-                        try {
-                            // Check if URL is expired or about to expire (within 5 minutes)
-                            $isExpired = $record->url_expiry && $record->url_expiry->isPast();
-                            $isExpiringSoon = $record->url_expiry && $record->url_expiry->diffInMinutes(now()) < 5;
-                            $isOldRecord = $record->updated_at->diffInDays(now()) > 3;
-
-                            $downloadUrl = null;
-
-                            if ($isExpired || $isExpiringSoon || !$record->model_url || $isOldRecord) {
-                                // For old records, check if regeneration is possible
-                                if ($isOldRecord) {
-                                    $canRegenerate = $this->checkIfRegenerationPossible($record);
-
-                                    if (!$canRegenerate) {
-                                        Notification::make()
-                                            ->title('Download Expired')
-                                            ->body('This 3D model file has been deleted from the server (files are only retained for 3 days). Please generate a new model.')
-                                            ->warning()
-                                            ->send();
-                                        return;
-                                    }
-                                }
-
-                                // Regenerate the download URL
-                                $downloadUrl = $this->regenerateDownloadUrl($record);
-
-                                if ($downloadUrl) {
-                                    Notification::make()
-                                        ->title('Download Generated')
-                                        ->body('New download link created and will expire in 1 hour.')
-                                        ->success()
-                                        ->send();
-                                } else {
-                                    Notification::make()
-                                        ->title('Download Unavailable')
-                                        ->body('The 3D model file is no longer available. Files are only stored for 3 days. Please generate a new model.')
-                                        ->warning()
-                                        ->send();
-                                    return;
-                                }
-                            } else {
-                                // Use existing URL
-                                $downloadUrl = $record->model_url;
-                            }
-
-                            // Actually trigger the download
-                            if ($downloadUrl) {
-                                $livewire->js("window.open('{$downloadUrl}', '_blank')");
-                            }
-                        } catch (\Exception $e) {
-                            Notification::make()
-                                ->title('Error')
-                                ->body("Failed to download: {$e->getMessage()}")
-                                ->danger()
-                                ->send();
-                        }
-                    }),
+                // Action::make('download_zip')
+                //     ->label('Download ZIP')
+                //     ->icon('heroicon-o-arrow-down-tray')
+                //     ->visible(fn($record) => $this->canDownloadOrRegenerate($record))
+                //     ->action(function ($record, $livewire) {
+                //         try {
+                //             // Check if URL is expired or about to expire (within 5 minutes)
+                //             $isExpired = $record->url_expiry && $record->url_expiry->isPast();
+                //             $isExpiringSoon = $record->url_expiry && $record->url_expiry->diffInMinutes(now()) < 5;
+                //             $isOldRecord = $record->updated_at->diffInDays(now()) > 3;
+                //             $downloadUrl = null;
+                //             if ($isExpired || $isExpiringSoon || !$record->model_url || $isOldRecord) {
+                //                 // For old records, check if regeneration is possible
+                //                 if ($isOldRecord) {
+                //                     $canRegenerate = $this->checkIfRegenerationPossible($record);
+                //                     if (!$canRegenerate) {
+                //                         Notification::make()
+                //                             ->title('Download Expired')
+                //                             ->body('This 3D model file has been deleted from the server (files are only retained for 3 days). Please generate a new model.')
+                //                             ->warning()
+                //                             ->send();
+                //                         return;
+                //                     }
+                //                 }
+                //                 // Regenerate the download URL
+                //                 $downloadUrl = $this->regenerateDownloadUrl($record);
+                //                 if ($downloadUrl) {
+                //                     Notification::make()
+                //                         ->title('Download Generated')
+                //                         ->body('New download link created and will expire in 1 hour.')
+                //                         ->success()
+                //                         ->send();
+                //                 } else {
+                //                     Notification::make()
+                //                         ->title('Download Unavailable')
+                //                         ->body('The 3D model file is no longer available. Files are only stored for 3 days. Please generate a new model.')
+                //                         ->warning()
+                //                         ->send();
+                //                     return;
+                //                 }
+                //             } else {
+                //                 // Use existing URL
+                //                 $downloadUrl = $record->model_url;
+                //             }
+                //             // Actually trigger the download
+                //             if ($downloadUrl) {
+                //                 $livewire->js("window.open('{$downloadUrl}', '_blank')");
+                //             }
+                //         } catch (\Exception $e) {
+                //             Notification::make()
+                //                 ->title('Error')
+                //                 ->body("Failed to download: {$e->getMessage()}")
+                //                 ->danger()
+                //                 ->send();
+                //         }
+                //     }),
                 Action::make('check_status')
                     ->label('Check Status')
                     ->icon('heroicon-o-arrow-path')
