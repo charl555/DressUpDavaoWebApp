@@ -91,80 +91,124 @@
             <!-- Edit Profile -->
             <div id="profile-settings"
                 class="content-section active bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-                <div class="flex items-center mb-6">
-                    <svg class="w-6 h-6 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    <h1 class="text-2xl font-bold text-gray-800">My Profile</h1>
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <h1 class="text-2xl font-bold text-gray-800">My Profile</h1>
+                    </div>
+                    <button type="button" id="editProfileBtn"
+                        class="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit Profile
+                    </button>
                 </div>
                 <p class="text-gray-600 pb-6 text-sm">Manage and protect your account information.</p>
 
-                <form method="POST" action="{{ route('profile.update') }}">
+                <form method="POST" action="{{ route('profile.update') }}" id="profileForm">
                     @csrf
                     @method('PUT')
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="space-y-6">
-                            <div>
-                                <label for="full-name" class="block text-sm font-semibold text-gray-700 mb-2">Full
-                                    Name</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Full Name -->
+                        <div>
+                            <label for="full-name" class="block text-sm font-semibold text-gray-700 mb-2">Full
+                                Name</label>
+                            <div class="relative">
                                 <input type="text" id="full-name" name="name" value="{{ Auth::user()->name }}"
-                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200">
+                                    class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
+                                    readonly>
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                </div>
                             </div>
-                            <div>
-                                <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                        </div>
+
+                        <!-- Email -->
+                        <div>
+                            <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                            <div class="relative">
                                 <input type="email" id="email" name="email" value="{{ Auth::user()->email }}"
-                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200">
+                                    class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
+                                    readonly>
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
                             </div>
-                            <div>
-                                <label for="gender"
-                                    class="block text-sm font-semibold text-gray-700 mb-2">Gender</label>
+                        </div>
+
+                        <!-- Gender -->
+                        <div>
+                            <label for="gender" class="block text-sm font-semibold text-gray-700 mb-2">Gender</label>
+                            <div class="relative">
                                 <select id="gender" name="gender"
-                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200">
+                                    class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200 appearance-none"
+                                    disabled>
                                     <option value="Male" {{ Auth::user()->gender == 'Male' ? 'selected' : '' }}>Male
                                     </option>
                                     <option value="Female" {{ Auth::user()->gender == 'Female' ? 'selected' : '' }}>Female
                                     </option>
                                 </select>
-                            </div>
-                            <div>
-                                <label for="phone" class="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
-                                <input type="tel" id="phone" name="phone_number"
-                                    value="{{ Auth::user()->phone_number }}"
-                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200">
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col items-center justify-center">
-                            <div class="relative">
-                                <img src="{{ asset('frontend-images/gown-category.jpg') }}" alt="Profile Picture"
-                                    class="h-32 w-32 rounded-full object-cover shadow-lg border-4 border-white ring-2 ring-purple-200">
-                                <div class="absolute bottom-0 right-0 bg-purple-600 rounded-full p-2 shadow-lg">
-                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
                                     </svg>
                                 </div>
                             </div>
-                            <button type="button"
-                                class="mt-6 px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
-                                Select Image
-                            </button>
+                        </div>
+
+                        <!-- Phone -->
+                        <div>
+                            <label for="phone" class="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
+                            <div class="relative">
+                                <input type="tel" id="phone" name="phone_number"
+                                    value="{{ Auth::user()->phone_number }}"
+                                    class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
+                                    readonly>
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                    </svg>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="pt-8 flex justify-end">
-                        <button type="submit"
-                            class="px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg">
-                            Update Profile
+                    <!-- Save/Cancel Buttons (Hidden by default) -->
+                    <div id="formActions" class="pt-8 flex justify-end space-x-4 hidden">
+                        <button type="button" id="cancelEditBtn"
+                            class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
+                            Cancel
+                        </button>
+                        <button type="submit" id="saveProfileBtn"
+                            class="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            Save Changes
                         </button>
                     </div>
                 </form>
             </div>
+
 
             <!-- Change Password -->
             <div id="change-password"
@@ -1168,6 +1212,139 @@
                 });
             });
         });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const editProfileBtn = document.getElementById('editProfileBtn');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const saveProfileBtn = document.getElementById('saveProfileBtn');
+        const formActions = document.getElementById('formActions');
+        const profileForm = document.getElementById('profileForm');
+
+        // Store original values for cancel functionality
+        let originalValues = {};
+
+        // Function to enable form editing
+        function enableFormEditing() {
+            const inputs = profileForm.querySelectorAll('input, select');
+
+            // Store original values
+            inputs.forEach(input => {
+                originalValues[input.name] = input.value;
+            });
+
+            // Enable inputs and remove readonly/disabled states
+            inputs.forEach(input => {
+                if (input.type === 'select-one') {
+                    input.disabled = false;
+                } else {
+                    input.readOnly = false;
+                }
+                input.classList.remove('bg-gray-50', 'text-gray-600');
+                input.classList.add('bg-white', 'text-gray-900');
+            });
+
+            // Show save/cancel buttons, hide edit button
+            formActions.classList.remove('hidden');
+            editProfileBtn.classList.add('hidden');
+        }
+
+        // Function to disable form editing
+        function disableFormEditing() {
+            const inputs = profileForm.querySelectorAll('input, select');
+
+            // Disable inputs and set readonly/disabled states
+            inputs.forEach(input => {
+                if (input.type === 'select-one') {
+                    input.disabled = true;
+                } else {
+                    input.readOnly = true;
+                }
+                input.classList.remove('bg-white', 'text-gray-900');
+                input.classList.add('bg-gray-50', 'text-gray-600');
+            });
+
+            // Hide save/cancel buttons, show edit button
+            formActions.classList.add('hidden');
+            editProfileBtn.classList.remove('hidden');
+        }
+
+        // Function to restore original values
+        function restoreOriginalValues() {
+            const inputs = profileForm.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                if (originalValues[input.name] !== undefined) {
+                    input.value = originalValues[input.name];
+                }
+            });
+        }
+
+        // Event Listeners
+        editProfileBtn.addEventListener('click', enableFormEditing);
+
+        cancelEditBtn.addEventListener('click', function () {
+            restoreOriginalValues();
+            disableFormEditing();
+        });
+
+        // Form submission handling
+        profileForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Show loading state
+            const originalText = saveProfileBtn.innerHTML;
+            saveProfileBtn.innerHTML = `
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Saving...
+        `;
+            saveProfileBtn.disabled = true;
+
+            // Submit form via AJAX
+            const formData = new FormData(profileForm);
+
+            fetch(profileForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (typeof showToast === 'function') {
+                            showToast(data.message || 'Profile updated successfully!', 'success');
+                        }
+                        disableFormEditing();
+                        // Update original values with new values
+                        const inputs = profileForm.querySelectorAll('input, select');
+                        inputs.forEach(input => {
+                            originalValues[input.name] = input.value;
+                        });
+                    } else {
+                        if (typeof showToast === 'function') {
+                            showToast(data.message || 'Failed to update profile.', 'error');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    if (typeof showToast === 'function') {
+                        showToast('An error occurred. Please try again.', 'error');
+                    }
+                })
+                .finally(() => {
+                    // Restore button state
+                    saveProfileBtn.innerHTML = originalText;
+                    saveProfileBtn.disabled = false;
+                });
+        });
+
+        // Initialize form in disabled state
+        disableFormEditing();
     });
 
     function togglePassword(fieldId) {

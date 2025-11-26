@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.1",
+        "doctrine/dbal": "^4.3",
         "filament/filament": "^4.0",
         "intervention/image": "^2.7",
         "joaopaulolndev/filament-edit-profile": "^2.0",

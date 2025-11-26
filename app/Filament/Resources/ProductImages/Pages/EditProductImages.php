@@ -48,7 +48,7 @@ class EditProductImages extends EditRecord
                     $record->thumbnail_image = $thumbnailPath;
                 }
             } elseif (is_object($data['thumbnail_image'])) {
-                // It's a new file upload
+                // It's a new file upload - use the same processing as CreateProducts
                 if ($record->thumbnail_image && Storage::disk('public')->exists($record->thumbnail_image)) {
                     Storage::disk('public')->delete($record->thumbnail_image);
                 }
@@ -74,7 +74,7 @@ class EditProductImages extends EditRecord
                     }
                     $newImages[] = $imagePath;
                 } elseif (is_object($imageInput)) {
-                    // It's a new file upload
+                    // It's a new file upload - use the same processing as CreateProducts
                     try {
                         $optimizedPath = ProductImages::optimizeAndConvertToWebP($imageInput, 85);
                         $newImages[] = $optimizedPath;
@@ -108,6 +108,7 @@ class EditProductImages extends EditRecord
 
     /**
      * Process thumbnail image with compression and WebP conversion
+     * Updated to match CreateProducts functionality
      */
     protected function processThumbnailImage($thumbnailFile)
     {
@@ -116,10 +117,30 @@ class EditProductImages extends EditRecord
         }
 
         try {
-            return ProductImages::createThumbnail($thumbnailFile, 80);
+            // Use the SAME method and quality as gallery images for consistency
+            $thumbnailPath = ProductImages::optimizeAndConvertToWebP($thumbnailFile, 85);
+
+            // Ensure the path includes the thumbnails directory (same as CreateProducts)
+            if ($thumbnailPath && strpos($thumbnailPath, 'product-images/thumbnails/') !== 0) {
+                // Move to correct directory if needed
+                $filename = basename($thumbnailPath);
+                $correctPath = 'product-images/thumbnails/' . $filename;
+
+                if (Storage::disk('public')->exists($thumbnailPath)) {
+                    Storage::disk('public')->move($thumbnailPath, $correctPath);
+                    $thumbnailPath = $correctPath;
+                }
+            }
+
+            return $thumbnailPath;
         } catch (\Exception $e) {
             \Log::error('Thumbnail processing failed: ' . $e->getMessage());
-            return $thumbnailFile->store('product-images/thumbnails', 'public');
+            // Fallback with correct directory
+            if (is_string($thumbnailFile)) {
+                return $thumbnailFile;  // Keep existing path
+            } else {
+                return $thumbnailFile->store('product-images/thumbnails', 'public');
+            }
         }
     }
 }

@@ -129,7 +129,7 @@
 
 <!-- Size Filter -->
 <div class="mb-6 border-b border-gray-200 pb-4">
-    <details class="group" open>
+    <details class="group">
         <summary
             class="flex justify-between items-center cursor-pointer py-3 text-lg font-semibold text-gray-800 hover:text-purple-700 transition-colors duration-200 bg-gray-50 rounded-lg px-4">
             <span class="flex items-center">

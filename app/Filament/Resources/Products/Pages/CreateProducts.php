@@ -90,7 +90,7 @@ class CreateProducts extends CreateRecord
 
         try {
             // For new uploads, it's a file object; for edits, it might be a string path
-            $thumbnailPath = ProductImages::createThumbnail($thumbnailFile, 80);
+            $thumbnailPath = ProductImages::optimizeAndConvertToWebP($thumbnailFile, 85);
 
             // Ensure the path includes the thumbnails directory
             if ($thumbnailPath && strpos($thumbnailPath, 'product-images/thumbnails/') !== 0) {
