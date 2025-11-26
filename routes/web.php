@@ -26,6 +26,9 @@ Route::get('/', function () {
         $products = Cache::remember('homepage_products', 300, function () {
             return Products::where('visibility', 'Yes')
                 ->where('status', 'Available')
+                ->whereHas('user.shop', function ($query) {
+                    $query->where('shop_status', 'Verified');
+                })
                 ->with(['product_images' => function ($query) {
                     $query
                         ->whereNotNull('thumbnail_image')
@@ -45,6 +48,9 @@ Route::get('/', function () {
     } catch (\Exception $e) {
         // Fallback if cache fails
         $products = Products::where('visibility', 'Yes')
+            ->whereHas('user.shop', function ($query) {
+                $query->where('shop_status', 'Verified');
+            })
             ->where('status', 'Available')
             ->with('product_images')
             ->select('product_id', 'name', 'type', 'subtype')
@@ -93,6 +99,8 @@ Route::get('/downloads', function () {
 Route::get('/how-it-works', function () {
     return view('howitworks');
 });
+
+Route::post('/contact', [App\Http\Controllers\ContactController::class, 'store'])->name('contact.submit');
 
 Route::post('/logout', function (Request $request) {
     Auth::logout();

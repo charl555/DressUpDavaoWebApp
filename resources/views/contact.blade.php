@@ -35,50 +35,75 @@
                             style="font-family: 'Playfair Display', serif;">
                             Send us a Message
                         </h3>
-                        <form class="space-y-6">
+                        <form id="contactForm" class="space-y-6" method="POST" action="{{ route('contact.submit') }}">
+                            @csrf
+
                             <!-- Name -->
                             <div>
                                 <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Name</label>
-                                <input type="text" id="name" name="name"
+                                <input type="text" id="name" name="name" required
                                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all duration-300"
-                                    placeholder="Your full name">
+                                    placeholder="Your full name" value="{{ old('name') }}">
+                                @error('name')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
 
                             <!-- Email -->
                             <div>
                                 <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                                <input type="email" id="email" name="email"
+                                <input type="email" id="email" name="email" required
                                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all duration-300"
-                                    placeholder="your.email@example.com">
+                                    placeholder="your.email@example.com" value="{{ old('email') }}">
+                                @error('email')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
 
                             <!-- Mobile -->
                             <div>
-                                <label for="mobile" class="block text-sm font-medium text-gray-700 mb-2">Mobile</label>
-                                <input type="tel" id="mobile" name="mobile"
+                                <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Mobile</label>
+                                <input type="tel" id="phone" name="phone" maxlength="11"
                                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all duration-300"
-                                    placeholder="+63 900 000 0000">
+                                    placeholder="09123456789" value="{{ old('phone') }}"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11)">
+                                <p class="text-xs text-gray-500 mt-1">Enter 11-digit mobile number (digits only)</p>
+                                @error('phone')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
 
                             <!-- Message -->
                             <div>
                                 <label for="message"
                                     class="block text-sm font-medium text-gray-700 mb-2">Message</label>
-                                <textarea id="message" name="message" rows="5"
+                                <textarea id="message" name="message" rows="5" required
                                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all duration-300 resize-none"
-                                    placeholder="Tell us how we can help you..."></textarea>
+                                    placeholder="Tell us how we can help you...">{{ old('message') }}</textarea>
+                                @error('message')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
 
                             <!-- Submit Button -->
-                            <button type="submit"
-                                class="w-full inline-flex justify-center items-center px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:from-purple-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-300">
+                            <button type="submit" id="submitContactBtn"
+                                class="w-full inline-flex justify-center items-center px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:from-purple-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-300 disabled:from-purple-300 disabled:to-indigo-300 disabled:cursor-not-allowed disabled:transform-none disabled:hover:scale-100">
                                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                                 </svg>
-                                Send Message
+                                <span class="btn-text">Send Message</span>
+                                <span
+                                    class="loading hidden ml-2 animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5"></span>
                             </button>
                         </form>
+
+                        <!-- Success Message -->
+                        @if(session('success'))
+                            <div class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                                <p class="text-green-700">{{ session('success') }}</p>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Contact Information -->
@@ -228,7 +253,171 @@
 
     </main>
     <x-footer />
+    <x-toast />
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const contactForm = document.getElementById('contactForm');
+            const submitBtn = document.getElementById('submitContactBtn');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const loadingIcon = submitBtn.querySelector('.loading');
+            const cooldownSeconds = 30; // 30 seconds cooldown
+            let lastSubmitTime = 0;
+            let cooldownInterval;
+
+            // Phone number validation
+            const phoneInput = document.getElementById('phone');
+            phoneInput.addEventListener('input', function (e) {
+                // Remove any non-digit characters and limit to 11 characters
+                this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11);
+            });
+
+            // Update submit button state based on form validity
+            function updateSubmitButtonState() {
+                const name = document.getElementById('name').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const message = document.getElementById('message').value.trim();
+                const phone = document.getElementById('phone').value.trim();
+
+                const isFormValid = name && email && message && validateEmail(email) && (!phone || phone.length === 11);
+
+                if (isFormValid) {
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('from-purple-300', 'to-indigo-300', 'cursor-not-allowed');
+                    submitBtn.classList.add('from-purple-600', 'to-indigo-600', 'hover:from-purple-700', 'hover:to-indigo-700', 'cursor-pointer');
+                } else {
+                    submitBtn.disabled = true;
+                    submitBtn.classList.add('from-purple-300', 'to-indigo-300', 'cursor-not-allowed');
+                    submitBtn.classList.remove('from-purple-600', 'to-indigo-600', 'hover:from-purple-700', 'hover:to-indigo-700', 'cursor-pointer');
+                }
+            }
+
+            // Email validation
+            function validateEmail(email) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return emailRegex.test(email);
+            }
+
+            // Start cooldown timer
+            function startCooldown() {
+                let remaining = cooldownSeconds;
+                btnText.textContent = `Wait ${remaining}s`;
+
+                cooldownInterval = setInterval(() => {
+                    remaining--;
+                    btnText.textContent = `Wait ${remaining}s`;
+
+                    if (remaining <= 0) {
+                        clearInterval(cooldownInterval);
+                        updateSubmitButtonState();
+                        btnText.textContent = 'Send Message';
+                    }
+                }, 1000);
+            }
+
+            // Reset form and start cooldown
+            function handleSuccess() {
+                contactForm.reset();
+                lastSubmitTime = Date.now();
+                startCooldown();
+            }
+
+            // Reset button to normal state
+            function resetButtonState() {
+                submitBtn.disabled = false;
+                loadingIcon.classList.add('hidden');
+                updateSubmitButtonState();
+                btnText.textContent = 'Send Message';
+            }
+
+            // Add event listeners for form validation
+            document.getElementById('name').addEventListener('input', updateSubmitButtonState);
+            document.getElementById('email').addEventListener('input', updateSubmitButtonState);
+            document.getElementById('phone').addEventListener('input', updateSubmitButtonState);
+            document.getElementById('message').addEventListener('input', updateSubmitButtonState);
+
+            // Form submission
+            contactForm.addEventListener('submit', async function (event) {
+                event.preventDefault();
+
+                const now = Date.now();
+                const timeSinceLastSubmit = (now - lastSubmitTime) / 1000;
+
+                // Check cooldown
+                if (timeSinceLastSubmit < cooldownSeconds) {
+                    const remaining = Math.ceil(cooldownSeconds - timeSinceLastSubmit);
+                    showToast(`Please wait ${remaining}s before sending another message.`, 'warning');
+                    return;
+                }
+
+                const name = document.getElementById('name').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const phone = document.getElementById('phone').value.trim();
+                const message = document.getElementById('message').value.trim();
+
+                // Validate phone number if provided
+                if (phone && phone.length !== 11) {
+                    showToast('Please enter a valid 11-digit mobile number.', 'error');
+                    return;
+                }
+
+                // Validate email
+                if (!validateEmail(email)) {
+                    showToast('Please enter a valid email address.', 'error');
+                    return;
+                }
+
+                // Show loading state
+                submitBtn.disabled = true;
+                btnText.textContent = 'Sending...';
+                loadingIcon.classList.remove('hidden');
+
+                try {
+                    const formData = new FormData(contactForm);
+
+                    const response = await fetch('{{ route('contact.submit') }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        showToast(data.message || 'Your message has been sent successfully! We will get back to you within 24 hours.', 'success', 5000);
+                        handleSuccess();
+                    } else {
+                        // Handle validation errors
+                        if (data.errors) {
+                            const firstError = Object.values(data.errors)[0][0];
+                            throw new Error(firstError);
+                        }
+                        throw new Error(data.message || 'Failed to send message. Please try again.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+
+                    // Check if the message was actually sent (database success but network error)
+                    // In a real scenario, you might want to check this differently
+                    // For now, we'll assume it failed and let the user retry
+                    if (error.message.includes('Failed to fetch') || error.message.includes('Network Error')) {
+                        showToast('Network error. Your message may have been sent. Please check your connection and try again if needed.', 'warning');
+                    } else {
+                        showToast(error.message || 'Failed to send message. Please try again later.', 'error');
+                    }
+
+                    resetButtonState();
+                }
+            });
+
+            // Initialize button state
+            updateSubmitButtonState();
+        });
+    </script>
 </body>
 
 </html>

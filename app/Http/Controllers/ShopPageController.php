@@ -58,15 +58,51 @@ class ShopPageController extends Controller
         // Size filter
         if ($request->filled('size')) {
             $sizeMapping = [
+                // Individual Sizes
                 'XS' => 'Extra Small',
                 'S' => 'Small',
                 'M' => 'Medium',
                 'L' => 'Large',
                 'XL' => 'Extra Large',
-                'XXL' => 'Extra Extra Large'
+                'XXL' => 'Extra Extra Large',
+                'XXXL' => 'Extra Extra Extra Large',
+                // --- Most Common Ranges ---
+                'XS-S' => 'XS to S',
+                'S-M' => 'S to M',
+                'M-L' => 'M to L',
+                'L-XL' => 'L to XL',
+                'XL-XXL' => 'XL to XXL',
+                // --- Extended Ranges ---
+                'XXS-S' => 'XXS to S',
+                'XS-M' => 'XS to M',
+                'S-L' => 'S to L',
+                'M-XL' => 'M to XL',
+                'L-XXL' => 'L to XXL',
+                'XXS-M' => 'XXS to M',
+                'XS-L' => 'XS to L',
+                'S-XL' => 'S to XL',
+                'M-XXL' => 'M to XXL',
+                // --- Broad Ranges ---
+                'XXS-L' => 'XXS to L',
+                'XS-XL' => 'XS to XL',
+                'S-XXL' => 'S to XXL',
+                'XXS-XL' => 'XXS to XL',
+                'XS-XXL' => 'XS to XXL',
+                'Adjustable' => 'Adjustable/Customizable',
             ];
-            $dbSizes = array_map(fn($s) => $sizeMapping[$s] ?? $s, (array) $request->size);
-            $query->whereIn('size', $dbSizes);
+
+            $sizes = (array) $request->size;
+            $query->where(function ($q) use ($sizes, $sizeMapping) {
+                foreach ($sizes as $size) {
+                    if (isset($sizeMapping[$size])) {
+                        $dbSize = $sizeMapping[$size];
+                        $q->orWhere('size', $dbSize);
+                    } else {
+                        // Fallback for any unmapped sizes
+                        $q->orWhere('size', 'LIKE', "%$size%");
+                    }
+                }
+            });
         }
 
         // Color filter

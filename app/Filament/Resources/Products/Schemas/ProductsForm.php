@@ -20,7 +20,7 @@ class ProductsForm
         return $schema
             ->schema([
                 Section::make('Product Information')
-                    ->description('Enter the basic details about your dress or suit rental product')
+                    ->description('Enter the basic details about your gown or suit rental product')
                     ->icon('heroicon-o-information-circle')
                     ->schema([
                         Group::make()
@@ -69,7 +69,7 @@ class ProductsForm
                                                 'Empire Waist Gown' => 'Empire Waist Gown',
                                                 'V-neck Gown' => 'V-neck Gown',
                                                 'Trumpet Gown' => 'Trumpet Gown',
-                                                'Other' => 'Other',
+                                                'Filipina Gown' => 'Filipina Gown',
                                             ];
                                         } elseif ($get('type') === 'Dress') {
                                             return [
@@ -85,7 +85,6 @@ class ProductsForm
                                                 'Empire Waist Dress' => 'Empire Waist Dress',
                                                 'V-neck Dress' => 'V-neck Dress',
                                                 'Trumpet Dress' => 'Trumpet Dress',
-                                                'Other' => 'Other',
                                             ];
                                         } elseif ($get('type') === 'Suit') {
                                             return [
@@ -95,6 +94,7 @@ class ProductsForm
                                                 'Italian Suit' => 'Italian Suit',
                                                 'Single Breasted Suit' => 'Single Breasted Suit',
                                                 'Double Breasted Suit' => 'Double Breasted Suit',
+                                                'Barong Tagalog' => 'Barong Tagalog',
                                                 'Other' => 'Other',
                                             ];
                                         } elseif ($get('type') === 'Jacket') {
@@ -116,17 +116,45 @@ class ProductsForm
                                     ->placeholder('Choose style')
                                     ->columnSpan(1),
                                 Select::make('size')
-                                    ->label('Size')
-                                    ->helperText('Select the size category for this product')
+                                    ->label('Size Range')
+                                    ->helperText('Select the precise size range for this garment')
                                     ->options([
-                                        'Small' => 'Small',
-                                        'Medium' => 'Medium',
-                                        'Large' => 'Large',
-                                        'XLarge' => 'XLarge',
-                                        'XXLarge' => 'XXLarge',
+                                        // Single Sizes
+                                        'XXS' => 'XXS',
+                                        'XS' => 'XS',
+                                        'S' => 'S',
+                                        'M' => 'M',
+                                        'L' => 'L',
+                                        'XL' => 'XL',
+                                        'XXL' => 'XXL',
+                                        'XXXL' => 'XXXL',
+                                        // --- Most Common Ranges ---
+                                        'XS-S' => 'XS to S',
+                                        'S-M' => 'S to M',
+                                        'M-L' => 'M to L',
+                                        'L-XL' => 'L to XL',
+                                        'XL-XXL' => 'XL to XXL',
+                                        // --- Extended Ranges ---
+                                        'XXS-S' => 'XXS to S',
+                                        'XS-M' => 'XS to M',
+                                        'S-L' => 'S to L',
+                                        'M-XL' => 'M to XL',
+                                        'L-XXL' => 'L to XXL',
+                                        'XXS-M' => 'XXS to M',
+                                        'XS-L' => 'XS to L',
+                                        'S-XL' => 'S to XL',
+                                        'M-XXL' => 'M to XXL',
+                                        // --- Broad Ranges ---
+                                        'XXS-L' => 'XXS to L',
+                                        'XS-XL' => 'XS to XL',
+                                        'S-XXL' => 'S to XXL',
+                                        'XXS-XL' => 'XXS to XL',
+                                        'XS-XXL' => 'XS to XXL',
+                                        'Adjustable' => 'Adjustable/Customizable',
                                     ])
                                     ->required()
-                                    ->placeholder('Choose size')
+                                    ->placeholder('Select size range')
+                                    ->searchable()
                                     ->columnSpan(1),
                                 TextInput::make('rental_price')
                                     ->label('Rental Price')

@@ -76,13 +76,13 @@
                             $subtypes = [
                                 'Ball Gown', 'Wedding Gown', 'Prom Dress', 'Evening Gown', 'Cocktail Dress',    
                                 'A-line Gown', 'Sheath Gown', 'Mermaid Gown', 'Off-shoulder Gown', 'Princess Gown',
-                                'Empire Waist Gown', 'V-neck Gown', 'Trumpet Gown', 
+                                'Empire Waist Gown', 'V-neck Gown', 'Trumpet Gown','Filipina Gown' ,
                             ];
                         } elseif ($userGender === 'Male') {
                             $subtypes = [
                                 'Tuxedo','Three-piece Suit',   
                                 'Two Piece Suit', 'Italian Suit', 'Single Breasted Suit', 'Double Breasted Suit',
-                                'Casual Suit', 'Denim Suit', 'Leather Suit', 'Bomber Jacket', 'Blazer'
+                                'Casual Suit', 'Denim Suit', 'Leather Suit', 'Bomber Jacket', 'Blazer', 'Barong Tagalog'
                             ];
                         } else {
                             // For guests or users with other/prefer not to say gender, show all
@@ -92,7 +92,7 @@
                                 'Empire Waist Gown', 'V-neck Gown', 'Trumpet Gown',
                                 'Tuxedo','Three-piece Suit',
                                 'Two Piece Suit', 'Italian Suit', 'Single Breasted Suit', 'Double Breasted Suit',
-                                'Casual Suit', 'Denim Suit', 'Leather Suit', 'Bomber Jacket', 'Blazer'
+                                'Casual Suit', 'Denim Suit', 'Leather Suit', 'Bomber Jacket', 'Blazer', 'Barong Tagalog'
                             ];
                         }
                         
@@ -113,55 +113,145 @@
             </details>
         </div>
 
-        <!-- Size Filter -->
-        <div class="mb-6 border-b border-gray-200 pb-4">
-            <details class="group">
-                <summary
-                    class="flex justify-between items-center cursor-pointer py-3 text-lg font-semibold text-gray-800 hover:text-purple-700 transition-colors duration-200 bg-gray-50 rounded-lg px-4">
-                    <span class="flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
-                        </svg>
-                        Size
-                    </span>
-                    <span class="transform transition-transform duration-200 group-open:rotate-180">
-                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
-                            </path>
-                        </svg>
-                    </span>
-                </summary>
-                <div class="mt-3 grid grid-cols-3 gap-3">
-                    @php
-                        $sizeMapping = [
-                            'XS' => 'Extra Small',
-                            'S' => 'Small',
-                            'M' => 'Medium',
-                            'L' => 'Large',
-                            'XL' => 'Extra Large',
-                            'XXL' => 'Extra Extra Large'
-                        ];
-                        $selectedSizes = request('size', []);
-                        if (!is_array($selectedSizes)) {
-                            $selectedSizes = [$selectedSizes];
-                        }
-                    @endphp
-                    @foreach($sizeMapping as $displaySize => $dbSize)
+<!-- Size Filter -->
+<div class="mb-6 border-b border-gray-200 pb-4">
+    <details class="group" open>
+        <summary
+            class="flex justify-between items-center cursor-pointer py-3 text-lg font-semibold text-gray-800 hover:text-purple-700 transition-colors duration-200 bg-gray-50 rounded-lg px-4">
+            <span class="flex items-center">
+                <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                </svg>
+                Size
+            </span>
+            <span class="transform transition-transform duration-200 group-open:rotate-180">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                    </path>
+                </svg>
+            </span>
+        </summary>
+        <div class="mt-3 space-y-4 max-h-80 overflow-y-auto pr-2">
+            @php
+                $sizeOptions = [
+                    // Individual Sizes
+                    'XS' => 'XS',
+                    'S' => 'S', 
+                    'M' => 'M',
+                    'L' => 'L',
+                    'XL' => 'XL',
+                    'XXL' => 'XXL',
+                    'XXXL' => 'XXXL',
+                    // --- Most Common Ranges ---
+                    'XS-S' => 'XS to S',
+                    'S-M' => 'S to M', 
+                    'M-L' => 'M to L',
+                    'L-XL' => 'L to XL',
+                    'XL-XXL' => 'XL to XXL',
+                    // --- Extended Ranges ---
+                    'XXS-S' => 'XXS to S',
+                    'XS-M' => 'XS to M',
+                    'S-L' => 'S to L',
+                    'M-XL' => 'M to XL', 
+                    'L-XXL' => 'L to XXL',
+                    'XXS-M' => 'XXS to M',
+                    'XS-L' => 'XS to L',
+                    'S-XL' => 'S to XL',
+                    'M-XXL' => 'M to XXL',
+                    // --- Broad Ranges ---
+                    'XXS-L' => 'XXS to L',
+                    'XS-XL' => 'XS to XL',
+                    'S-XXL' => 'S to XXL',
+                    'XXS-XL' => 'XXS to XL',
+                    'XS-XXL' => 'XS to XXL',
+                    'Adjustable' => 'Adjustable/Customizable',
+                ];
+                
+                $selectedSizes = request('size', []);
+                if (!is_array($selectedSizes)) {
+                    $selectedSizes = [$selectedSizes];
+                }
+            @endphp
+            
+            <!-- Individual Sizes -->
+            <div>
+                <h4 class="text-sm font-semibold text-gray-700 mb-3 pl-2 border-l-2 border-purple-500 pl-3">Individual Sizes</h4>
+                <div class="grid grid-cols-3 gap-2">
+                    @foreach(array_slice($sizeOptions, 0, 7) as $sizeValue => $sizeLabel)
                         <label class="block">
-                            <input type="checkbox" name="size[]" value="{{ $displaySize }}" class="hidden peer filter-input"
-                                {{ in_array($displaySize, $selectedSizes) ? 'checked' : '' }}>
-                            <span class="block w-full py-2 text-center border-2 border-gray-200 rounded-lg cursor-pointer font-medium
+                            <input type="checkbox" name="size[]" value="{{ $sizeValue }}" class="hidden peer filter-input"
+                                {{ in_array($sizeValue, $selectedSizes) ? 'checked' : '' }}>
+                            <span class="block w-full py-2 px-1 text-center border-2 border-gray-200 rounded-lg cursor-pointer font-medium text-sm
                                         peer-checked:bg-gradient-to-r peer-checked:from-purple-600 peer-checked:to-indigo-600 
                                         peer-checked:text-white peer-checked:border-transparent
                                         hover:border-purple-300 transition-all duration-200 text-gray-700">
-                                {{ $displaySize }}
+                                {{ $sizeValue }}
                             </span>
                         </label>
                     @endforeach
                 </div>
-            </details>
+            </div>
+            
+            <!-- Most Common Ranges -->
+            <div>
+                <h4 class="text-sm font-semibold text-gray-700 mb-3 pl-2 border-l-2 border-purple-500 pl-3">Most Common Ranges</h4>
+                <div class="grid grid-cols-2 gap-2">
+                    @foreach(array_slice($sizeOptions, 7, 5) as $sizeValue => $sizeLabel)
+                        <label class="block">
+                            <input type="checkbox" name="size[]" value="{{ $sizeValue }}" class="hidden peer filter-input"
+                                {{ in_array($sizeValue, $selectedSizes) ? 'checked' : '' }}>
+                            <span class="block w-full py-2 px-1 text-center border-2 border-gray-200 rounded-lg cursor-pointer font-medium text-sm
+                                        peer-checked:bg-gradient-to-r peer-checked:from-purple-600 peer-checked:to-indigo-600 
+                                        peer-checked:text-white peer-checked:border-transparent
+                                        hover:border-purple-300 transition-all duration-200 text-gray-700">
+                                {{ $sizeLabel }}
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+            
+            <!-- Extended Ranges -->
+            <div>
+                <h4 class="text-sm font-semibold text-gray-700 mb-3 pl-2 border-l-2 border-purple-500 pl-3">Extended Ranges</h4>
+                <div class="grid grid-cols-2 gap-2">
+                    @foreach(array_slice($sizeOptions, 12, 9) as $sizeValue => $sizeLabel)
+                        <label class="block">
+                            <input type="checkbox" name="size[]" value="{{ $sizeValue }}" class="hidden peer filter-input"
+                                {{ in_array($sizeValue, $selectedSizes) ? 'checked' : '' }}>
+                            <span class="block w-full py-2 px-1 text-center border-2 border-gray-200 rounded-lg cursor-pointer font-medium text-sm
+                                        peer-checked:bg-gradient-to-r peer-checked:from-purple-600 peer-checked:to-indigo-600 
+                                        peer-checked:text-white peer-checked:border-transparent
+                                        hover:border-purple-300 transition-all duration-200 text-gray-700">
+                                {{ $sizeLabel }}
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+            
+            <!-- Broad Ranges & Adjustable -->
+            <div>
+                <h4 class="text-sm font-semibold text-gray-700 mb-3 pl-2 border-l-2 border-purple-500 pl-3">Broad Ranges</h4>
+                <div class="grid grid-cols-2 gap-2">
+                    @foreach(array_slice($sizeOptions, 21) as $sizeValue => $sizeLabel)
+                        <label class="block">
+                            <input type="checkbox" name="size[]" value="{{ $sizeValue }}" class="hidden peer filter-input"
+                                {{ in_array($sizeValue, $selectedSizes) ? 'checked' : '' }}>
+                            <span class="block w-full py-2 px-1 text-center border-2 border-gray-200 rounded-lg cursor-pointer font-medium text-sm
+                                        peer-checked:bg-gradient-to-r peer-checked:from-purple-600 peer-checked:to-indigo-600 
+                                        peer-checked:text-white peer-checked:border-transparent
+                                        hover:border-purple-300 transition-all duration-200 text-gray-700">
+                                {{ $sizeLabel }}
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
         </div>
+    </details>
+</div>
 
         <!-- Color Filter -->
         <div class="mb-6 border-b border-gray-200 pb-4">
