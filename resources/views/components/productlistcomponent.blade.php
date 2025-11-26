@@ -77,22 +77,36 @@
                                 'Ball Gown', 'Wedding Gown', 'Prom Dress', 'Evening Gown', 'Cocktail Dress',    
                                 'A-line Gown', 'Sheath Gown', 'Mermaid Gown', 'Off-shoulder Gown', 'Princess Gown',
                                 'Empire Waist Gown', 'V-neck Gown', 'Trumpet Gown','Filipina Gown' ,
+                                    'filipiniana Gown', 'Slip Gown', 'Tea-length Gown', 'High-low Gown', 'Long Sleeve Gown',
+                                    'Halter Gown', 'Sweetheart Gown', 'Backless Gown', 'Sequined Gown', 'Lace Gown',
+                                    'Chiffon Gown', 'Satin Gown', 'Tulle Gown', 'Beaded Gown', 'Prom Gown', 'Debutante Gown',
+                                    'Mother of the Bride Gown', 'Bridesmaid Gown', 'Formal Maxi Gown', 'One-shoulder Gown', 'Cowl Neck Gown',
                             ];
                         } elseif ($userGender === 'Male') {
                             $subtypes = [
                                 'Tuxedo','Three-piece Suit',   
                                 'Two Piece Suit', 'Italian Suit', 'Single Breasted Suit', 'Double Breasted Suit',
-                                'Casual Suit', 'Denim Suit', 'Leather Suit', 'Bomber Jacket', 'Blazer', 'Barong Tagalog'
+                                'Casual Suit', 'Denim Suit', 'Leather Suit', 'Bomber Jacket', 'Blazer', 'Barong Tagalog',
+                                    'Morning Coat', 'Tailcoat', 'Dinner Jacket', 'Slim Fit Suit', 'Classic Fit Suit',
+                                    'Modern Fit Suit', 'Notch Lapel Suit', 'Peak Lapel Suit', 'Shawl Lapel Tuxedo',
+                                    'Linen Suit', 'Tweed Suit', 'Mandarin Collar Suit', 'Prince Coat'
                             ];
                         } else {
                             // For guests or users with other/prefer not to say gender, show all
                             $subtypes = [
                                 'Ball Gown', 'Wedding Gown', 'Prom Dress', 'Evening Gown', 'Cocktail Dress',
                                 'A-line Gown', 'Sheath Gown', 'Mermaid Gown', 'Off-shoulder Gown', 'Princess Gown',
-                                'Empire Waist Gown', 'V-neck Gown', 'Trumpet Gown',
+                                'Empire Waist Gown', 'V-neck Gown', 'Trumpet Gown', 'filipiniana Gown', 'Slip Gown',
+                                'Tea-length Gown', 'High-low Gown', 'Long Sleeve Gown', 'Halter Gown', 'Sweetheart Gown',
+                                'Backless Gown', 'Sequined Gown', 'Lace Gown', 'Chiffon Gown', 'Satin Gown', 'Tulle Gown',
+                                'Beaded Gown', 'Prom Gown', 'Debutante Gown', 'Mother of the Bride Gown', 'Bridesmaid Gown',
+                                'Formal Maxi Gown', 'One-shoulder Gown', 'Cowl Neck Gown',
                                 'Tuxedo','Three-piece Suit',
                                 'Two Piece Suit', 'Italian Suit', 'Single Breasted Suit', 'Double Breasted Suit',
-                                'Casual Suit', 'Denim Suit', 'Leather Suit', 'Bomber Jacket', 'Blazer', 'Barong Tagalog'
+                                'Casual Suit', 'Denim Suit', 'Leather Suit', 'Bomber Jacket', 'Blazer', 'Barong Tagalog',
+                                    'Morning Coat', 'Tailcoat', 'Dinner Jacket', 'Slim Fit Suit', 'Classic Fit Suit',
+                                    'Modern Fit Suit', 'Notch Lapel Suit', 'Peak Lapel Suit', 'Shawl Lapel Tuxedo',
+                                    'Linen Suit', 'Tweed Suit', 'Mandarin Collar Suit', 'Prince Coat'
                             ];
                         }
                         
