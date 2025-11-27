@@ -167,7 +167,19 @@
                                 'Waist' => $product->product_measurements->gown_waist ?? null,
                                 'Hips' => $product->product_measurements->gown_hips ?? null,
                                 'Shoulder' => $product->product_measurements->gown_shoulder ?? null,
-                                'Bust' => $product->product_measurements->gown_bust ?? null
+                                'Bust' => $product->product_measurements->gown_bust ?? null,
+                                'Back Width' => $product->product_measurements->gown_back_width ?? null,
+                                'Figure' => $product->product_measurements->gown_figure ?? null,
+                                'Arm Hole' => $product->product_measurements->gown_arm_hole ?? null,
+                                    'Neck' => $product->product_measurements->gown_neck ?? null,
+                                'Bust Point' => $product->product_measurements->gown_bust_point ?? null,
+                                'Bust Distance' => $product->product_measurements->gown_bust_distance ?? null,
+                                'Sleeve Width' => $product->product_measurements->gown_sleeve_width ?? null,
+                                'Sleeve Length' => $product->product_measurements->gown_sleeve_length ?? null,
+                                
+
+
+
                             ];
 
                             // Filter out null, empty, or 'N/A' values
@@ -198,6 +210,7 @@
                         @php
                             $suitMeasurements = [
                                 'Jacket Chest' => $product->product_measurements->jacket_chest ?? null,
+                                'Jacket Bust' => $product->product_measurements->jacket_bust ?? null,
                                 'Jacket Length' => $product->product_measurements->jacket_length ?? null,
                                 'Shoulder' => $product->product_measurements->jacket_shoulder ?? null,
                                 'Sleeve Length' => $product->product_measurements->jacket_sleeve_length ?? null,
@@ -206,13 +219,19 @@
                                 'Arm Hole' => $product->product_measurements->jacket_arm_hole ?? null,
                                 'Jacket Waist' => $product->product_measurements->jacket_waist ?? null,
                                 'Jacket Hip' => $product->product_measurements->jacket_hip ?? null,
+                                'Back Width' => $product->product_measurements->jacket_back_width ?? null,
+                                'Figure' => $product->product_measurements->jacket_figure ?? null,
                                 'Trouser Waist' => $product->product_measurements->trouser_waist ?? null,
                                 'Trouser Hip' => $product->product_measurements->trouser_hip ?? null,
                                 'Inseam' => $product->product_measurements->trouser_inseam ?? null,
                                 'Outseam' => $product->product_measurements->trouser_outseam ?? null,
                                 'Thigh' => $product->product_measurements->trouser_thigh ?? null,
+                                'Knee' => $product->product_measurements->trouser_knee ?? null,
+                                'Bottom' => $product->product_measurements->trouser_bottom ?? null,
                                 'Leg Opening' => $product->product_measurements->trouser_leg_opening ?? null,
-                                'Crotch' => $product->product_measurements->trouser_crotch ?? null
+                                'Crotch' => $product->product_measurements->trouser_crotch ?? null,
+                                'Trouser Length' => $product->product_measurements->trouser_length ?? null,
+                                
                             ];
 
                             // Filter out null, empty, or 'N/A' values
