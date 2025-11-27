@@ -76,7 +76,7 @@
                             $subtypes = [
                                 'Ball Gown', 'Wedding Gown', 'Prom Dress', 'Evening Gown', 'Cocktail Dress',    
                                 'A-line Gown', 'Sheath Gown', 'Mermaid Gown', 'Off-shoulder Gown', 'Princess Gown',
-                                'Empire Waist Gown', 'V-neck Gown', 'Trumpet Gown','Filipina Gown' ,
+                                'Empire Waist Gown', 'V-neck Gown', 'Trumpet Gown',
                                     'filipiniana Gown', 'Slip Gown', 'Tea-length Gown', 'High-low Gown', 'Long Sleeve Gown',
                                     'Halter Gown', 'Sweetheart Gown', 'Backless Gown', 'Sequined Gown', 'Lace Gown',
                                     'Chiffon Gown', 'Satin Gown', 'Tulle Gown', 'Beaded Gown', 'Prom Gown', 'Debutante Gown',
