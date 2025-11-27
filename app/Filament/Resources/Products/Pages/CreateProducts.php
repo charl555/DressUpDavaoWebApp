@@ -193,4 +193,9 @@ class CreateProducts extends CreateRecord
             ->success()
             ->sendToDatabase(Auth::user());
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

@@ -32,7 +32,7 @@ class ProductsResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->where('user_id', auth()->id())
+            ->where('user_id', Auth::id())
             ->with(['occasions', 'product_images', 'product_measurements', 'user']);
     }
 

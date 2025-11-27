@@ -1,99 +1,147 @@
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 px-4 sm:px-6 lg:px-8 pt-[150px] pb-12 max-w-7xl mx-auto">
     @php
-        $rawImageRecords = $product->product_images;
-        $galleryImages = [];
-        $thumbnail = null;
+    $rawImageRecords = $product->product_images;
+    $galleryImages = [];
+    $thumbnail = null;
 
-        foreach ($rawImageRecords as $record) {
-            if (empty($thumbnail) && !empty($record->thumbnail_image)) {
-                $thumbnail = $record->thumbnail_image;
-            }
+    foreach ($rawImageRecords as $record) {
+        if (empty($thumbnail) && !empty($record->thumbnail_image)) {
+            $thumbnail = $record->thumbnail_image;
+        }
 
-            if (!empty($record->images)) {
-                $decodedImages = is_array($record->images)
-                    ? $record->images
-                    : json_decode($record->images, true);
+        if (!empty($record->images)) {
+            $decodedImages = is_array($record->images)
+                ? $record->images
+                : json_decode($record->images, true);
 
-                if (is_array($decodedImages)) {
-                    foreach ($decodedImages as $img) {
-                        if ($img !== $thumbnail) {
-                            $galleryImages[] = (object) ['image' => $img];
-                        }
+            if (is_array($decodedImages)) {
+                foreach ($decodedImages as $img) {
+                    if ($img !== $thumbnail) {
+                        $galleryImages[] = (object) ['image' => $img];
                     }
                 }
             }
         }
+    }
 
-        $model3D = $product->product_3d_models()->first();
-        $modelPath = null;
-        if ($model3D && $model3D->model_path) {
-            // If path already starts with 'uploads/', use as is
-            if (str_starts_with($model3D->model_path, 'uploads/')) {
-                $modelPath = asset($model3D->model_path);
-            }
-            // If path starts with '3d-models/', add 'uploads/' prefix
-            else if (str_starts_with($model3D->model_path, '3d-models/')) {
-                $modelPath = asset('uploads/' . $model3D->model_path);
-            }
-            // For any other format, try to construct the path
-            else {
-                $modelPath = asset('uploads/3d-models/' . $model3D->model_path);
+    $model3D = $product->product_3d_models()->first();
+    $modelPath = null;
+    if ($model3D && $model3D->model_path) {
+        // If path already starts with 'uploads/', use as is
+        if (str_starts_with($model3D->model_path, 'uploads/')) {
+            $modelPath = asset($model3D->model_path);
+        }
+        // If path starts with '3d-models/', add 'uploads/' prefix
+        else if (str_starts_with($model3D->model_path, '3d-models/')) {
+            $modelPath = asset('uploads/' . $model3D->model_path);
+        }
+        // For any other format, try to construct the path
+        else {
+            $modelPath = asset('uploads/3d-models/' . $model3D->model_path);
+        }
+    }
+    $clippingData = $model3D ? $model3D->clipping_planes_data : null;
+    $imagesCount = count($galleryImages);
+
+    // REMOVE THIS LINE - Don't set thumbnail to null when there's a 3D model
+    // if ($modelPath && $thumbnail) {
+    //     $galleryImages[] = (object) ['image' => $thumbnail];
+    //     $thumbnail = null;
+    // }
+
+    // Instead, only add thumbnail to gallery if it's not already there and we have a 3D model
+    if ($modelPath && $thumbnail) {
+        // Check if thumbnail is already in gallery images
+        $thumbnailInGallery = false;
+        foreach ($galleryImages as $galleryImg) {
+            if ($galleryImg->image === $thumbnail) {
+                $thumbnailInGallery = true;
+                break;
             }
         }
-        $clippingData = $model3D ? $model3D->clipping_planes_data : null;
-        $imagesCount = count($galleryImages);
-
-        if ($modelPath && $thumbnail) {
+        // Only add to gallery if not already present
+        if (!$thumbnailInGallery) {
             $galleryImages[] = (object) ['image' => $thumbnail];
-            $thumbnail = null;
         }
+    }
 
-        $imagesCount = count($galleryImages);
-    @endphp
+    $imagesCount = count($galleryImages);
+@endphp
 
-    @if ($thumbnail || $imagesCount > 0 || $modelPath)
-        <div class="flex flex-col">
-            {{-- Main Image/Model --}}
-            <div
-                class="bg-gray-50 rounded-xl overflow-hidden shadow-lg aspect-video w-full h-[600px] mb-6 relative border border-gray-200">
-                @if ($modelPath)
-                    <canvas id="renderCanvas" class="w-full h-full"></canvas>
-                @elseif ($thumbnail)
-                    <img src="{{ asset('uploads/' . $thumbnail) }}" alt="{{ $product->name }}"
-                        class="w-full h-full object-cover cursor-pointer transition-transform duration-300 hover:scale-105"
-                        onclick="openImageModal('{{ asset('uploads/' . $thumbnail) }}')" />
-                @else
-                    <div class="flex items-center justify-center h-full w-full text-gray-500">
-                        <div class="text-center">
-                            <svg class="w-16 h-16 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            <p class="text-gray-600 font-medium">No Preview Available</p>
-                        </div>
-                    </div>
-                @endif
+@if ($thumbnail || $imagesCount > 0 || $modelPath)
+    <div class="flex flex-col">
+        {{-- 3D Model Toggle --}}
+        @if ($modelPath)
+            <div class="flex justify-center mb-4">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-2 inline-flex">
+                    <button id="toggle3DView" 
+                        class="px-4 py-2 rounded-md bg-purple-600 text-white font-medium transition-all duration-200 flex items-center"
+                        onclick="toggle3DView()">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/>
+                        </svg>
+                        3D View
+                    </button>
+                    <button id="toggleImageView" 
+                        class="px-4 py-2 rounded-md bg-gray-100 text-gray-700 font-medium transition-all duration-200 flex items-center hidden"
+                        onclick="toggleImageView()">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        Image View
+                    </button>
+                </div>
             </div>
+        @endif
 
-            {{-- Gallery Thumbnails --}}
-            @if ($imagesCount > 0)
-                <div class="grid grid-cols-4 gap-3">
-                    @foreach ($galleryImages as $img)
-                        @php $imgPath = $img->image ?? ($img['image'] ?? null); @endphp
-                        @if ($imgPath)
-                            <div
-                                class="bg-gray-100 h-24 sm:h-28 rounded-lg overflow-hidden cursor-pointer border-2 border-transparent hover:border-purple-500 transition-all duration-200 group">
-                                <img src="{{ asset('uploads/' . $imgPath) }}" alt="Product Image"
-                                    class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200"
-                                    onclick="openImageModal('{{ asset('uploads/' . $imgPath) }}')" />
-                            </div>
-                        @endif
-                    @endforeach
+        {{-- Main Image/Model Container --}}
+        <div
+            class="bg-gray-50 rounded-xl overflow-hidden shadow-lg aspect-video w-full h-[600px] mb-6 relative border border-gray-200">
+            {{-- 3D Model Canvas --}}
+            @if ($modelPath)
+                <canvas id="renderCanvas" class="w-full h-full hidden"></canvas>
+            @endif
+            
+            {{-- Main Image --}}
+            @if ($thumbnail)
+                <div id="mainImageContainer" class="w-full h-full flex items-center justify-center bg-white">
+                    <img src="{{ asset('uploads/' . $thumbnail) }}" alt="{{ $product->name }}"
+                        class="max-w-full max-h-full object-contain cursor-pointer transition-opacity duration-300"
+                        onclick="openImageModal('{{ asset('uploads/' . $thumbnail) }}')" />
+                </div>
+            @else
+                <div id="mainImageContainer" class="flex items-center justify-center h-full w-full text-gray-500 bg-white">
+                    <div class="text-center">
+                        <svg class="w-16 h-16 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p class="text-gray-600 font-medium">No Preview Available</p>
+                    </div>
                 </div>
             @endif
         </div>
-    @endif
+
+        {{-- Gallery Thumbnails --}}
+        @if ($imagesCount > 0)
+            <div class="grid grid-cols-4 gap-3">
+                @foreach ($galleryImages as $img)
+                    @php $imgPath = $img->image ?? ($img['image'] ?? null); @endphp
+                    @if ($imgPath)
+                        <div
+                            class="bg-gray-100 h-24 sm:h-28 rounded-lg overflow-hidden cursor-pointer border-2 border-transparent hover:border-purple-500 transition-all duration-200 group flex items-center justify-center">
+                            <img src="{{ asset('uploads/' . $imgPath) }}" alt="Product Image"
+                                class="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-200 p-1"
+                                onclick="openImageModal('{{ asset('uploads/' . $imgPath) }}')" />
+                        </div>
+                    @endif
+                @endforeach
+            </div>
+        @endif
+    </div>
+@endif
+
 
     {{-- Product Details --}}
     <div class="flex flex-col pt-8 lg:pt-0">
@@ -502,72 +550,122 @@
         </div>
     </div>
 
-    {{-- Keep the existing 3D model and image modal scripts --}}
+  
     @if ($modelPath)
         <script src="https://cdn.babylonjs.com/babylon.js"></script>
         <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
         <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                const canvas = document.getElementById('renderCanvas');
-                const engine = new BABYLON.Engine(canvas, true);
-                const scene = new BABYLON.Scene(engine);
-                scene.clearColor = new BABYLON.Color3(1, 1, 1);
+              let engine, scene, canvas;
+        let is3DViewActive = false;
 
-                const camera = new BABYLON.ArcRotateCamera("camera",
-                    Math.PI / 2, Math.PI / 3, 3, BABYLON.Vector3.Zero(), scene);
-                camera.attachControl(canvas, true);
+        function initialize3DView() {
+            canvas = document.getElementById('renderCanvas');
+            if (!canvas) return;
 
-                // Smooth controls for desktop and mobile
-                camera.wheelPrecision = 25; // Faster zoom
-                camera.panningSensibility = 5000; // Slower panning
-                camera.angularSensibilityX = 8000; // Slower rotation
-                camera.angularSensibilityY = 8000; // Slower rotation
+            engine = new BABYLON.Engine(canvas, true);
+            scene = new BABYLON.Scene(engine);
+            scene.clearColor = new BABYLON.Color3(1, 1, 1);
 
-                // Pinch controls for mobile
-                camera.pinchPrecision = 80; // Faster pinch zoom
-                camera.pinchDeltaPercentage = 0.002;
+            const camera = new BABYLON.ArcRotateCamera("camera",
+                Math.PI / 2, Math.PI / 3, 3, BABYLON.Vector3.Zero(), scene);
+            camera.attachControl(canvas, true);
 
-                // Inertia for smooth stops
-                camera.inertia = 0.9;
-                camera.panningInertia = 0.9;
+            // Smooth controls for desktop and mobile
+            camera.wheelPrecision = 25;
+            camera.panningSensibility = 5000;
+            camera.angularSensibilityX = 8000;
+            camera.angularSensibilityY = 8000;
+            camera.pinchPrecision = 80;
+            camera.pinchDeltaPercentage = 0.002;
+            camera.inertia = 0.9;
+            camera.panningInertia = 0.9;
+            camera.minZ = 0.001;
+            camera.maxZ = 1000;
 
+            const light = new BABYLON.HemisphericLight("light",
+                new BABYLON.Vector3(1, 1, 0), scene);
 
-                camera.minZ = 0.001;
-                camera.maxZ = 1000;
+            camera.useAutoRotationBehavior = true;
+            const autoRotate = camera.autoRotationBehavior;
+            if (autoRotate) {
+                autoRotate.idleRotationSpeed = 0.1;
+                autoRotate.idleRotationWaitTime = 3000;
+                autoRotate.idleRotationSpinUpTime = 2000;
+                autoRotate.zoomStopsAnimation = false;
+            }
 
-                const light = new BABYLON.HemisphericLight("light",
-                    new BABYLON.Vector3(1, 1, 0), scene);
+            canvas.addEventListener('wheel', (event) => {
+                event.preventDefault();
+            }, { passive: false });
 
-                camera.useAutoRotationBehavior = true;
-                const autoRotate = camera.autoRotationBehavior;
-                if (autoRotate) {
-                    autoRotate.idleRotationSpeed = 0.1;
-                    autoRotate.idleRotationWaitTime = 3000;
-                    autoRotate.idleRotationSpinUpTime = 2000;
-                    autoRotate.zoomStopsAnimation = false;
+            BABYLON.SceneLoader.Append("", "{{ $modelPath }}", scene, function () {
+                const meshes = scene.meshes.filter(m => m.name !== "__root__");
+                if (meshes.length > 0) {
+                    const boundingInfo = meshes[0].getBoundingInfo().boundingBox;
+                    const center = boundingInfo.centerWorld;
+                    const radius = boundingInfo.extendSizeWorld.length();
+
+                    camera.target = center;
+                    camera.radius = radius * 2;
+                    camera.lowerRadiusLimit = radius * 0.001;
+                    camera.upperRadiusLimit = radius * 10;
                 }
-
-                canvas.addEventListener('wheel', (event) => {
-                    event.preventDefault();
-                }, { passive: false });
-
-                BABYLON.SceneLoader.Append("", "{{ $modelPath }}", scene, function () {
-                    const meshes = scene.meshes.filter(m => m.name !== "__root__");
-                    if (meshes.length > 0) {
-                        const boundingInfo = meshes[0].getBoundingInfo().boundingBox;
-                        const center = boundingInfo.centerWorld;
-                        const radius = boundingInfo.extendSizeWorld.length();
-
-                        camera.target = center;
-                        camera.radius = radius * 2;
-                        camera.lowerRadiusLimit = radius * 0.001; // Very close zoom
-                        camera.upperRadiusLimit = radius * 10;
-                    }
-                });
-
-                engine.runRenderLoop(() => scene.render());
-                window.addEventListener('resize', () => engine.resize());
             });
+
+            engine.runRenderLoop(() => {
+                if (is3DViewActive) {
+                    scene.render();
+                }
+            });
+            
+            window.addEventListener('resize', () => {
+                if (engine) {
+                    engine.resize();
+                }
+            });
+        }
+
+        function toggle3DView() {
+            const canvas = document.getElementById('renderCanvas');
+            const mainImageContainer = document.getElementById('mainImageContainer');
+            const toggle3DButton = document.getElementById('toggle3DView');
+            const toggleImageButton = document.getElementById('toggleImageView');
+
+            if (canvas && mainImageContainer) {
+                canvas.classList.remove('hidden');
+                mainImageContainer.classList.add('hidden');
+                toggle3DButton.classList.add('hidden');
+                toggleImageButton.classList.remove('hidden');
+                is3DViewActive = true;
+                
+                // Ensure canvas is properly sized
+                if (engine) {
+                    engine.resize();
+                }
+            }
+        }
+
+        function toggleImageView() {
+            const canvas = document.getElementById('renderCanvas');
+            const mainImageContainer = document.getElementById('mainImageContainer');
+            const toggle3DButton = document.getElementById('toggle3DView');
+            const toggleImageButton = document.getElementById('toggleImageView');
+
+            if (canvas && mainImageContainer) {
+                canvas.classList.add('hidden');
+                mainImageContainer.classList.remove('hidden');
+                toggle3DButton.classList.remove('hidden');
+                toggleImageButton.classList.add('hidden');
+                is3DViewActive = false;
+            }
+        }
+
+        // Initialize 3D view when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('renderCanvas')) {
+                initialize3DView();
+            }
+        });
         </script>
     @endif
 

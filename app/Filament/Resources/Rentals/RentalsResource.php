@@ -34,15 +34,13 @@ class RentalsResource extends Resource
         return parent::getEloquentQuery()
             ->whereHas('product', function ($query) {
                 $query->where('user_id', auth()->id());
-            });
+            })
+            ->with(['product', 'customer', 'user']);
     }
 
     public static function getTableQuery(): Builder
     {
-        return parent::getEloquentQuery()
-            ->whereHas('product', function ($query) {
-                $query->where('user_id', auth()->id());
-            })
+        return static::getEloquentQuery()
             ->with(['product', 'customer', 'user']);
     }
 

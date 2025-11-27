@@ -25,7 +25,6 @@ class RentalsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->query(Rentals::query()->with(['product', 'customer', 'user']))
             ->columns([
                 TextColumn::make('product.name')->label('Product')->searchable(),
                 TextColumn::make('rented_by')

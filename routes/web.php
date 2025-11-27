@@ -154,6 +154,11 @@ Route::get('/user/review-data/{shop}', [UserController::class, 'getReviewData'])
 Route::post('/account/request-deletion', [UserController::class, 'requestAccountDeletion'])->name('account.request-deletion');
 Route::delete('/account/cancel-deletion', [UserController::class, 'cancelAccountDeletion'])->name('account.cancel-deletion');
 
+Route::middleware(['auth'])->group(function () {
+    Route::put('/user/measurements', [UserController::class, 'updateMeasurements'])
+        ->name('user.measurements.update');
+});
+
 // Shop policy route (handles auth internally)
 Route::get('/shop-policy/{id}', function ($id) {
     try {
@@ -218,11 +223,6 @@ Route::middleware('auth')->group(function () {
 // Shop pages routes
 Route::get('/shops', [ShopPageController::class, 'list'])->name('shops.list');
 Route::get('/shop-overview/{shop}', [ShopPageController::class, 'overview'])->name('shop.overview');
-
-Route::middleware(['auth'])->group(function () {
-    Route::put('/user/measurements', [UserController::class, 'updateMeasurements'])
-        ->name('user.measurements.update');
-});
 
 Route::post('/products/{product}/favorite', [FavoriteController::class, 'store'])->name('products.favorite');
 Route::delete('/products/{product}/unfavorite', [FavoriteController::class, 'destroy'])->name('products.unfavorite');
