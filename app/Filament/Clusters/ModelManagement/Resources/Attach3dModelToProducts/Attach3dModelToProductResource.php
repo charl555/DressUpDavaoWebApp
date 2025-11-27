@@ -78,8 +78,8 @@ class Attach3dModelToProductResource extends Resource
     {
         return [
             'index' => ListAttach3dModelToProducts::route('/'),
-            'create' => CreateAttach3dModelToProduct::route('/create'),
-            'edit' => EditAttach3dModelToProduct::route('/{record}/edit'),
+            // 'create' => CreateAttach3dModelToProduct::route('/create'),
+            // 'edit' => EditAttach3dModelToProduct::route('/{record}/edit'),
         ];
     }
 }

@@ -56,44 +56,47 @@ class Jobs3DModel extends Page implements HasTable
 
         $this->isPolling = true;
 
-        // Use Filament's JS to set up polling for both download and status checks
         $this->js(<<<JS
                 (function() {
                     let pollCount = 0;
-                    const maxPolls = 30; // Poll 30 times maximum (5 minutes)
-                    const pollInterval = 10000; // 10 seconds between polls
+                    const maxPolls = 30; 
+                    const pollInterval = 5000; 
                     
-                    function startPolling() {
-                        const poll = setInterval(() => {
-                            pollCount++;
-                            
-                            // Check if we should stop polling
-                            if (pollCount >= maxPolls) {
-                                clearInterval(poll);
-                                console.log('Auto-polling stopped after ' + maxPolls + ' attempts');
-                                return;
+                    function executePolling() {
+                        pollCount++;
+                        
+                     
+                        if (pollCount >= maxPolls) {
+                            console.log('Auto-polling stopped after ' + maxPolls + ' attempts');
+                            return;
+                        }
+                        
+                      
+                        \$wire.call('pollForReadyModels').then((downloadResult) => {
+                            console.log('Download polling attempt ' + pollCount + ': ' + downloadResult);
+                        });
+                        
+                        \$wire.call('pollForJobStatusUpdates').then((statusResult) => {
+                            console.log('Status polling attempt ' + pollCount + ': ' + statusResult);
+                         
+                            if (statusResult === 'no_active_jobs' && pollCount > 5) {
+                                console.log('Auto-polling completed - no active jobs to monitor');
                             }
-                            
-                            // Trigger both polling actions
-                            \$wire.call('pollForReadyModels').then((downloadResult) => {
-                                console.log('Download polling attempt ' + pollCount + ': ' + downloadResult);
-                            });
-                            
-                            \$wire.call('pollForJobStatusUpdates').then((statusResult) => {
-                                console.log('Status polling attempt ' + pollCount + ': ' + statusResult);
-                                
-                                // If no more jobs to monitor, consider stopping
-                                if (statusResult === 'no_active_jobs' && pollCount > 5) {
-                                    clearInterval(poll);
-                                    console.log('Auto-polling completed - no active jobs to monitor');
-                                }
-                            });
-                            
-                        }, pollInterval);
+                        });
                     }
                     
-                    // Start polling after a short delay
-                    setTimeout(startPolling, 2000);
+                    
+                    executePolling();
+                    
+                    
+                    const poll = setInterval(() => {
+                        if (pollCount >= maxPolls) {
+                            clearInterval(poll);
+                            return;
+                        }
+                        executePolling();
+                    }, pollInterval);
+                    
                 })();
             JS);
     }

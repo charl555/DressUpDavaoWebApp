@@ -338,7 +338,7 @@
                 </summary>
                 <div class="mt-3 space-y-3 pl-2">
                     @php
-                        $events = ['Formal', 'Wedding', 'Prom','Party', 'Graduation', 'Anniversary', 'Debut', 'Gala'];
+                        $events = ['Wedding', 'Prom','Party', 'Graduation', 'Anniversary', 'Debut', 'Gala'];
                         $selectedEvents = request('event', []);
                         if (!is_array($selectedEvents)) {
                             $selectedEvents = [$selectedEvents];

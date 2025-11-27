@@ -239,6 +239,7 @@ class Attach3dModelToProductsTable
                         ->modalSubmitActionLabel('Attach Model')
                         ->modalCancelActionLabel('Cancel'),
                     Action::make('remove3DModel')
+                        ->visible(fn(Products $record) => $record->product_3d_models)
                         ->label('Remove 3D Model')
                         ->icon('heroicon-o-trash')
                         ->color(color: 'danger')
