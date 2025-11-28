@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Auth;
 class ProductRecommendationService
 {
     private $userMeasurements;
-    private $tolerance = 2;  // inches
+    private $tolerance = 2;
 
     public function __construct()
     {
@@ -32,7 +32,6 @@ class ProductRecommendationService
         $score = 0;
         $totalPossibleScore = 0;
 
-        // Define measurement mappings based on product type
         if ($product->type === 'Gown') {
             $measurementMappings = [
                 ['user' => 'chest', 'product' => 'gown_chest', 'weight' => 1.2],
@@ -60,7 +59,7 @@ class ProductRecommendationService
 
             if ($userValue && $productValue) {
                 $difference = abs($userValue - $productValue);
-                $measurementScore = max(0, 100 - ($difference * 20));  // Convert difference to score
+                $measurementScore = max(0, 100 - ($difference * 20));
                 $weightedScore = $measurementScore * $mapping['weight'];
 
                 $score += $weightedScore;

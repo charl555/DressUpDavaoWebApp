@@ -39,7 +39,7 @@
                         </div>
                         <h3 class="text-lg font-semibold text-gray-900 mb-2">Shop Registration Guide</h3>
                         <p class="text-gray-600 text-sm mb-4">Step-by-step guide to setting up your shop</p>
-                        <button
+                        <button onclick="downloadFile('Shop-Registration-Guide.pdf')"
                             class="w-full inline-flex items-center justify-center px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-300">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -61,7 +61,7 @@
                         </div>
                         <h3 class="text-lg font-semibold text-gray-900 mb-2">Product Photo Guidelines</h3>
                         <p class="text-gray-600 text-sm mb-4">Best practices for product photography</p>
-                        <button
+                        <button onclick="downloadFile('Product-Photo-Guidelines.pdf')"
                             class="w-full inline-flex items-center justify-center px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-300">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -83,13 +83,13 @@
                         </div>
                         <h3 class="text-lg font-semibold text-gray-900 mb-2">Rental Agreement Template</h3>
                         <p class="text-gray-600 text-sm mb-4">Standard rental agreement form</p>
-                        <button
+                        <button onclick="downloadFile('Rental-Agreement-Template.pdf')"
                             class="w-full inline-flex items-center justify-center px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-300">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
-                            Download DOC
+                            Download PDF
                         </button>
                     </div>
 
@@ -105,7 +105,7 @@
                         </div>
                         <h3 class="text-lg font-semibold text-gray-900 mb-2">User Manual</h3>
                         <p class="text-gray-600 text-sm mb-4">Complete guide for customers & shop owners</p>
-                        <button
+                        <button onclick="downloadFile('User-Manual.pdf')"
                             class="w-full inline-flex items-center justify-center px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-300">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -127,9 +127,9 @@
                                     d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">System Policies PDF</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">System Policies</h3>
                         <p class="text-gray-600 text-sm mb-4">Complete platform policies and guidelines</p>
-                        <button
+                        <button onclick="downloadFile('System-Policies.pdf')"
                             class="w-full inline-flex items-center justify-center px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-300">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -144,6 +144,23 @@
 
     </main>
     <x-footer />
+
+    <script>
+        function downloadFile(filename) {
+            // Create a temporary anchor element
+            const link = document.createElement('a');
+            link.href = `/uploads/downloads/${filename}`;
+            link.download = filename;
+
+            // Append to the document, click it, and remove it
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Optional: Add download tracking or analytics here
+            console.log(`Download initiated: ${filename}`);
+        }
+    </script>
 
 </body>
 

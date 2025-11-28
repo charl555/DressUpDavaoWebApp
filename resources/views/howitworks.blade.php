@@ -95,6 +95,75 @@
                 </div>
 
                 <!-- Shop Owner Process -->
+                <div class="mb-16">
+                    <h3 class="text-3xl font-bold text-gray-900 mb-8 text-center"
+                        style="font-family: 'Playfair Display', serif;">
+                        For Shop Owners
+                    </h3>
+                    <div class="grid gap-6 md:grid-cols-3 lg:grid-cols-6">
+                        <!-- Step 1 -->
+                        <div class="text-center group">
+                            <div
+                                class="bg-gradient-to-br from-purple-100 to-indigo-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:from-purple-200 group-hover:to-indigo-200 transition-all duration-300">
+                                <span class="text-2xl font-bold text-purple-600">1</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-900 mb-2">Create Shop Account</h4>
+
+                        </div>
+
+                        <!-- Step 2 -->
+                        <div class="text-center group">
+                            <div
+                                class="bg-gradient-to-br from-purple-100 to-indigo-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:from-purple-200 group-hover:to-indigo-200 transition-all duration-300">
+                                <span class="text-2xl font-bold text-purple-600">2</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-900 mb-2">Upload Products</h4>
+                            <p class="text-sm text-gray-600">with descriptions and photos</p>
+                        </div>
+
+                        <!-- Step 3 -->
+                        <div class="text-center group">
+                            <div
+                                class="bg-gradient-to-br from-purple-100 to-indigo-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:from-purple-200 group-hover:to-indigo-200 transition-all duration-300">
+                                <span class="text-2xl font-bold text-purple-600">3</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-900 mb-2">Set Rental Price & Availability</h4>
+
+                        </div>
+
+                        <!-- Step 4 -->
+                        <div class="text-center group">
+                            <div
+                                class="bg-gradient-to-br from-purple-100 to-indigo-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:from-purple-200 group-hover:to-indigo-200 transition-all duration-300">
+                                <span class="text-2xl font-bold text-purple-600">4</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-900 mb-2">Receive Booking Requests</h4>
+
+                        </div>
+
+                        <!-- Step 5 -->
+                        <div class="text-center group">
+                            <div
+                                class="bg-gradient-to-br from-purple-100 to-indigo-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:from-purple-200 group-hover:to-indigo-200 transition-all duration-300">
+                                <span class="text-2xl font-bold text-purple-600">5</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-900 mb-2">Manage Inventory & Customers</h4>
+
+                        </div>
+
+                        <!-- Step 6 -->
+                        <div class="text-center group">
+                            <div
+                                class="bg-gradient-to-br from-purple-100 to-indigo-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:from-purple-200 group-hover:to-indigo-200 transition-all duration-300">
+                                <span class="text-2xl font-bold text-purple-600">6</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-900 mb-2">Grow Visibility</h4>
+                            <p class="text-sm text-gray-600">through the platform's features</p>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- <!-- Shop Owner Process -->
                 <div>
                     <h3 class="text-3xl font-bold text-gray-900 mb-8 text-center"
                         style="font-family: 'Playfair Display', serif;">
@@ -164,7 +233,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> --}}
         </div>
 
     </main>
