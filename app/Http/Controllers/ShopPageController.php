@@ -9,6 +9,13 @@ use Illuminate\Http\Request;
 
 class ShopPageController extends Controller
 {
+    private $recommendationService;
+
+    public function __construct()
+    {
+        $this->recommendationService = new \App\Services\ProductRecommendationService();
+    }
+
     public function list(Request $request)
     {
         $search = $request->input('search');
@@ -36,7 +43,7 @@ class ShopPageController extends Controller
     {
         $query = Products::where('visibility', 'Yes')
             ->where('user_id', $shop->user_id)
-            ->with(['product_images', 'occasions', 'user.shop']);
+            ->with(['product_images', 'occasions', 'user.shop', 'product_measurements']);
 
         // Gender-based category filtering
         $userGender = auth()->check() ? auth()->user()->gender : null;
@@ -194,11 +201,51 @@ class ShopPageController extends Controller
             }
         }
 
+        // Use the same ordering logic as productlist
         $query
-            ->orderByRaw("CASE WHEN status = 'Available' THEN 1 ELSE 2 END")
-            ->orderBy('created_at', 'desc');
+            ->select('products.*')
+            ->leftJoin('product_measurements', 'products.product_id', '=', 'product_measurements.product_id')
+            ->orderByRaw("
+            CASE 
+                WHEN products.status != 'Available' THEN 3
+                WHEN product_measurements.product_id IS NOT NULL THEN 1
+                ELSE 2
+            END
+        ")
+            ->orderByRaw("
+            CASE 
+                WHEN product_measurements.product_id IS NOT NULL THEN 
+                    CASE 
+                        WHEN products.status = 'Available' THEN 0 
+                        ELSE 1 
+                    END
+                ELSE 0
+            END
+        ")
+            ->orderBy('products.created_at', 'desc');
 
         $products = $query->paginate(12)->appends($request->query());
+
+        // Calculate fit scores and add recommendation data (same as productlist)
+        $products->getCollection()->transform(function ($product) {
+            $fitScore = $this->recommendationService->calculateFitScore($product);
+            $product->fit_score = $fitScore;
+            $product->recommendation_level = $this->recommendationService->getRecommendationLevel($fitScore);
+
+            // Check if product has actual measurement values (not just a record)
+            $product->has_actual_measurements = $this->hasActualMeasurements($product);
+
+            return $product;
+        });
+
+        // Sort the collection by fit score for products with measurements (same as productlist)
+        $sortedCollection = $products->getCollection()->sortByDesc(function ($product) {
+            // Products with actual measurements sorted by fit score, others maintain their order
+            return $product->has_actual_measurements ? $product->fit_score : 0;
+        });
+
+        // Set the sorted collection back to paginator
+        $products->setCollection($sortedCollection);
 
         $reviews = $shop
             ->shop_reviews()
@@ -221,5 +268,38 @@ class ShopPageController extends Controller
         }
 
         return view('shopoverview', compact('shop', 'products', 'reviews', 'averageRating'));
+    }
+
+    /**
+     * Check if a product has actual measurement values (not just an empty record)
+     * Same method as in ProductController
+     */
+    private function hasActualMeasurements($product)
+    {
+        if (!$product->product_measurements) {
+            return false;
+        }
+
+        $measurements = $product->product_measurements;
+
+        // Define all measurement fields to check
+        $measurementFields = [
+            // Gown measurements
+            'gown_chest', 'gown_bust', 'gown_waist', 'gown_hips', 'gown_shoulder', 'gown_length', 'gown_upper_chest',
+            // Jacket measurements
+            'jacket_chest', 'jacket_waist', 'jacket_hip', 'jacket_shoulder', 'jacket_length', 'jacket_sleeve_length',
+            'jacket_sleeve_width', 'jacket_bicep', 'jacket_arm_hole',
+            // Trouser measurements
+            'trouser_waist', 'trouser_hip', 'trouser_inseam', 'trouser_outseam', 'trouser_thigh', 'trouser_leg_opening', 'trouser_crotch'
+        ];
+
+        // Check if any measurement field has a non-null, non-empty value
+        foreach ($measurementFields as $field) {
+            if (!empty($measurements->$field) && $measurements->$field > 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
