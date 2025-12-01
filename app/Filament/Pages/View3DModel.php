@@ -18,12 +18,11 @@ class View3DModel extends Page
     public $modelUrl;
     public $clippingData;
     public $modelName;
-    public $isStoredModel = true;  // Always true now since we're only handling stored models
+    public $isStoredModel = true;
     public $debugInfo = [];
 
     public function mount($id)
     {
-        // Load stored 3D model from stored3d_models table
         $this->loadStoredModel($id);
     }
 

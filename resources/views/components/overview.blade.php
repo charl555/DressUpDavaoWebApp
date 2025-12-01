@@ -43,12 +43,6 @@
     $clippingData = $model3D ? $model3D->clipping_planes_data : null;
     $imagesCount = count($galleryImages);
 
-    // REMOVE THIS LINE - Don't set thumbnail to null when there's a 3D model
-    // if ($modelPath && $thumbnail) {
-    //     $galleryImages[] = (object) ['image' => $thumbnail];
-    //     $thumbnail = null;
-    // }
-
     // Instead, only add thumbnail to gallery if it's not already there and we have a 3D model
     if ($modelPath && $thumbnail) {
         // Check if thumbnail is already in gallery images
@@ -97,9 +91,28 @@
         {{-- Main Image/Model Container --}}
         <div
             class="bg-gray-50 rounded-xl overflow-hidden shadow-lg aspect-video w-full h-[600px] mb-6 relative border border-gray-200">
-            {{-- 3D Model Canvas --}}
+            {{-- 3D Model Viewer --}}
             @if ($modelPath)
-                <canvas id="renderCanvas" class="w-full h-full hidden"></canvas>
+                <model-viewer 
+                    id="modelViewer"
+                    src="{{ $modelPath }}"
+                    alt="{{ $product->name }} 3D Model"
+                    ar
+                    ar-modes="webxr scene-viewer quick-look"
+                    environment-image="neutral"
+                    auto-rotate
+                    camera-controls
+                    shadow-intensity="1"
+                    class="w-full h-full hidden"
+                >
+                    <button slot="ar-button" class="absolute bottom-4 right-4 bg-white/90 hover:bg-white text-gray-800 px-4 py-2 rounded-lg shadow-lg transition-all duration-200 backdrop-blur-sm border border-gray-200">
+                        👋 View in AR
+                    </button>
+                    
+                    <div class="progress-bar hide" slot="progress-bar">
+                        <div class="update-bar"></div>
+                    </div>
+                </model-viewer>
             @endif
             
             {{-- Main Image --}}
@@ -141,7 +154,6 @@
         @endif
     </div>
 @endif
-
 
     {{-- Product Details --}}
     <div class="flex flex-col pt-8 lg:pt-0">
@@ -550,122 +562,37 @@
         </div>
     </div>
 
-  
+    {{-- Add Model Viewer Script --}}
     @if ($modelPath)
-        <script src="https://cdn.babylonjs.com/babylon.js"></script>
-        <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+        <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
         <script>
-              let engine, scene, canvas;
-        let is3DViewActive = false;
+            function toggle3DView() {
+                const modelViewer = document.getElementById('modelViewer');
+                const mainImageContainer = document.getElementById('mainImageContainer');
+                const toggle3DButton = document.getElementById('toggle3DView');
+                const toggleImageButton = document.getElementById('toggleImageView');
 
-        function initialize3DView() {
-            canvas = document.getElementById('renderCanvas');
-            if (!canvas) return;
-
-            engine = new BABYLON.Engine(canvas, true);
-            scene = new BABYLON.Scene(engine);
-            scene.clearColor = new BABYLON.Color3(1, 1, 1);
-
-            const camera = new BABYLON.ArcRotateCamera("camera",
-                Math.PI / 2, Math.PI / 3, 3, BABYLON.Vector3.Zero(), scene);
-            camera.attachControl(canvas, true);
-
-            // Smooth controls for desktop and mobile
-            camera.wheelPrecision = 25;
-            camera.panningSensibility = 5000;
-            camera.angularSensibilityX = 8000;
-            camera.angularSensibilityY = 8000;
-            camera.pinchPrecision = 80;
-            camera.pinchDeltaPercentage = 0.002;
-            camera.inertia = 0.9;
-            camera.panningInertia = 0.9;
-            camera.minZ = 0.001;
-            camera.maxZ = 1000;
-
-            const light = new BABYLON.HemisphericLight("light",
-                new BABYLON.Vector3(1, 1, 0), scene);
-
-            camera.useAutoRotationBehavior = true;
-            const autoRotate = camera.autoRotationBehavior;
-            if (autoRotate) {
-                autoRotate.idleRotationSpeed = 0.1;
-                autoRotate.idleRotationWaitTime = 3000;
-                autoRotate.idleRotationSpinUpTime = 2000;
-                autoRotate.zoomStopsAnimation = false;
-            }
-
-            canvas.addEventListener('wheel', (event) => {
-                event.preventDefault();
-            }, { passive: false });
-
-            BABYLON.SceneLoader.Append("", "{{ $modelPath }}", scene, function () {
-                const meshes = scene.meshes.filter(m => m.name !== "__root__");
-                if (meshes.length > 0) {
-                    const boundingInfo = meshes[0].getBoundingInfo().boundingBox;
-                    const center = boundingInfo.centerWorld;
-                    const radius = boundingInfo.extendSizeWorld.length();
-
-                    camera.target = center;
-                    camera.radius = radius * 2;
-                    camera.lowerRadiusLimit = radius * 0.001;
-                    camera.upperRadiusLimit = radius * 10;
-                }
-            });
-
-            engine.runRenderLoop(() => {
-                if (is3DViewActive) {
-                    scene.render();
-                }
-            });
-            
-            window.addEventListener('resize', () => {
-                if (engine) {
-                    engine.resize();
-                }
-            });
-        }
-
-        function toggle3DView() {
-            const canvas = document.getElementById('renderCanvas');
-            const mainImageContainer = document.getElementById('mainImageContainer');
-            const toggle3DButton = document.getElementById('toggle3DView');
-            const toggleImageButton = document.getElementById('toggleImageView');
-
-            if (canvas && mainImageContainer) {
-                canvas.classList.remove('hidden');
-                mainImageContainer.classList.add('hidden');
-                toggle3DButton.classList.add('hidden');
-                toggleImageButton.classList.remove('hidden');
-                is3DViewActive = true;
-                
-                // Ensure canvas is properly sized
-                if (engine) {
-                    engine.resize();
+                if (modelViewer && mainImageContainer) {
+                    modelViewer.classList.remove('hidden');
+                    mainImageContainer.classList.add('hidden');
+                    toggle3DButton.classList.add('hidden');
+                    toggleImageButton.classList.remove('hidden');
                 }
             }
-        }
 
-        function toggleImageView() {
-            const canvas = document.getElementById('renderCanvas');
-            const mainImageContainer = document.getElementById('mainImageContainer');
-            const toggle3DButton = document.getElementById('toggle3DView');
-            const toggleImageButton = document.getElementById('toggleImageView');
+            function toggleImageView() {
+                const modelViewer = document.getElementById('modelViewer');
+                const mainImageContainer = document.getElementById('mainImageContainer');
+                const toggle3DButton = document.getElementById('toggle3DView');
+                const toggleImageButton = document.getElementById('toggleImageView');
 
-            if (canvas && mainImageContainer) {
-                canvas.classList.add('hidden');
-                mainImageContainer.classList.remove('hidden');
-                toggle3DButton.classList.remove('hidden');
-                toggleImageButton.classList.add('hidden');
-                is3DViewActive = false;
+                if (modelViewer && mainImageContainer) {
+                    modelViewer.classList.add('hidden');
+                    mainImageContainer.classList.remove('hidden');
+                    toggle3DButton.classList.remove('hidden');
+                    toggleImageButton.classList.add('hidden');
+                }
             }
-        }
-
-        // Initialize 3D view when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            if (document.getElementById('renderCanvas')) {
-                initialize3DView();
-            }
-        });
         </script>
     @endif
 

@@ -8,13 +8,13 @@
             height: 100%;
         }
 
-        #renderCanvas {
+        .model-container {
             width: 100%;
             height: 80vh;
-            border: 1px solid #ccc;
-            display: block;
-            touch-action: none;
-            /* Prevent browser touch actions */
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f8fafc;
         }
 
         .back-button {
@@ -40,12 +40,12 @@
             border-left: 4px solid #3b82f6;
         }
 
-        .debug-info {
-            background: #fff3cd;
+        .controls-info {
+            background: #e8f5e8;
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 15px;
-            border-left: 4px solid #ffc107;
+            border-left: 4px solid #10b981;
         }
 
         .error-info {
@@ -56,261 +56,227 @@
             border-left: 4px solid #dc3545;
             color: #721c24;
         }
+
+        .loading-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .control-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .control-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #3b82f6;
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
     </style>
+
+    <!-- Load Google Model Viewer -->
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 
     <div class="mb-4 flex items-center gap-4">
         <x-filament::button color="info" tag="a" href="{{ url()->previous() }}">
             ← Back
         </x-filament::button>
 
-        <h2 class="text-xl font-semibold mb-2">
-            Viewing 3D Model: {{ $modelName }}
-        </h2>
+
     </div>
 
-    {{-- <div class="model-info">
-        <p><strong>Source:</strong> Kiri Engine Generated Model</p>
-        <p><strong>Model URL:</strong> <code id="modelUrl">{{ $modelUrl }}</code></p>
-        <p><strong>File Status:</strong> <span id="fileStatus">Loading model...</span></p>
-        @if(isset($debugInfo['model_file']))
-        <p><strong>File Path:</strong> <code>{{ $debugInfo['model_file'] }}</code></p>
-        @endif
-    </div>
 
+
+
+    <!-- Error Container (Hidden by default) -->
     <div id="errorContainer" class="error-info" style="display: none;">
-        <h4 class="font-bold">Error Loading Model:</h4>
+        <h3 class="font-semibold text-lg mb-2">Error Loading Model</h3>
         <p id="errorMessage"></p>
     </div>
 
-    @if(config('app.debug') && isset($debugInfo))
-    <div class="debug-info">
-        <h4 class="font-bold">Debug Information:</h4>
-        <pre class="text-xs">{{ json_encode($debugInfo, JSON_PRETTY_PRINT) }}</pre>
+    <!-- Model Viewer Container -->
+    <div class="model-container">
+        <model-viewer id="modelViewer" src="{{ $modelUrl }}" alt="{{ $modelName }}" camera-controls auto-rotate
+            auto-rotate-delay="0" ar ar-modes="webxr scene-viewer quick-look" shadow-intensity="1"
+            environment-image="neutral" exposure="1" camera-orbit="0deg 75deg 105%" field-of-view="30deg"
+            min-camera-orbit="auto auto 50%" max-camera-orbit="auto auto 400%" min-field-of-view="10deg"
+            max-field-of-view="45deg" interaction-policy="allow-when-focused" style="width: 100%; height: 100%;"
+            loading="eager">
+
+            <!-- Loading Spinner -->
+            <div slot="loading" class="loading-indicator">
+                <div class="spinner"></div>
+                <p>Loading 3D Model...</p>
+            </div>
+
+            <!-- Error Slot -->
+            <div slot="error" class="loading-indicator" style="color: #dc3545;">
+                <svg style="width: 40px; height: 40px; color: #dc3545;" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <p>Failed to load 3D model</p>
+            </div>
+
+        </model-viewer>
     </div>
-    @endif --}}
-
-    <canvas id="renderCanvas"></canvas>
-
-    <script src="https://cdn.babylonjs.com/babylon.js"></script>
-    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
 
     <script>
-        const canvas = document.getElementById('renderCanvas');
-        const engine = new BABYLON.Engine(canvas, true);
-        const scene = new BABYLON.Scene(engine);
-        scene.clearColor = new BABYLON.Color3(1, 1, 1);
+        document.addEventListener('DOMContentLoaded', function () {
+            const modelViewer = document.getElementById('modelViewer');
+            const fileStatus = document.getElementById('fileStatus');
+            const errorContainer = document.getElementById('errorContainer');
+            const errorMessage = document.getElementById('errorMessage');
 
-        // Camera setup - optimized for smooth controls
-        const camera = new BABYLON.ArcRotateCamera(
-            "camera",
-            Math.PI / 2,
-            Math.PI / 3,
-            3,
-            BABYLON.Vector3.Zero(),
-            scene
-        );
+            console.log('Loading 3D model from:', "{{ $modelUrl }}");
 
-        // SMOOTH CAMERA CONTROLS - DESKTOP & MOBILE
-        camera.attachControl(canvas, true);
+            // Model loaded successfully
+            modelViewer.addEventListener('load', () => {
+                console.log('3D model loaded successfully');
+                fileStatus.textContent = 'Model loaded successfully ✓';
+                fileStatus.style.color = 'green';
+                errorContainer.style.display = 'none';
+            });
 
-        // Rotation controls - much smoother and slower
-        camera.angularSensibilityX = 8000; // Slower rotation (higher value = slower)
-        camera.angularSensibilityY = 8000; // Slower rotation
+            // Model loading progress
+            modelViewer.addEventListener('progress', (event) => {
+                const progress = event.detail.totalProgress * 100;
+                console.log('Loading progress:', progress.toFixed(1) + '%');
+                fileStatus.textContent = `Loading: ${progress.toFixed(1)}%`;
+            });
 
-        // Panning controls - smoother panning
-        camera.panningSensibility = 5000; // Higher value = slower panning
-        camera.panningOriginTarget = BABYLON.Vector3.Zero(); // Smooth panning reference
+            // Model error
+            modelViewer.addEventListener('error', (event) => {
+                console.error('Error loading 3D model:', event.detail);
+                fileStatus.textContent = 'Error loading model';
+                fileStatus.style.color = 'red';
 
-        // Zoom controls - smooth and precise
-        camera.wheelPrecision = 15;              // lower = faster scroll zoom
-        camera.wheelDeltaPercentage = 0.01;
+                errorMessage.textContent = 'Failed to load the 3D model. Please check the console for details.';
+                errorContainer.style.display = 'block';
 
-        // Pinch controls for mobile - smooth zooming
-        camera.pinchPrecision = 40;              // lower = faster
-        camera.pinchDeltaPercentage = 0.01;      // higher = faster response
-        // Inertia for smooth stops
-        camera.inertia = 0.9; // Higher value = more inertia (smoother stops)
-        camera.panningInertia = 0.9; // Panning inertia
-
-        // Clipping for close zoom
-        camera.minZ = 0.001;
-        camera.maxZ = 1000;
-
-        // Light
-        const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(1, 1, 0), scene);
-
-        // Auto rotation - smoother
-        camera.useAutoRotationBehavior = true;
-        const autoRotateBehavior = camera.autoRotationBehavior;
-        if (autoRotateBehavior) {
-            autoRotateBehavior.idleRotationSpeed = 0.1; // Slower auto-rotation
-            autoRotateBehavior.idleRotationWaitTime = 3000; // Longer wait before auto-rotate
-            autoRotateBehavior.idleRotationSpinUpTime = 2000; // Slower spin-up
-            autoRotateBehavior.zoomStopsAnimation = false;
-        }
-
-        // Load the model
-        const modelUrl = "{{ $modelUrl }}";
-        console.log('Loading stored 3D model from:', modelUrl);
-
-        // Use proper parameter order for SceneLoader.Append
-        BABYLON.SceneLoader.Append(
-            "", // rootUrl
-            modelUrl, // sceneFilename
-            scene, // scene
-            function (scene) {
-                // Success callback
-                console.log('Model loaded successfully');
-
-                const meshes = scene.meshes.filter(m => m.name !== "__root__");
-
-                if (meshes.length > 0) {
-                    const boundingInfo = meshes[0].getBoundingInfo().boundingBox;
-                    const center = boundingInfo.centerWorld;
-                    const radius = boundingInfo.extendSizeWorld.length();
-
-                    camera.target = center;
-                    camera.radius = radius * 2; // Comfortable starting distance
-
-                    // Smooth zoom limits
-                    camera.lowerRadiusLimit = radius * 0.001; // Very close
-                    camera.upperRadiusLimit = radius * 10;   // Reasonable far limit
-
-                    // Dynamic sensitivity based on model size for consistent feel
-                    const baseSensitivity = radius / 5;
-                    camera.angularSensibilityX = 8000 * baseSensitivity;
-                    camera.angularSensibilityY = 8000 * baseSensitivity;
-                    camera.panningSensibility = 5000 * baseSensitivity;
-
-                    document.getElementById('fileStatus').textContent = 'Model loaded successfully ✓';
-                    document.getElementById('fileStatus').style.color = 'green';
-
-                    console.log('Camera configured for smooth controls:', {
-                        radius: radius,
-                        angularSensibility: camera.angularSensibilityX,
-                        panningSensibility: camera.panningSensibility,
-                        wheelPrecision: camera.wheelPrecision
-                    });
-                } else {
-                    console.warn('No meshes found in the model');
-                    document.getElementById('fileStatus').textContent = 'No meshes found in model';
-                    document.getElementById('fileStatus').style.color = 'orange';
-                }
-            },
-            function (progress) {
-                // Progress callback
-                console.log('Loading progress:', progress);
-                if (progress.lengthComputable) {
-                    const percent = (progress.loaded / progress.total * 100).toFixed(1);
-                    document.getElementById('fileStatus').textContent = `Loading: ${percent}%`;
-                }
-            },
-            function (scene, message, exception) {
-                // Error callback
-                console.error('Error loading model:', message, exception);
-                document.getElementById('fileStatus').textContent = 'Error loading model';
-                document.getElementById('fileStatus').style.color = 'red';
-
-                // Show error to user
-                document.getElementById('errorContainer').style.display = 'block';
-                document.getElementById('errorMessage').textContent = message || 'Unknown error occurred';
-
-                console.error('Full error details:', {
-                    message: message,
-                    exception: exception,
-                    modelUrl: modelUrl
-                });
-
-                // Try alternative loading method
+                // Try alternative format if available
                 setTimeout(() => {
-                    console.log('Trying alternative loader...');
-                    tryAlternativeLoader();
-                }, 1000);
+                    tryAlternativeFormat();
+                }, 2000);
+            });
+
+            // Model visibility changed
+            modelViewer.addEventListener('visibilitychange', (event) => {
+                console.log('Model visibility:', event.detail.visible ? 'visible' : 'hidden');
+            });
+
+            // Camera change events
+            modelViewer.addEventListener('camera-change', (event) => {
+                // Optional: Log camera changes for debugging
+                // console.log('Camera changed:', event.detail);
+            });
+
+            // Enhanced error handling for unsupported formats
+            function tryAlternativeFormat() {
+                const currentSrc = modelViewer.src;
+                console.log('Trying to handle format issues for:', currentSrc);
+
+                // You could implement format conversion logic here
+                // For now, just show a more helpful error message
+                errorMessage.textContent = 'The 3D model format might not be fully supported by your browser. Try using Chrome or Edge for best compatibility.';
             }
-        );
 
-        function tryAlternativeLoader() {
-            console.log('Using alternative loader...');
-
-            // Alternative loading method - create a new scene
-            const newScene = new BABYLON.Scene(engine);
-            newScene.clearColor = new BABYLON.Color3(1, 1, 1);
-
-            // Copy camera with smooth settings
-            camera.scene = newScene;
-            light.scene = newScene;
-
-            // Try loading with different method
-            BABYLON.SceneLoader.Load(
-                "", // rootUrl
-                modelUrl, // sceneFilename
-                newScene, // scene
-                function (newScene) {
-                    // Success callback
-                    console.log('Model loaded with alternative method');
-                    document.getElementById('fileStatus').textContent = 'Model loaded (alternative method) ✓';
-                    document.getElementById('fileStatus').style.color = 'green';
-                    document.getElementById('errorContainer').style.display = 'none';
-
-                    // Configure smooth controls for new scene
-                    const meshes = newScene.meshes.filter(m => m.name !== "__root__");
-                    if (meshes.length > 0) {
-                        const boundingInfo = meshes[0].getBoundingInfo().boundingBox;
-                        const radius = boundingInfo.extendSizeWorld.length();
-
-                        camera.lowerRadiusLimit = radius * 0.001;
-                        camera.upperRadiusLimit = radius * 10;
-
-                        const baseSensitivity = radius / 5;
-                        camera.angularSensibilityX = 8000 * baseSensitivity;
-                        camera.angularSensibilityY = 8000 * baseSensitivity;
-                        camera.panningSensibility = 5000 * baseSensitivity;
+            // Add keyboard controls for better accessibility
+            document.addEventListener('keydown', (event) => {
+                if (document.activeElement === modelViewer || modelViewer.matches(':hover')) {
+                    switch (event.key) {
+                        case 'r':
+                        case 'R':
+                            // Reset camera
+                            modelViewer.cameraOrbit = '0deg 75deg 105%';
+                            event.preventDefault();
+                            break;
+                        case '+':
+                        case '=':
+                            // Zoom in
+                            const currentZoom = parseFloat(modelViewer.getAttribute('camera-orbit').split(' ')[2]);
+                            modelViewer.cameraOrbit = `0deg 75deg ${Math.max(50, currentZoom * 0.8)}%`;
+                            event.preventDefault();
+                            break;
+                        case '-':
+                        case '_':
+                            // Zoom out
+                            const currentZoomOut = parseFloat(modelViewer.getAttribute('camera-orbit').split(' ')[2]);
+                            modelViewer.cameraOrbit = `0deg 75deg ${Math.min(400, currentZoomOut * 1.2)}%`;
+                            event.preventDefault();
+                            break;
                     }
-
-                    // Update scene reference
-                    scene.dispose();
-                    window.currentScene = newScene;
-                },
-                function (progress) {
-                    // Progress callback
-                    console.log('Alternative loader progress:', progress);
-                },
-                function (newScene, message, exception) {
-                    // Error callback
-                    console.error('Alternative loader also failed:', message, exception);
-                    document.getElementById('fileStatus').textContent = 'All loading methods failed';
-                    document.getElementById('errorMessage').textContent = 'All loading attempts failed: ' + message;
                 }
-            );
-        }
+            });
 
-        // Enhanced input handling for ultra-smooth controls
-        canvas.addEventListener('wheel', (event) => {
-            if (document.activeElement === canvas || canvas.matches(':hover')) {
-                event.preventDefault();
+            // Mobile-specific enhancements
+            if ('ontouchstart' in window) {
+                // Add touch-specific optimizations
+                modelViewer.setAttribute('interaction-policy', 'allow-when-focused');
+                modelViewer.style.touchAction = 'pan-y';
             }
-        }, { passive: false });
 
-        // Prevent context menu on canvas for better mobile experience
-        canvas.addEventListener('contextmenu', (event) => {
-            event.preventDefault();
+            // Debug information
+            console.log('Google Model Viewer initialized with settings:', {
+                src: modelViewer.src,
+                cameraControls: modelViewer.hasAttribute('camera-controls'),
+                autoRotate: modelViewer.hasAttribute('auto-rotate'),
+                environmentImage: modelViewer.getAttribute('environment-image'),
+                exposure: modelViewer.getAttribute('exposure')
+            });
         });
 
-        engine.runRenderLoop(() => {
-            const currentScene = window.currentScene || scene;
-            currentScene.render();
-        });
-
-        window.addEventListener('resize', () => engine.resize());
-
-        // Debug info for smooth controls
-        console.log('Smooth camera controls configured:', {
-            angularSensibilityX: camera.angularSensibilityX,
-            angularSensibilityY: camera.angularSensibilityY,
-            panningSensibility: camera.panningSensibility,
-            wheelPrecision: camera.wheelPrecision,
-            pinchPrecision: camera.pinchPrecision,
-            inertia: camera.inertia
+        // Handle page visibility changes to pause auto-rotation when not visible
+        document.addEventListener('visibilitychange', function () {
+            const modelViewer = document.getElementById('modelViewer');
+            if (document.hidden) {
+                modelViewer.removeAttribute('auto-rotate');
+            } else {
+                modelViewer.setAttribute('auto-rotate', '');
+            }
         });
     </script>
 </x-filament-panels::page>

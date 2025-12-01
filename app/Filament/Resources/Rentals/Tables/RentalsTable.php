@@ -10,10 +10,13 @@ use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -177,12 +180,21 @@ class RentalsTable
                     ->label('Current Rentals Only'),
             ])
             ->actions([
+                Action::make('viewRental')
+                    ->label('View Details')
+                    ->icon('heroicon-o-eye')
+                    ->color('gray')
+                    ->modalHeading('Rental Details')
+                    ->modalSubmitAction(false)
+                    ->form(function ($record) {
+                        return self::getRentalDetailsFormSchema($record);
+                    }),
                 Action::make('rentalReceipt')
                     ->label('Rental Receipt')
                     ->icon('heroicon-o-printer')
                     ->color('gray')
                     ->modalHeading('Rental Receipt')
-                    ->modalSubmitAction(false)  // disables default submit button
+                    ->modalSubmitAction(false)
                     ->modalContent(function ($record) {
                         $customerName = $record->customer
                             ? "{$record->customer->first_name} {$record->customer->last_name}"
@@ -242,7 +254,6 @@ class RentalsTable
                     ]),
                 ActionGroup::make(
                     [
-                        ViewAction::make(),
                         EditAction::make()
                             ->visible(fn($record) => $record->status !== 'Returned' || $record->balance_due > 0),
                         Action::make('markAsPickedUp')
@@ -262,30 +273,86 @@ class RentalsTable
                         Action::make('addPayment')
                             ->label('Add Payment')
                             ->icon('heroicon-o-banknotes')
+                            ->color('success')
+                            ->modalHeading('Add Payment - Rental Details')
                             ->visible(fn($record) => !$record->is_returned && ($record->balance_due ?? 0) > 0)
                             ->form(function ($record) {
-                                return [
-                                    Placeholder::make('balance_info')
-                                        ->label('Current Balance Due')
-                                        ->content('₱ ' . number_format($record->balance_due ?? 0, 2)),
-                                    TextInput::make('amount_paid')
-                                        ->label('Amount')
-                                        ->numeric()
-                                        ->prefix('₱')
-                                        ->minValue(1)
-                                        ->maxValue($record->balance_due ?? 0)
-                                        ->helperText('Enter the amount the customer is paying now. You can repeat this anytime until the balance is zero.'),
-                                ];
+                                $isOverdue = !$record->is_returned && Carbon::parse($record->return_date)->isPast();
+                                $daysOverdue = $isOverdue ? Carbon::parse($record->return_date)->diffInDays(now()) : 0;
+
+                                return array_merge(
+                                    // Rental Information Sections
+                                    self::getRentalSummaryFormSchema($record),
+                                    // Payment Form
+                                    [
+                                        Section::make('Payment Information')
+                                            ->schema([
+                                                Placeholder::make('current_balance')
+                                                    ->label('Current Balance Due')
+                                                    ->content('₱ ' . number_format($record->balance_due ?? 0, 2))
+                                                    ->extraAttributes(['class' => 'text-lg font-bold text-center ' . ($record->balance_due > 0 ? 'text-red-600' : 'text-green-600')]),
+                                                Grid::make(2)
+                                                    ->schema([
+                                                        TextInput::make('amount_paid')
+                                                            ->label('Payment Amount')
+                                                            ->numeric()
+                                                            ->prefix('₱')
+                                                            ->minValue(1)
+                                                            ->maxValue($record->balance_due ?? 0)
+                                                            ->required()
+                                                            ->default(min($record->balance_due, $record->balance_due))
+                                                            ->helperText('Enter the amount the customer is paying now.'),
+                                                        Select::make('payment_method')
+                                                            ->label('Payment Method')
+                                                            ->options([
+                                                                'Cash' => 'Cash',
+                                                                'GCash' => 'GCash',
+                                                                'PayMaya' => 'PayMaya',
+                                                                'Bank Transfer' => 'Bank Transfer',
+                                                                'Credit Card' => 'Credit Card',
+                                                                'Debit Card' => 'Debit Card',
+                                                            ])
+                                                            ->default('Cash')
+                                                            ->required()
+                                                            ->helperText('Payment method used by customer.'),
+                                                    ]),
+                                                Placeholder::make('remaining_balance')
+                                                    ->label('Remaining Balance After Payment')
+                                                    ->content(function ($get) use ($record) {
+                                                        $amount = (float) ($get('amount_paid') ?? 0);
+                                                        $remaining = max(0, ($record->balance_due ?? 0) - $amount);
+                                                        return '₱ ' . number_format($remaining, 2);
+                                                    })
+                                                    ->visible(fn($get) => !empty($get('amount_paid')))
+                                            ])
+                                    ]
+                                );
                             })
                             ->action(function ($record, array $data) {
                                 $amount = (float) ($data['amount_paid'] ?? 0);
+                                $paymentMethod = $data['payment_method'] ?? 'Cash';
+
                                 if ($amount <= 0) {
+                                    Notification::make()
+                                        ->title('Invalid Amount')
+                                        ->body('Please enter a valid payment amount.')
+                                        ->danger()
+                                        ->send();
+                                    return;
+                                }
+
+                                if ($amount > $record->balance_due) {
+                                    Notification::make()
+                                        ->title('Amount Too High')
+                                        ->body('Payment amount cannot exceed the current balance due.')
+                                        ->danger()
+                                        ->send();
                                     return;
                                 }
 
                                 $record->payments()->create([
                                     'rental_id' => $record->rental_id,
-                                    'payment_method' => 'Cash',
+                                    'payment_method' => $paymentMethod,
                                     'amount_paid' => $amount,
                                     'payment_date' => now(),
                                     'payment_status' => 'Paid',
@@ -295,69 +362,87 @@ class RentalsTable
                                 $record->update(['balance_due' => max(0, ($record->balance_due ?? 0) - $amount)]);
 
                                 Notification::make()
-                                    ->title('Payment Added')
+                                    ->title('Payment Added Successfully')
+                                    ->body('Payment of ₱' . number_format($amount, 2) . ' has been recorded. Remaining balance: ₱' . number_format($record->balance_due, 2))
                                     ->success()
                                     ->send();
                             }),
                         Action::make('markAsReturned')
                             ->label('Mark as Returned')
                             ->icon('heroicon-o-arrow-uturn-left')
+                            ->color('warning')
+                            ->modalHeading('Mark as Returned - Rental Details')
                             ->visible(fn($record) => !$record->is_returned && in_array($record->rental_status, ['Picked Up', 'Overdue']))
                             ->form(function ($record) {
                                 $hasBalance = ($record->balance_due ?? 0) > 0;
                                 $returnDate = Carbon::parse($record->return_date)->startOfDay();
                                 $today = Carbon::now()->startOfDay();
+                                $isOverdue = $today->gt($returnDate);
+                                $daysOverdue = $isOverdue ? $today->diffInDays($returnDate) : 0;
 
-                                if ($today->gt($returnDate)) {
-                                    $daysOverdue = $today->diffInDays($returnDate);
-                                    $message = "Overdue by {$daysOverdue} day(s). Due " . $returnDate->format('M j, Y') . '.';
-                                    $message .= 'This rental record is overdue and may be subject to penalties depending on shop policy.';
-                                } elseif ($today->lt($returnDate)) {
-                                    $message = 'This rental is not yet due for return (due ' . $returnDate->format('M j, Y') . ').';
-                                } else {
-                                    $message = 'On-time return (due ' . $returnDate->format('M j, Y') . ').';
-                                }
+                                $returnInfo = match (true) {
+                                    $isOverdue => "Overdue by {$daysOverdue} day(s). Due " . $returnDate->format('M j, Y') . '.',
+                                    $today->lt($returnDate) => 'Early return (due ' . $returnDate->format('M j, Y') . ').',
+                                    default => 'On-time return (due ' . $returnDate->format('M j, Y') . ').'
+                                };
 
-                                // Create form components
-                                $form = [
-                                    Placeholder::make('return_info')
-                                        ->label('Return Info')
-                                        ->content($message),
-                                ];
-
-                                // Balance info display
-                                if ($hasBalance) {
-                                    $form[] = Placeholder::make('balance_info')
-                                        ->label('Current Balance Due')
-                                        ->content('₱ ' . number_format($record->balance_due, 2));
-                                } else {
-                                    $form[] = Placeholder::make('balance_info')
-                                        ->label('Current Balance Status')
-                                        ->badge()
-                                        ->content('Fully Paid')
-                                        ->color('success');
-                                }
-
-                                // Payment input only if balance remains
-                                if ($hasBalance) {
-                                    $form[] = TextInput::make('payment_amount')
-                                        ->label('Payment Now')
-                                        ->numeric()
-                                        ->prefix('₱')
-                                        ->default(min($record->balance_due, $record->balance_due))
-                                        ->minValue(0)
-                                        ->maxValue($record->balance_due)
-                                        ->helperText('Collect any remaining balance now. This will be added as a payment.');
-                                }
-
-                                return $form;
+                                return array_merge(
+                                    // Rental Information Sections
+                                    self::getRentalSummaryFormSchema($record),
+                                    // Return Form
+                                    [
+                                        Section::make('Return Information')
+                                            ->schema([
+                                                Placeholder::make('return_status')
+                                                    ->label('Return Status')
+                                                    ->content($returnInfo)
+                                                    ->extraAttributes(['class' => 'text-center p-3 rounded-lg ' . ($isOverdue ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700')]),
+                                                Grid::make(2)
+                                                    ->schema([
+                                                        Placeholder::make('current_balance')
+                                                            ->label('Current Balance Due')
+                                                            ->content('₱ ' . number_format($record->balance_due, 2))
+                                                            ->extraAttributes(['class' => 'text-lg font-bold text-center ' . ($hasBalance ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700') . ' rounded-lg p-3']),
+                                                        Placeholder::make('product_status')
+                                                            ->label('Product Will Be Set To')
+                                                            ->content('Available')
+                                                            ->extraAttributes(['class' => 'text-lg font-bold text-center bg-blue-50 text-blue-700 rounded-lg p-3']),
+                                                    ]),
+                                                $hasBalance
+                                                    ? TextInput::make('payment_amount')
+                                                        ->label('Final Payment Amount')
+                                                        ->numeric()
+                                                        ->prefix('₱')
+                                                        ->default(min($record->balance_due, $record->balance_due))
+                                                        ->minValue(0)
+                                                        ->maxValue($record->balance_due)
+                                                        ->helperText('Collect any remaining balance now. Leave as 0 if no payment is needed.')
+                                                    : Placeholder::make('no_balance')
+                                                        ->label('Balance Status')
+                                                        ->content('No balance due - ready to return')
+                                                        ->badge()
+                                                        ->color('success')
+                                                        ->extraAttributes(['class' => 'text-center']),
+                                            ])
+                                    ]
+                                );
                             })
                             ->action(function ($record, array $data) {
                                 $today = Carbon::today();
                                 $hasBalance = ($record->balance_due ?? 0) > 0;
                                 $paymentAmount = (float) ($data['payment_amount'] ?? 0);
 
-                                // Record rental payment if any and only if there is balance
+                                // Validate payment amount
+                                if ($hasBalance && $paymentAmount > $record->balance_due) {
+                                    Notification::make()
+                                        ->title('Invalid Payment Amount')
+                                        ->body('Payment amount cannot exceed the current balance due.')
+                                        ->danger()
+                                        ->send();
+                                    return;
+                                }
+
+                                // Record final payment if any
                                 if ($hasBalance && $paymentAmount > 0) {
                                     $record->payments()->create([
                                         'rental_id' => $record->rental_id,
@@ -380,8 +465,17 @@ class RentalsTable
                                 // Update product back to available
                                 $record->product->update(['status' => 'Available']);
 
+                                $message = 'Rental marked as returned successfully.';
+                                if ($paymentAmount > 0) {
+                                    $message .= ' Final payment of ₱' . number_format($paymentAmount, 2) . ' recorded.';
+                                }
+                                if ($record->balance_due > 0) {
+                                    $message .= ' Note: Balance of ₱' . number_format($record->balance_due, 2) . ' still remains.';
+                                }
+
                                 Notification::make()
                                     ->title('Rental Returned')
+                                    ->body($message)
                                     ->success()
                                     ->send();
                             }),
@@ -398,5 +492,248 @@ class RentalsTable
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /**
+     * Get the rental details form schema for view action
+     */
+    private static function getRentalDetailsFormSchema($record): array
+    {
+        $customerName = $record->customer
+            ? "{$record->customer->first_name} {$record->customer->last_name}"
+            : ($record->user?->name ?? 'Unknown');
+
+        $customerContact = $record->customer?->phone_number ?? $record->user?->phone_number ?? 'N/A';
+        $customerEmail = $record->customer?->email ?? $record->user?->email ?? 'N/A';
+
+        $isOverdue = !$record->is_returned && Carbon::parse($record->return_date)->isPast();
+        $daysOverdue = $isOverdue ? Carbon::parse($record->return_date)->diffInDays(now()) : 0;
+
+        $statusColor = match ($record->rental_status) {
+            'Rented' => 'warning',
+            'Picked Up' => 'info',
+            'Returned' => 'success',
+            default => 'gray'
+        };
+
+        $productStatusColor = match ($record->product->status) {
+            'Available' => 'success',
+            'Rented' => 'warning',
+            'Reserved' => 'info',
+            default => 'gray'
+        };
+
+        return [
+            // Header Section
+            Section::make('Rental Information')
+                ->schema([
+                    Grid::make(2)
+                        ->schema([
+                            Placeholder::make('rental_id')
+                                ->label('Rental ID')
+                                ->content('RNT-' . $record->rental_id),
+                            Placeholder::make('status')
+                                ->label('Status')
+                                ->badge()
+                                ->content($record->rental_status)
+                                ->color($statusColor),
+                            Placeholder::make('created_at')
+                                ->label('Created Date')
+                                ->content($record->created_at->format('M j, Y g:i A')),
+                            Placeholder::make('overdue_status')
+                                ->label('Overdue Status')
+                                ->content($isOverdue ? "Overdue by {$daysOverdue} day(s)" : 'On Time')
+                                ->badge()
+                                ->color($isOverdue ? 'danger' : 'success')
+                                ->visible($isOverdue || $record->rental_status !== 'Returned'),
+                        ]),
+                ]),
+            // Customer & Product Information
+            Grid::make(2)
+                ->schema([
+                    Section::make('Customer Information')
+                        ->schema([
+                            Placeholder::make('customer_name')
+                                ->label('Name')
+                                ->content($customerName),
+                            Placeholder::make('customer_contact')
+                                ->label('Contact')
+                                ->content($customerContact),
+                            Placeholder::make('customer_email')
+                                ->label('Email')
+                                ->content($customerEmail),
+                        ]),
+                    Section::make('Product Information')
+                        ->schema([
+                            Placeholder::make('product_name')
+                                ->label('Product')
+                                ->content($record->product->name),
+                            Placeholder::make('product_type')
+                                ->label('Type')
+                                ->content($record->product->type),
+                            Placeholder::make('product_status')
+                                ->label('Current Status')
+                                ->badge()
+                                ->content($record->product->status)
+                                ->color($productStatusColor),
+                        ]),
+                ]),
+            // Rental Dates
+            Section::make('Rental Period')
+                ->schema([
+                    Grid::make(3)
+                        ->schema([
+                            Placeholder::make('pickup_date')
+                                ->label('Pickup Date')
+                                ->content(Carbon::parse($record->pickup_date)->format('M j, Y'))
+                                ->extraAttributes(['class' => 'text-center bg-blue-50 rounded-lg p-3']),
+                            Placeholder::make('return_date')
+                                ->label('Return Date')
+                                ->content(Carbon::parse($record->return_date)->format('M j, Y'))
+                                ->extraAttributes(['class' => 'text-center bg-green-50 rounded-lg p-3']),
+                            Placeholder::make('event_date')
+                                ->label('Event Date')
+                                ->content($record->event_date ? Carbon::parse($record->event_date)->format('M j, Y') : 'N/A')
+                                ->extraAttributes(['class' => 'text-center bg-purple-50 rounded-lg p-3']),
+                        ]),
+                    Placeholder::make('actual_return_date')
+                        ->label('Actual Return Date')
+                        ->content($record->actual_return_date ? Carbon::parse($record->actual_return_date)->format('M j, Y') : 'Not returned yet')
+                        ->visible(fn() => $record->actual_return_date !== null)
+                        ->extraAttributes(['class' => 'text-center bg-yellow-50 rounded-lg p-3']),
+                ]),
+            // Financial Information
+            Section::make('Financial Summary')
+                ->schema([
+                    Grid::make(4)
+                        ->schema([
+                            Placeholder::make('rental_price')
+                                ->label('Rental Price')
+                                ->content('₱' . number_format($record->rental_price, 2))
+                                ->extraAttributes(['class' => 'text-center bg-gray-50 rounded-lg p-3']),
+                            Placeholder::make('deposit_amount')
+                                ->label('Deposit')
+                                ->content('₱' . number_format($record->deposit_amount, 2))
+                                ->extraAttributes(['class' => 'text-center bg-yellow-50 rounded-lg p-3']),
+                            Placeholder::make('total_paid')
+                                ->label('Total Paid')
+                                ->content('₱' . number_format($record->total_paid, 2))
+                                ->extraAttributes(['class' => 'text-center bg-green-50 rounded-lg p-3']),
+                            Placeholder::make('balance_due')
+                                ->label('Balance Due')
+                                ->content('₱' . number_format($record->balance_due, 2))
+                                ->extraAttributes(['class' => 'text-center ' . ($record->balance_due > 0 ? 'bg-red-50' : 'bg-green-50') . ' rounded-lg p-3']),
+                        ]),
+                ]),
+            // Additional Information
+            Section::make('Additional Information')
+                ->schema([
+                    Placeholder::make('notes')
+                        ->label('Notes')
+                        ->content($record->notes ?: 'No notes')
+                        ->visible(fn() => !empty($record->notes))
+                        ->extraAttributes(['class' => 'bg-gray-50 rounded-lg p-3']),
+                    Placeholder::make('special_instructions')
+                        ->label('Special Instructions')
+                        ->content($record->special_instructions ?: 'No special instructions')
+                        ->visible(fn() => !empty($record->special_instructions))
+                        ->extraAttributes(['class' => 'bg-blue-50 rounded-lg p-3']),
+                ])
+                ->visible(fn() => !empty($record->notes) || !empty($record->special_instructions)),
+            // Payment History
+            Section::make('Payment History')
+                ->schema([
+                    ViewField::make('payment_history')
+                        ->view('filament.tables.custom.payment-history', ['payments' => $record->payments])
+                        ->visible(fn() => $record->payments && $record->payments->count() > 0),
+                    Placeholder::make('no_payments')
+                        ->label('No Payments')
+                        ->content('No payment history available')
+                        ->visible(fn() => !$record->payments || $record->payments->count() === 0),
+                ]),
+        ];
+    }
+
+    /**
+     * Get a condensed rental summary form schema for action modals
+     */
+    private static function getRentalSummaryFormSchema($record): array
+    {
+        $customerName = $record->customer
+            ? "{$record->customer->first_name} {$record->customer->last_name}"
+            : ($record->user?->name ?? 'Unknown');
+
+        $isOverdue = !$record->is_returned && Carbon::parse($record->return_date)->isPast();
+        $daysOverdue = $isOverdue ? Carbon::parse($record->return_date)->diffInDays(now()) : 0;
+
+        $statusColor = match ($record->rental_status) {
+            'Rented' => 'warning',
+            'Picked Up' => 'info',
+            'Returned' => 'success',
+            default => 'gray'
+        };
+
+        return [
+            Section::make('Rental Summary')
+                ->schema([
+                    Grid::make(2)
+                        ->schema([
+                            Placeholder::make('rental_id')
+                                ->label('Rental ID')
+                                ->content('RNT-' . $record->rental_id),
+                            Placeholder::make('status')
+                                ->label('Status')
+                                ->badge()
+                                ->content($record->rental_status)
+                                ->color($statusColor),
+                            Placeholder::make('customer_name')
+                                ->label('Customer')
+                                ->content($customerName),
+                            Placeholder::make('product_name')
+                                ->label('Product')
+                                ->content($record->product->name),
+                        ]),
+                ]),
+            Section::make('Rental Period & Financials')
+                ->schema([
+                    Grid::make(2)
+                        ->schema([
+                            Grid::make(1)
+                                ->schema([
+                                    Placeholder::make('pickup_date')
+                                        ->label('Pickup Date')
+                                        ->content(Carbon::parse($record->pickup_date)->format('M j, Y')),
+                                    Placeholder::make('return_date')
+                                        ->label('Return Date')
+                                        ->content(Carbon::parse($record->return_date)->format('M j, Y'))
+                                        ->extraAttributes(['class' => $isOverdue ? 'text-red-600 font-semibold' : '']),
+                                    $isOverdue
+                                        ? Placeholder::make('overdue_days')
+                                            ->label('Overdue Days')
+                                            ->content("{$daysOverdue} day(s) overdue")
+                                            ->badge()
+                                            ->color('danger')
+                                        : Placeholder::make('return_status')
+                                            ->label('Return Status')
+                                            ->content($isOverdue ? 'Overdue' : 'On Time')
+                                            ->badge()
+                                            ->color($isOverdue ? 'danger' : 'success'),
+                                ]),
+                            Grid::make(1)
+                                ->schema([
+                                    Placeholder::make('rental_price')
+                                        ->label('Rental Price')
+                                        ->content('₱' . number_format($record->rental_price, 2)),
+                                    Placeholder::make('total_paid')
+                                        ->label('Total Paid')
+                                        ->content('₱' . number_format($record->total_paid, 2)),
+                                    Placeholder::make('balance_due')
+                                        ->label('Balance Due')
+                                        ->content('₱' . number_format($record->balance_due, 2))
+                                        ->extraAttributes(['class' => $record->balance_due > 0 ? 'text-red-600 font-semibold' : 'text-green-600 font-semibold']),
+                                ]),
+                        ]),
+                ]),
+        ];
     }
 }
