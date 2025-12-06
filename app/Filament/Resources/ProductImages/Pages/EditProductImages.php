@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\ProductImages\Pages;
 
 use App\Filament\Resources\ProductImages\ProductImagesResource;
-use App\Models\ProductImages;
+use App\Models\ProductImages as ProductImagesModel;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Storage;
@@ -12,16 +12,16 @@ class EditProductImages extends EditRecord
 {
     protected static string $resource = ProductImagesResource::class;
 
-    protected function getHeaderActions(): array
-    {
-        return [
-            DeleteAction::make(),
-        ];
-    }
+    protected $thumbnail = null;
+    protected $galleryImages = [];
+    protected $oldThumbnail = null;
+    protected $oldGalleryImages = [];
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        // Only handle JSON decoding for images array, don't convert to URLs
+        $this->oldThumbnail = $data['thumbnail_image'] ?? null;
+        $this->oldGalleryImages = $data['images'] ?? [];
+
         if (isset($data['images']) && is_string($data['images'])) {
             $data['images'] = json_decode($data['images'], true) ?: [];
         }
@@ -29,118 +29,135 @@ class EditProductImages extends EditRecord
         return $data;
     }
 
-    public function handleRecordUpdate(\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model
+    protected function mutateFormDataBeforeSave(array $data): array
     {
-        // Process thumbnail image
-        if (isset($data['thumbnail_image'])) {
-            if (is_array($data['thumbnail_image'])) {
-                // It's from FileUpload with existing files
-                $thumbnailData = $data['thumbnail_image'];
+        $record = $this->getRecord();
+        $this->oldThumbnail = $record->thumbnail_image;
+        $this->oldGalleryImages = $record->images ?? [];
 
-                if (!empty($thumbnailData) && is_string($thumbnailData[0] ?? null)) {
-                    // Extract path from URL if it's a full URL
-                    $thumbnailPath = $thumbnailData[0];
-                    if (strpos($thumbnailPath, 'http') === 0) {
-                        $baseUrl = asset('uploads/');
-                        $thumbnailPath = str_replace($baseUrl, '', $thumbnailPath);
-                        $thumbnailPath = ltrim($thumbnailPath, '/');
-                    }
-                    $record->thumbnail_image = $thumbnailPath;
-                }
-            } elseif (is_object($data['thumbnail_image'])) {
-                // It's a new file upload - use the same processing as CreateProducts
-                if ($record->thumbnail_image && Storage::disk('public')->exists($record->thumbnail_image)) {
-                    Storage::disk('public')->delete($record->thumbnail_image);
-                }
-                $record->thumbnail_image = $this->processThumbnailImage($data['thumbnail_image']);
-            } elseif (is_string($data['thumbnail_image'])) {
-                // It's already a file path
-                $record->thumbnail_image = $data['thumbnail_image'];
-            }
-        }
+        $thumbnailInput = $data['thumbnail_image'] ?? null;
+        $this->thumbnail = $this->processThumbnailImage($thumbnailInput, $record->thumbnail_image);
 
-        // Process gallery images
-        if (isset($data['images']) && is_array($data['images'])) {
-            $newImages = [];
+        $galleryInput = $data['images'] ?? [];
+        $this->galleryImages = $this->processGalleryImages($galleryInput, $record->images ?? []);
 
-            foreach ($data['images'] as $imageInput) {
-                if (is_array($imageInput) && isset($imageInput[0]) && is_string($imageInput[0])) {
-                    // It's from FileUpload with existing files
-                    $imagePath = $imageInput[0];
-                    if (strpos($imagePath, 'http') === 0) {
-                        $baseUrl = asset('uploads/');
-                        $imagePath = str_replace($baseUrl, '', $imagePath);
-                        $imagePath = ltrim($imagePath, '/');
-                    }
-                    $newImages[] = $imagePath;
-                } elseif (is_object($imageInput)) {
-                    // It's a new file upload - use the same processing as CreateProducts
-                    try {
-                        $optimizedPath = ProductImages::optimizeAndConvertToWebP($imageInput, 85);
-                        $newImages[] = $optimizedPath;
-                    } catch (\Exception $e) {
-                        \Log::error('Gallery image processing failed: ' . $e->getMessage());
-                        $newImages[] = $imageInput->store('product-images', 'public');
-                    }
-                } elseif (is_string($imageInput)) {
-                    // It's an existing file path
-                    $newImages[] = $imageInput;
-                }
-            }
+        unset($data['thumbnail_image'], $data['images']);
 
-            // Clean up old images that are no longer used
-            $oldImages = $record->images ?? [];
-            $imagesToDelete = array_diff($oldImages, $newImages);
-
-            foreach ($imagesToDelete as $oldImagePath) {
-                if (Storage::disk('public')->exists($oldImagePath)) {
-                    Storage::disk('public')->delete($oldImagePath);
-                }
-            }
-
-            $record->images = $newImages;
-        }
-
-        $record->save();
-
-        return $record;
+        return $data;
     }
 
-    /**
-     * Process thumbnail image with compression and WebP conversion
-     * Updated to match CreateProducts functionality
-     */
-    protected function processThumbnailImage($thumbnailFile)
+    protected function processThumbnailImage($thumbnailInput, $existingThumbnail = null)
     {
-        if (!$thumbnailFile) {
-            return null;
+        if (!$thumbnailInput || (is_array($thumbnailInput) && empty($thumbnailInput))) {
+            return $existingThumbnail;
         }
 
-        try {
-            // Use the SAME method and quality as gallery images for consistency
-            $thumbnailPath = ProductImages::optimizeAndConvertToWebP($thumbnailFile, 85);
-
-            // Ensure the path includes the thumbnails directory (same as CreateProducts)
-            if ($thumbnailPath && strpos($thumbnailPath, 'product-images/thumbnails/') !== 0) {
-                // Move to correct directory if needed
-                $filename = basename($thumbnailPath);
-                $correctPath = 'product-images/thumbnails/' . $filename;
-
-                if (Storage::disk('public')->exists($thumbnailPath)) {
-                    Storage::disk('public')->move($thumbnailPath, $correctPath);
-                    $thumbnailPath = $correctPath;
+        if (is_array($thumbnailInput)) {
+            if (!empty($thumbnailInput) && is_string($thumbnailInput[0] ?? null)) {
+                $thumbnailPath = $thumbnailInput[0];
+                if (strpos($thumbnailPath, 'http') === 0) {
+                    $baseUrl = url('storage/');
+                    $thumbnailPath = str_replace($baseUrl, '', $thumbnailPath);
+                    $thumbnailPath = ltrim($thumbnailPath, '/');
                 }
+                return $thumbnailPath;
             }
+        } elseif (is_object($thumbnailInput)) {
+            try {
+                $thumbnailPath = ProductImagesModel::optimizeAndConvertToWebP($thumbnailInput, 85);
 
-            return $thumbnailPath;
-        } catch (\Exception $e) {
-            \Log::error('Thumbnail processing failed: ' . $e->getMessage());
-            // Fallback with correct directory
-            if (is_string($thumbnailFile)) {
-                return $thumbnailFile;  // Keep existing path
-            } else {
-                return $thumbnailFile->store('product-images/thumbnails', 'public');
+                if ($thumbnailPath && strpos($thumbnailPath, 'product-images/thumbnails/') !== 0) {
+                    $filename = basename($thumbnailPath);
+                    $correctPath = 'product-images/thumbnails/' . $filename;
+
+                    if (Storage::disk('public')->exists($thumbnailPath)) {
+                        Storage::disk('public')->move($thumbnailPath, $correctPath);
+                        $thumbnailPath = $correctPath;
+                    }
+                }
+
+                return $thumbnailPath;
+            } catch (\Exception $e) {
+                \Log::error('Thumbnail processing failed: ' . $e->getMessage());
+
+                return $thumbnailInput->store('product-images/thumbnails', 'public');
+            }
+        } elseif (is_string($thumbnailInput)) {
+            return $thumbnailInput;
+        }
+
+        return $existingThumbnail;
+    }
+
+    protected function processGalleryImages($galleryInput, $existingImages = [])
+    {
+        if (empty($galleryInput)) {
+            return $existingImages;
+        }
+
+        $processedImages = [];
+
+        foreach ($galleryInput as $imageInput) {
+            if (is_array($imageInput) && isset($imageInput[0]) && is_string($imageInput[0])) {
+                $imagePath = $imageInput[0];
+                if (strpos($imagePath, 'http') === 0) {
+                    $baseUrl = url('storage/');
+                    $imagePath = str_replace($baseUrl, '', $imagePath);
+                    $imagePath = ltrim($imagePath, '/');
+                }
+                $processedImages[] = $imagePath;
+            } elseif (is_object($imageInput)) {
+                try {
+                    $optimizedPath = ProductImagesModel::optimizeAndConvertToWebP($imageInput, 85);
+                    $processedImages[] = $optimizedPath;
+                } catch (\Exception $e) {
+                    \Log::error('Gallery image processing failed: ' . $e->getMessage());
+
+                    $processedImages[] = $imageInput->store('product-images', 'public');
+                }
+            } elseif (is_string($imageInput)) {
+                $processedImages[] = $imageInput;
             }
         }
+
+        return $processedImages;
+    }
+
+    protected function afterSave(): void
+    {
+        $record = $this->getRecord();
+
+        $record->thumbnail_image = $this->thumbnail;
+        $record->images = $this->galleryImages;
+        $record->save();
+
+        $this->cleanupOldImages();
+    }
+
+    protected function cleanupOldImages(): void
+    {
+        if ($this->oldThumbnail &&
+                $this->thumbnail &&
+                $this->oldThumbnail !== $this->thumbnail &&
+                Storage::disk('public')->exists($this->oldThumbnail)) {
+            Storage::disk('public')->delete($this->oldThumbnail);
+        }
+
+        $oldImages = $this->oldGalleryImages ?? [];
+        $newImages = $this->galleryImages ?? [];
+        $imagesToDelete = array_diff($oldImages, $newImages);
+
+        foreach ($imagesToDelete as $oldImagePath) {
+            if (Storage::disk('public')->exists($oldImagePath)) {
+                Storage::disk('public')->delete($oldImagePath);
+            }
+        }
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            DeleteAction::make(),
+        ];
     }
 }
