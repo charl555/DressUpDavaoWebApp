@@ -23,48 +23,46 @@ class CreateProducts extends CreateRecord
     {
         $data['user_id'] = auth()->id();
 
-        // Extract events from product_events field (comma-separated string)
-        $this->eventsData = $this->processEventsData($data['product_events'] ?? '');
+        // Extract events from product_events field (now it's an array from the select field)
+        $this->eventsData = $this->processEventsData($data['product_events'] ?? []);
         unset($data['product_events']);
 
         // Always extract measurement fields, even if empty
         $this->measurementsData = Arr::only($data, [
-            'gown_upper_chest',
+            'gown_neck',
+            'gown_shoulder',
+            'gown_back_width',
             'gown_bust',
             'gown_chest',
-            'gown_shoulder',
-            'gown_waist',
-            'gown_hips',
-            'gown_back_width',
-            'gown_figure',
-            'gown_arm_hole',
-            'gown_neck',
             'gown_bust_point',
             'gown_bust_distance',
+            'gown_arm_hole',
+            'gown_waist',
+            'gown_hips',
+            'gown_figure',
             'gown_sleeve_width',
-            'gown_sleeve_length',
             'gown_length',
+            'jacket_shoulder',
+            'jacket_back_width',
             'jacket_chest',
             'jacket_bust',
-            'jacket_shoulder',
-            'jacket_sleeve_length',
-            'jacket_sleeve_width',
-            'jacket_length',
-            'jacket_bicep',
             'jacket_arm_hole',
+            'jacket_sleeve_length',
             'jacket_waist',
             'jacket_hip',
-            'jacket_back_width',
             'jacket_figure',
+            'jacket_sleeve_width',
+            'jacket_bicep',
+            'jacket_length',
             'trouser_waist',
             'trouser_hip',
-            'trouser_inseam',
-            'trouser_outseam',
+            'trouser_crotch',
             'trouser_thigh',
             'trouser_knee',
             'trouser_bottom',
             'trouser_leg_opening',
-            'trouser_crotch',
+            'trouser_inseam',
+            'trouser_outseam',
             'trouser_length',
         ]);
         $data = Arr::except($data, array_keys($this->measurementsData));
@@ -79,22 +77,35 @@ class CreateProducts extends CreateRecord
     }
 
     /**
-     * Process events data from comma-separated string to array
+     * Process events data from array (now comes directly from the select field)
      */
-    protected function processEventsData(?string $eventsString): array
+    protected function processEventsData($eventsInput): array
     {
-        if (empty($eventsString)) {
+        if (empty($eventsInput)) {
             return [];
         }
 
-        $events = array_map(function ($event) {
-            // Remove quotes, trim whitespace, and ensure it's not empty
-            $cleanEvent = trim($event, " \t\n\r\0\v\"'");
-            return $cleanEvent;
-        }, explode(',', $eventsString));
+        // If it's already an array (from the select field), just clean it
+        if (is_array($eventsInput)) {
+            $events = array_map(function ($event) {
+                return trim($event);
+            }, $eventsInput);
 
-        // Remove empty values and duplicates
-        return array_values(array_unique(array_filter($events)));
+            // Remove empty values and duplicates
+            return array_values(array_unique(array_filter($events)));
+        }
+
+        // Fallback for string input (shouldn't happen with the new form, but just in case)
+        if (is_string($eventsInput) && !empty($eventsInput)) {
+            $events = array_map(function ($event) {
+                return trim($event);
+            }, explode(',', $eventsInput));
+
+            // Remove empty values and duplicates
+            return array_values(array_unique(array_filter($events)));
+        }
+
+        return [];
     }
 
     /**
@@ -168,7 +179,7 @@ class CreateProducts extends CreateRecord
     {
         $product = $this->record;
 
-        // Create events from processed data
+        // Create events from processed data - each as a separate record
         foreach ($this->eventsData as $eventName) {
             if (!empty($eventName)) {
                 $product->events()->create([
@@ -182,6 +193,7 @@ class CreateProducts extends CreateRecord
             array_merge($this->measurementsData, ['product_id' => $product->product_id])
         );
 
+        // Create product images record
         $product->product_images()->create([
             'thumbnail_image' => $this->thumbnail,
             'images' => $this->galleryImages,

@@ -3,14 +3,11 @@
 namespace App\Filament\Resources\Products\Schemas;
 
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\Column;
 use Illuminate\Support\Facades\Storage;
 
 class ProductsForm
@@ -89,21 +86,6 @@ class ProductsForm
                                                 'One-shoulder Gown' => 'One-shoulder Gown',
                                                 'Cowl Neck Gown' => 'Cowl Neck Gown',
                                             ];
-                                        } elseif ($get('type') === 'Dress') {
-                                            return [
-                                                'Wedding Dress' => 'Wedding Dress',
-                                                'Prom Dress' => 'Prom Dress',
-                                                'Evening Dress' => 'Evening Dress',
-                                                'Cocktail Dress' => 'Cocktail Dress',
-                                                'A-line Dress' => 'A-line Dress',
-                                                'Sheath Dress' => 'Sheath Dress',
-                                                'Mermaid Dress' => 'Mermaid Dress',
-                                                'Off-shoulder Dress' => 'Off-shoulder Dress',
-                                                'Princess Dress' => 'Princess Dress',
-                                                'Empire Waist Dress' => 'Empire Waist Dress',
-                                                'V-neck Dress' => 'V-neck Dress',
-                                                'Trumpet Dress' => 'Trumpet Dress',
-                                            ];
                                         } elseif ($get('type') === 'Suit') {
                                             return [
                                                 'Tuxedo' => 'Tuxedo',
@@ -126,19 +108,6 @@ class ProductsForm
                                                 'Tweed Suit' => 'Tweed Suit',
                                                 'Mandarin Collar Suit' => 'Mandarin Collar Suit',
                                                 'Prince Coat' => 'Prince Coat',
-                                                'Other' => 'Other',
-                                            ];
-                                        } elseif ($get('type') === 'Jacket') {
-                                            return [
-                                                'Blazer' => 'Blazer',
-                                                'Bomber Jacket' => 'Bomber Jacket',
-                                                'Leather Jacket' => 'Leather Jacket',
-                                                'Denim Jacket' => 'Denim Jacket',
-                                                'Other' => 'Other',
-                                            ];
-                                        } elseif ($get('type') === 'Other') {
-                                            return [
-                                                'Other' => 'Other',
                                             ];
                                         }
                                         return [];
@@ -203,68 +172,54 @@ class ProductsForm
                             ->schema([
                                 Select::make('product_events')
                                     ->label('Event Categories')
-                                    ->helperText('Select multiple event categories (use Ctrl/Cmd + click for multiple selection)')
+                                    ->helperText('Select multiple event categories')
                                     ->multiple()
                                     ->options([
-                                        [
-                                            // Weddings & Related
-                                            'Wedding' => 'Wedding',
-                                            'Engagement Party' => 'Engagement Party',
-                                            'Bridal Shower' => 'Bridal Shower',
-                                            'Rehearsal Dinner' => 'Rehearsal Dinner',
-                                            // Formal & Red Carpet
-                                            'Gala' => 'Gala',
-                                            'Black Tie Event' => 'Black Tie Event',
-                                            'Awards Night' => 'Awards Night',
-                                            'Charity Ball' => 'Charity Ball',
-                                            'Red Carpet Event' => 'Red Carpet Event',
-                                            // School/Formal Youth Events
-                                            'Prom' => 'Prom',
-                                            'Graduation' => 'Graduation',
-                                            'Homecoming' => 'Homecoming',
-                                            'Formal Dance' => 'Formal Dance',
-                                            // Cultural & Ceremonial
-                                            'Debut / 18th Birthday' => 'Debut / 18th Birthday',
-                                            'Quinceañera' => 'Quinceañera',
-                                            'Pageant' => 'Pageant',
-                                            // Professional/Formal Business
-                                            'Corporate Event' => 'Corporate Event',
-                                            'Business Gala' => 'Business Gala',
-                                            // Holiday & Seasonal
-                                            'Christmas Party' => 'Christmas Party',
-                                            "New Year's Eve" => "New Year's Eve",
-                                            'Holiday Ball' => 'Holiday Ball',
-                                            // Special Shoots / Exhibitions
-                                            'Photo Shoot' => 'Photo Shoot',
-                                            'Fashion Show' => 'Fashion Show',
-                                            // Family Occasions
-                                            'Anniversary' => 'Anniversary',
-                                            'Birthday Celebration' => 'Birthday Celebration',
-                                        ]
+                                        // Weddings & Related
+                                        'Wedding' => 'Wedding',
+                                        'Engagement Party' => 'Engagement Party',
+                                        'Bridal Shower' => 'Bridal Shower',
+                                        'Rehearsal Dinner' => 'Rehearsal Dinner',
+                                        // Formal & Red Carpet
+                                        'Gala' => 'Gala',
+                                        'Black Tie Event' => 'Black Tie Event',
+                                        'Awards Night' => 'Awards Night',
+                                        'Charity Ball' => 'Charity Ball',
+                                        'Red Carpet Event' => 'Red Carpet Event',
+                                        // School/Formal Youth Events
+                                        'Prom' => 'Prom',
+                                        'Graduation' => 'Graduation',
+                                        'Homecoming' => 'Homecoming',
+                                        'Formal Dance' => 'Formal Dance',
+                                        // Cultural & Ceremonial
+                                        'Debut / 18th Birthday' => 'Debut / 18th Birthday',
+                                        'Quinceañera' => 'Quinceañera',
+                                        'Pageant' => 'Pageant',
+                                        // Professional/Formal Business
+                                        'Corporate Event' => 'Corporate Event',
+                                        'Business Gala' => 'Business Gala',
+                                        // Holiday & Seasonal
+                                        'Christmas Party' => 'Christmas Party',
+                                        "New Year's Eve" => "New Year's Eve",
+                                        'Holiday Ball' => 'Holiday Ball',
+                                        // Special Shoots / Exhibitions
+                                        'Photo Shoot' => 'Photo Shoot',
+                                        'Fashion Show' => 'Fashion Show',
+                                        // Family Occasions
+                                        'Anniversary' => 'Anniversary',
+                                        'Birthday Celebration' => 'Birthday Celebration',
                                     ])
                                     ->required()
                                     ->placeholder('Select event categories...')
                                     ->searchable()
                                     ->preload()
                                     ->columnSpan(1)
-                                    // Convert comma-separated string to array when loading data
-                                    ->afterStateHydrated(function ($state, $set) {
+                                    ->afterStateHydrated(function (Select $component, $state) {
+                                        // When loading data for editing, convert existing events to array
                                         if (is_string($state) && !empty($state)) {
-                                            // Convert "Wedding, Prom, Gala" to ["Wedding", "Prom", "Gala"]
                                             $events = array_map('trim', explode(',', $state));
-                                            $set('product_events', $events);
-                                        } elseif (is_array($state)) {
-                                            // Already an array, keep it
-                                            $set('product_events', $state);
+                                            $component->state($events);
                                         }
-                                    })
-                                    // Convert array to comma-separated string when saving
-                                    ->dehydrateStateUsing(function ($state) {
-                                        if (is_array($state)) {
-                                            // Convert ["Wedding", "Prom", "Gala"] to "Wedding, Prom, Gala"
-                                            return implode(', ', array_filter($state));
-                                        }
-                                        return $state;
                                     }),
                                 TextInput::make('colors')
                                     ->label('Available Colors')
@@ -337,7 +292,7 @@ class ProductsForm
                         Section::make('Gown Measurements (inches)')
                             ->description('Enter precise measurements for gown products')
                             ->icon('heroicon-o-sparkles')
-                            ->visible(fn($get) => $get('type') === 'Gown' || $get('type') === 'Dress')
+                            ->visible(fn($get) => $get('type') === 'Gown')
                             ->schema([
                                 Group::make()
                                     ->schema([
@@ -364,7 +319,7 @@ class ProductsForm
                         Section::make('Jacket Measurements (inches)')
                             ->description('Enter precise measurements for the jacket/blazer part of the suit')
                             ->icon('heroicon-o-squares-2x2')
-                            ->visible(fn($get) => $get('type') === 'Suit' || $get('type') === 'Jacket')
+                            ->visible(fn($get) => $get('type') === 'Suit')
                             ->schema([
                                 Group::make()
                                     ->schema([
@@ -390,7 +345,7 @@ class ProductsForm
                         Section::make('Trouser Measurements (inches)')
                             ->description('Enter precise measurements for the trouser/pants part of the suit')
                             ->icon('heroicon-o-rectangle-stack')
-                            ->visible(fn($get) => $get('type') === 'Suit' || $get('type') === 'Jacket')
+                            ->visible(fn($get) => $get('type') === 'Suit')
                             ->schema([
                                 Group::make()
                                     ->schema([

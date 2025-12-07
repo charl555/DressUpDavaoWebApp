@@ -21,42 +21,22 @@ class EditProducts extends EditRecord
     {
         $product = $this->record;
 
-        // Get the events from the form data
-        $eventsString = $this->data['product_events'] ?? '';
+        // Get the events from the form data - it's already an array from the select field
+        $events = $this->data['product_events'] ?? [];
 
-        // Process events data (same logic as CreateProducts)
-        $eventsData = $this->processEventsData($eventsString);
-
-        // Remove existing events
+        // Remove existing events (delete all and replace)
         $product->events()->delete();
 
         // Reinsert new events
-        foreach ($eventsData as $eventName) {
-            if (!empty($eventName)) {
-                $product->events()->create([
-                    'event_name' => $eventName,
-                ]);
+        if (is_array($events) && !empty($events)) {
+            foreach ($events as $eventName) {
+                if (!empty(trim($eventName))) {
+                    $product->events()->create([
+                        'event_name' => trim($eventName),
+                    ]);
+                }
             }
         }
-    }
-
-    /**
-     * Process events data from comma-separated string to array
-     */
-    protected function processEventsData(?string $eventsString): array
-    {
-        if (empty($eventsString)) {
-            return [];
-        }
-
-        $events = array_map(function ($event) {
-            // Remove quotes, trim whitespace, and ensure it's not empty
-            $cleanEvent = trim($event, " \t\n\r\0\v\"'");
-            return $cleanEvent;
-        }, explode(',', $eventsString));
-
-        // Remove empty values and duplicates
-        return array_values(array_unique(array_filter($events)));
     }
 
     // This method ensures the events field is populated with existing data when editing
@@ -64,10 +44,20 @@ class EditProducts extends EditRecord
     {
         $product = $this->record;
 
-        // Load existing events into comma-separated string format
-        $existingEvents = $product->events->pluck('event_name')->toArray();
-        $data['product_events'] = implode(', ', $existingEvents);
+        // Load existing events as an array of event names
+        // This matches what the select field expects
+        if ($product->exists) {
+            $existingEvents = $product->events->pluck('event_name')->toArray();
+            $data['product_events'] = $existingEvents;
+        } else {
+            $data['product_events'] = [];
+        }
 
         return $data;
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
     }
 }
