@@ -338,7 +338,48 @@
                 </summary>
                 <div class="mt-3 space-y-3 pl-2">
                     @php
-                        $events = ['Wedding', 'Prom','Party', 'Graduation', 'Anniversary', 'Debut', 'Gala'];
+                          $events = [
+                    // Weddings & Related
+                    'Wedding',
+                    'Engagement Party',
+                    'Bridal Shower',
+                    'Rehearsal Dinner',
+
+                    // Formal & Red Carpet
+                    'Gala',
+                    'Black Tie Event',
+                    'Awards Night',
+                    'Charity Ball',
+                    'Red Carpet Event',
+
+                    // School / Formal Youth Events
+                    'Prom',
+                    'Graduation',
+                    'Homecoming',
+                    'Formal Dance',
+
+                    // Cultural & Ceremonial
+                    'Debut / 18th Birthday',
+                    'Quinceañera',
+                    'Pageant',
+
+                    // Professional / Business
+                    'Corporate Event',
+                    'Business Gala',
+
+                    // Holiday & Seasonal
+                    'Christmas Party',
+                    "New Year's Eve",
+                    'Holiday Ball',
+
+                    // Special Shoots / Exhibitions
+                    'Photo Shoot',
+                    'Fashion Show',
+
+                    // Family Occasions
+                    'Anniversary',
+                    'Birthday Celebration',
+                ];
                         $selectedEvents = request('event', []);
                         if (!is_array($selectedEvents)) {
                             $selectedEvents = [$selectedEvents];

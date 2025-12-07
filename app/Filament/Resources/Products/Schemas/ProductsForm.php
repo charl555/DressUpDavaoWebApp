@@ -38,9 +38,7 @@ class ProductsForm
                                     ->helperText('Select whether this is a gown or suit')
                                     ->options([
                                         'Gown' => 'Gown',
-                                        'Dress' => 'Dress',
                                         'Suit' => 'Suit',
-                                        'Jacket' => 'Jacket',
                                     ])
                                     ->required()
                                     ->reactive()
@@ -203,14 +201,71 @@ class ProductsForm
                             ->columns(3),
                         Group::make()
                             ->schema([
-                                TextInput::make('product_events')
-                                    ->label('Events')
-                                    ->helperText('List all events this product is suitable for (separate with commas)')
+                                Select::make('product_events')
+                                    ->label('Event Categories')
+                                    ->helperText('Select multiple event categories (use Ctrl/Cmd + click for multiple selection)')
+                                    ->multiple()
+                                    ->options([
+                                        [
+                                            // Weddings & Related
+                                            'Wedding' => 'Wedding',
+                                            'Engagement Party' => 'Engagement Party',
+                                            'Bridal Shower' => 'Bridal Shower',
+                                            'Rehearsal Dinner' => 'Rehearsal Dinner',
+                                            // Formal & Red Carpet
+                                            'Gala' => 'Gala',
+                                            'Black Tie Event' => 'Black Tie Event',
+                                            'Awards Night' => 'Awards Night',
+                                            'Charity Ball' => 'Charity Ball',
+                                            'Red Carpet Event' => 'Red Carpet Event',
+                                            // School/Formal Youth Events
+                                            'Prom' => 'Prom',
+                                            'Graduation' => 'Graduation',
+                                            'Homecoming' => 'Homecoming',
+                                            'Formal Dance' => 'Formal Dance',
+                                            // Cultural & Ceremonial
+                                            'Debut / 18th Birthday' => 'Debut / 18th Birthday',
+                                            'Quinceañera' => 'Quinceañera',
+                                            'Pageant' => 'Pageant',
+                                            // Professional/Formal Business
+                                            'Corporate Event' => 'Corporate Event',
+                                            'Business Gala' => 'Business Gala',
+                                            // Holiday & Seasonal
+                                            'Christmas Party' => 'Christmas Party',
+                                            "New Year's Eve" => "New Year's Eve",
+                                            'Holiday Ball' => 'Holiday Ball',
+                                            // Special Shoots / Exhibitions
+                                            'Photo Shoot' => 'Photo Shoot',
+                                            'Fashion Show' => 'Fashion Show',
+                                            // Family Occasions
+                                            'Anniversary' => 'Anniversary',
+                                            'Birthday Celebration' => 'Birthday Celebration',
+                                        ]
+                                    ])
                                     ->required()
-                                    ->maxLength(100)
-                                    ->placeholder('e.g., Wedding, Anniversary, Formal')
-                                    ->rules(['required', 'string', 'max:100'])
-                                    ->columnSpan(1),
+                                    ->placeholder('Select event categories...')
+                                    ->searchable()
+                                    ->preload()
+                                    ->columnSpan(1)
+                                    // Convert comma-separated string to array when loading data
+                                    ->afterStateHydrated(function ($state, $set) {
+                                        if (is_string($state) && !empty($state)) {
+                                            // Convert "Wedding, Prom, Gala" to ["Wedding", "Prom", "Gala"]
+                                            $events = array_map('trim', explode(',', $state));
+                                            $set('product_events', $events);
+                                        } elseif (is_array($state)) {
+                                            // Already an array, keep it
+                                            $set('product_events', $state);
+                                        }
+                                    })
+                                    // Convert array to comma-separated string when saving
+                                    ->dehydrateStateUsing(function ($state) {
+                                        if (is_array($state)) {
+                                            // Convert ["Wedding", "Prom", "Gala"] to "Wedding, Prom, Gala"
+                                            return implode(', ', array_filter($state));
+                                        }
+                                        return $state;
+                                    }),
                                 TextInput::make('colors')
                                     ->label('Available Colors')
                                     ->helperText('List all available colors for this product (separate with commas)')

@@ -28,10 +28,10 @@ class ModelModifier extends Page
     public $models;
     public $selectedModel = null;
 
-    public function mount()
-    {
-        $this->models = Product3dModels::with('product')->get();
-    }
+    // public function mount()
+    // {
+    //     $this->models = Product3dModels::with('product')->get();
+    // }
 
     public function selectModel($modelPath)
     {
