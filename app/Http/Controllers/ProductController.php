@@ -65,7 +65,7 @@ class ProductController extends Controller
             ->whereHas('user.shop', function ($query) {
                 $query->where('shop_status', 'Verified');
             })
-            ->with(['product_images', 'events', 'user.shop', 'product_3d_models']);
+            ->with(['product_images', 'events', 'user.shop', 'product_3d_models', 'product_measurements']);
 
         // Gender-based category filtering
         $userGender = auth()->check() ? auth()->user()->gender : null;
@@ -242,13 +242,28 @@ class ProductController extends Controller
             }
         }
 
-        // First, get the products without pagination to apply our custom sorting
-        $baseQuery = $query->clone();
+        // ====== NEW: Session-based seed for consistent ordering ======
 
-        // Get all product IDs that match our filters
-        $productIds = $baseQuery->pluck('products.product_id')->toArray();
+        // Create a unique seed based on session + filters
+        $filterString = json_encode($request->except(['page', '_token']));
+        $sessionId = session()->getId();
+        $uniqueSeed = crc32($sessionId . $filterString);
 
-        if (empty($productIds)) {
+        // Store the seed in session if not already set for this filter combination
+        $sessionKey = 'product_sort_seed_' . md5($filterString);
+        if (!session()->has($sessionKey)) {
+            session()->put($sessionKey, $uniqueSeed);
+        }
+
+        $sessionSeed = session()->get($sessionKey);
+
+        // Clear old seeds (optional: keep only last 5 filter combinations)
+        $this->cleanupOldSeeds();
+
+        // Get all filtered products first
+        $filteredProducts = $query->get();
+
+        if ($filteredProducts->isEmpty()) {
             $products = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 12);
 
             if ($request->ajax()) {
@@ -258,73 +273,92 @@ class ProductController extends Controller
             return view('productlist', compact('products'));
         }
 
-        // Now create a new query with proper ordering
-        $orderedQuery = Products::whereIn('products.product_id', $productIds)
-            ->select('products.*')
-            ->leftJoin('product_measurements', 'products.product_id', '=', 'product_measurements.product_id')
-            ->leftJoin('users', 'products.user_id', '=', 'users.id')
-            ->leftJoin('shops', 'users.id', '=', 'shops.user_id')
-            // Primary sorting: Availability and measurements
-            ->orderByRaw("
-            CASE 
-                WHEN products.status != 'Available' THEN 3
-                WHEN product_measurements.product_id IS NOT NULL THEN 1
-                ELSE 2
-            END
-        ")
-            // Secondary sorting: Within same priority, randomize shop order
-            ->orderByRaw('RAND(UNIX_TIMESTAMP(NOW()))')
-            // Tertiary sorting: Created date for tie-breaking
-            ->orderBy('products.created_at', 'desc');
-
-        // Execute the paginated query
-        $products = $orderedQuery->paginate(12)->appends($request->query());
-
-        // Calculate fit scores and add recommendation data
-        $products->getCollection()->transform(function ($product) {
+        // Calculate fit scores for all filtered products
+        $productsWithScores = $filteredProducts->map(function ($product) {
             $fitScore = $this->recommendationService->calculateFitScore($product);
             $product->fit_score = $fitScore;
             $product->recommendation_level = $this->recommendationService->getRecommendationLevel($fitScore);
-
-            // Check if product has actual measurement values (not just a record)
             $product->has_actual_measurements = $this->hasActualMeasurements($product);
-
             return $product;
         });
 
-        // IMPORTANT: After calculating fit scores, we need to sort by fit score
-        // but we should preserve some randomness to avoid shop clustering
-        $sortedCollection = $products->getCollection()->sort(function ($a, $b) {
-            // First, prioritize products with actual measurements and higher fit scores
-            if ($a->has_actual_measurements && !$b->has_actual_measurements) {
-                return -1;
-            }
+        // Sort products using session-based seed
+        $sortedProducts = $this->sortProductsWithSeed($productsWithScores, $sessionSeed);
 
-            if (!$a->has_actual_measurements && $b->has_actual_measurements) {
-                return 1;
-            }
+        // Paginate the sorted collection
+        $page = $request->input('page', 1);
+        $perPage = 12;
+        $offset = ($page - 1) * $perPage;
 
-            // If both have measurements, sort by fit score
-            if ($a->has_actual_measurements && $b->has_actual_measurements) {
-                return $b->fit_score <=> $a->fit_score;  // Descending
-            }
+        $paginatedProducts = new \Illuminate\Pagination\LengthAwarePaginator(
+            $sortedProducts->slice($offset, $perPage)->values(),
+            $sortedProducts->count(),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
 
-            // For products without measurements, maintain random order to mix shops
-            // We'll use a deterministic random based on product ID and shop ID
-            $aRandom = crc32($a->product_id . $a->user_id) % 100;
-            $bRandom = crc32($b->product_id . $b->user_id) % 100;
-
-            return $bRandom <=> $aRandom;  // Sort by "random" value
-        });
-
-        // Set the sorted collection back to paginator
-        $products->setCollection($sortedCollection);
+        $products = $paginatedProducts;
 
         if ($request->ajax()) {
             return view('partials.products-grid', compact('products'))->render();
         }
 
         return view('productlist', compact('products'));
+    }
+
+    /**
+     * Sort products using session-based seed for consistent ordering
+     */
+    private function sortProductsWithSeed($products, $seed)
+    {
+        // Set the seed for deterministic shuffling
+        mt_srand($seed);
+
+        // Separate products with and without measurements
+        $withMeasurements = $products->filter(function ($product) {
+            return $product->has_actual_measurements;
+        });
+
+        $withoutMeasurements = $products->filter(function ($product) {
+            return !$product->has_actual_measurements;
+        });
+
+        // Sort products with measurements by fit score (descending)
+        $sortedWithMeasurements = $withMeasurements->sortByDesc('fit_score');
+
+        // Deterministically shuffle products without measurements
+        $shuffledWithoutMeasurements = $withoutMeasurements->shuffle(mt_rand());
+
+        // Combine: products with measurements first, then shuffled products without measurements
+        $sortedCollection = $sortedWithMeasurements->merge($shuffledWithoutMeasurements);
+
+        // Reset random seed
+        mt_srand();
+
+        return $sortedCollection->values();
+    }
+
+    /**
+     * Cleanup old session seeds to prevent session bloat
+     */
+    private function cleanupOldSeeds()
+    {
+        $allKeys = array_keys(session()->all());
+        $seedKeys = array_filter($allKeys, function ($key) {
+            return strpos($key, 'product_sort_seed_') === 0;
+        });
+
+        // Keep only the 5 most recent seeds
+        if (count($seedKeys) > 5) {
+            $keysToRemove = array_slice($seedKeys, 0, count($seedKeys) - 5);
+            foreach ($keysToRemove as $key) {
+                session()->forget($key);
+            }
+        }
     }
 
     /**
