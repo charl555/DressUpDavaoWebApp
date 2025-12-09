@@ -242,9 +242,29 @@ class ProductController extends Controller
             }
         }
 
-        $query
+        // First, get the products without pagination to apply our custom sorting
+        $baseQuery = $query->clone();
+
+        // Get all product IDs that match our filters
+        $productIds = $baseQuery->pluck('products.product_id')->toArray();
+
+        if (empty($productIds)) {
+            $products = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 12);
+
+            if ($request->ajax()) {
+                return view('partials.products-grid', compact('products'))->render();
+            }
+
+            return view('productlist', compact('products'));
+        }
+
+        // Now create a new query with proper ordering
+        $orderedQuery = Products::whereIn('products.product_id', $productIds)
             ->select('products.*')
             ->leftJoin('product_measurements', 'products.product_id', '=', 'product_measurements.product_id')
+            ->leftJoin('users', 'products.user_id', '=', 'users.id')
+            ->leftJoin('shops', 'users.id', '=', 'shops.user_id')
+            // Primary sorting: Availability and measurements
             ->orderByRaw("
             CASE 
                 WHEN products.status != 'Available' THEN 3
@@ -252,19 +272,13 @@ class ProductController extends Controller
                 ELSE 2
             END
         ")
-            ->orderByRaw("
-            CASE 
-                WHEN product_measurements.product_id IS NOT NULL THEN 
-                    CASE 
-                        WHEN products.status = 'Available' THEN 0 
-                        ELSE 1 
-                    END
-                ELSE 0
-            END
-        ")
+            // Secondary sorting: Within same priority, randomize shop order
+            ->orderByRaw('RAND(UNIX_TIMESTAMP(NOW()))')
+            // Tertiary sorting: Created date for tie-breaking
             ->orderBy('products.created_at', 'desc');
 
-        $products = $query->paginate(12)->appends($request->query());
+        // Execute the paginated query
+        $products = $orderedQuery->paginate(12)->appends($request->query());
 
         // Calculate fit scores and add recommendation data
         $products->getCollection()->transform(function ($product) {
@@ -278,10 +292,29 @@ class ProductController extends Controller
             return $product;
         });
 
-        // Sort the collection by fit score for products with measurements
-        $sortedCollection = $products->getCollection()->sortByDesc(function ($product) {
-            // Products with actual measurements sorted by fit score, others maintain their order
-            return $product->has_actual_measurements ? $product->fit_score : 0;
+        // IMPORTANT: After calculating fit scores, we need to sort by fit score
+        // but we should preserve some randomness to avoid shop clustering
+        $sortedCollection = $products->getCollection()->sort(function ($a, $b) {
+            // First, prioritize products with actual measurements and higher fit scores
+            if ($a->has_actual_measurements && !$b->has_actual_measurements) {
+                return -1;
+            }
+
+            if (!$a->has_actual_measurements && $b->has_actual_measurements) {
+                return 1;
+            }
+
+            // If both have measurements, sort by fit score
+            if ($a->has_actual_measurements && $b->has_actual_measurements) {
+                return $b->fit_score <=> $a->fit_score;  // Descending
+            }
+
+            // For products without measurements, maintain random order to mix shops
+            // We'll use a deterministic random based on product ID and shop ID
+            $aRandom = crc32($a->product_id . $a->user_id) % 100;
+            $bRandom = crc32($b->product_id . $b->user_id) % 100;
+
+            return $bRandom <=> $aRandom;  // Sort by "random" value
         });
 
         // Set the sorted collection back to paginator
