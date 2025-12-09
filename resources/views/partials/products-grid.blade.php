@@ -39,6 +39,31 @@
                         </div>
                     @endif
 
+                    <!-- 3D Model Icon -->
+                    @if($product->product_3d_models && $product->product_3d_models->count() > 0)
+                        <div class="absolute top-2 right-2 z-10">
+                            <div class="relative group/3d">
+                                <!-- 3D Model Icon -->
+                                <div class="bg-purple-600 text-white p-2 rounded-full shadow-lg transform transition-all duration-300 hover:scale-110 hover:shadow-xl hover:bg-gray-800">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"></path>
+                                    </svg>
+                                </div>
+                                
+                                <!-- Tooltip -->
+                                <div class="absolute right-0 top-full mt-2 w-48 bg-gray-900 text-white text-xs rounded-lg py-2 px-3 opacity-0 invisible group-hover/3d:opacity-100 group-hover/3d:visible transition-all duration-300 transform translate-y-1 group-hover/3d:translate-y-0 z-20 shadow-xl">
+                                    <div class="flex items-center">
+                                        <svg class="w-4 h-4 mr-2 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <span class="font-semibold">3D Model Available</span>
+                                    </div>
+                                    <p class="mt-1 text-gray-300">View this product in 3D</p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="relative h-96 sm:h-[400px] md:h-[400px] lg:h-[400px] xl:h-[400px] w-full transform transition-transform duration-300 ease-in-out group-hover:-translate-y-1 bg-gray-100 rounded-md shadow-md overflow-hidden">
                         @php
                             $imageRecord = $product->product_images->first();
@@ -74,14 +99,16 @@
                         </p>
                         <p class="text-left text-gray-600 text-sm">{{ $product->subtype }}</p>
                         <p class="text-left text-gray-600 text-sm">{{ $product->size }}</p>
-@if(!$product->has_actual_measurements)
-    <div class="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full mt-1">
-        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-        </svg>
-        No measurements
-    </div>
-@endif
+                        
+                        @if(!$product->has_actual_measurements)
+                            <div class="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full mt-1">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                                </svg>
+                                No measurements
+                            </div>
+                        @endif
+                        
                         <p class="text-left text-gray-500 text-xs italic">{{ $product->user->shop->shop_name }}</p>
                     </div>
                 </div>
