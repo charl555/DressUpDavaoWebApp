@@ -186,6 +186,42 @@
                 if (!is_array($selectedSizes)) {
                     $selectedSizes = [$selectedSizes];
                 }
+                
+                // Function to get ranges that include a specific size
+                function getRangesForSize($size) {
+                    $ranges = [];
+                    $sizeOptions = [
+                        'XS-S', 'S-M', 'M-L', 'L-XL', 'XL-XXL',
+                        'XXS-S', 'XS-M', 'S-L', 'M-XL', 'L-XXL',
+                        'XXS-M', 'XS-L', 'S-XL', 'M-XXL',
+                        'XXS-L', 'XS-XL', 'S-XXL', 'XXS-XL', 'XS-XXL'
+                    ];
+                    
+                    foreach ($sizeOptions as $range) {
+                        if (strpos($range, $size) !== false) {
+                            $ranges[] = $range;
+                        }
+                    }
+                    return $ranges;
+                }
+                
+                // Function to check if a size is selected in any form
+                function isSizeSelected($size, $selectedSizes) {
+                    // Check if the individual size is selected
+                    if (in_array($size, $selectedSizes)) {
+                        return true;
+                    }
+                    
+                    // Check if any range containing this size is selected
+                    $ranges = getRangesForSize($size);
+                    foreach ($ranges as $range) {
+                        if (in_array($range, $selectedSizes)) {
+                            return true;
+                        }
+                    }
+                    
+                    return false;
+                }
             @endphp
             
             <!-- Individual Sizes -->
@@ -195,7 +231,7 @@
                     @foreach(array_slice($sizeOptions, 0, 7) as $sizeValue => $sizeLabel)
                         <label class="block">
                             <input type="checkbox" name="size[]" value="{{ $sizeValue }}" class="hidden peer filter-input"
-                                {{ in_array($sizeValue, $selectedSizes) ? 'checked' : '' }}>
+                                {{ isSizeSelected($sizeValue, $selectedSizes) ? 'checked' : '' }}>
                             <span class="block w-full py-2 px-1 text-center border-2 border-gray-200 rounded-lg cursor-pointer font-medium text-sm
                                         peer-checked:bg-gradient-to-r peer-checked:from-purple-600 peer-checked:to-indigo-600 
                                         peer-checked:text-white peer-checked:border-transparent
@@ -267,55 +303,70 @@
     </details>
 </div>
 
-        <!-- Color Filter -->
-        <div class="mb-6 border-b border-gray-200 pb-4">
-            <details class="group">
-                <summary
-                    class="flex justify-between items-center cursor-pointer py-3 text-lg font-semibold text-gray-800 hover:text-purple-700 transition-colors duration-200 bg-gray-50 rounded-lg px-4">
-                    <span class="flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
-                        </svg>
-                        Color
-                    </span>
-                    <span class="transform transition-transform duration-200 group-open:rotate-180">
-                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
-                            </path>
-                        </svg>
-                    </span>
-                </summary>
-                <div class="mt-3 grid grid-cols-4 gap-3">
-                    @php
-                        $colors = [
-                            'Red' => 'bg-red-600',
-                            'Blue' => 'bg-blue-600',
-                            'Green' => 'bg-green-600',
-                            'Black' => 'bg-black',
-                            'White' => 'bg-white ring-1 ring-gray-300',
-                            'Purple' => 'bg-purple-600',
-                            'Pink' => 'bg-pink-500',
-                            'Gold' => 'bg-yellow-500'
-                        ];
-                        $selectedColors = request('color', []);
-                        if (!is_array($selectedColors)) {
-                            $selectedColors = [$selectedColors];
-                        }
-                    @endphp
-                    @foreach($colors as $colorName => $colorClass)
-                        <label class="flex justify-center items-center">
-                            <input type="checkbox" name="color[]" value="{{ $colorName }}" class="hidden peer filter-input"
-                                {{ in_array($colorName, $selectedColors) ? 'checked' : '' }}>
-                            <span
-                                class="w-10 h-10 rounded-full border-3 border-transparent cursor-pointer shadow-sm
-                                        {{ $colorClass }} peer-checked:border-purple-600 peer-checked:ring-2 peer-checked:ring-purple-200 transition-all transform peer-checked:scale-110 hover:scale-105"
-                                title="{{ $colorName }}"></span>
-                        </label>
-                    @endforeach
-                </div>
-            </details>
+     <!-- Color Filter -->
+<div class="mb-6 border-b border-gray-200 pb-4">
+    <details class="group">
+        <summary
+            class="flex justify-between items-center cursor-pointer py-3 text-lg font-semibold text-gray-800 hover:text-purple-700 transition-colors duration-200 bg-gray-50 rounded-lg px-4">
+            <span class="flex items-center">
+                <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+                </svg>
+                Color
+            </span>
+            <span class="transform transition-transform duration-200 group-open:rotate-180">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                    </path>
+                </svg>
+            </span>
+        </summary>
+        <div class="mt-3 grid grid-cols-5 gap-3">
+            @php
+                $colors = [
+                    // Basic Colors
+                    'Black' => 'bg-black',
+                    'White' => 'bg-white ring-1 ring-gray-300',
+                    'Gray' => 'bg-gray-500',
+                    'Silver' => 'bg-gray-400',
+                    'Brown' => 'bg-amber-800',
+                    
+                    // Primary Colors
+                    'Red' => 'bg-red-600',
+                    'Blue' => 'bg-blue-600',
+                    'Green' => 'bg-green-600',
+                    'Yellow' => 'bg-yellow-500',
+                    'Orange' => 'bg-orange-500',
+                    
+                    // Secondary Colors
+                    'Purple' => 'bg-purple-600',
+                    'Pink' => 'bg-pink-500',
+                    'Teal' => 'bg-teal-500',
+                    'Indigo' => 'bg-indigo-600',
+                    'Lime' => 'bg-lime-500',
+                
+                
+                ];
+                
+                $selectedColors = request('color', []);
+                if (!is_array($selectedColors)) {
+                    $selectedColors = [$selectedColors];
+                }
+            @endphp
+            @foreach($colors as $colorName => $colorClass)
+                <label class="flex justify-center items-center">
+                    <input type="checkbox" name="color[]" value="{{ $colorName }}" class="hidden peer filter-input"
+                        {{ in_array($colorName, $selectedColors) ? 'checked' : '' }}>
+                    <span
+                        class="w-10 h-10 rounded-full border-3 border-transparent cursor-pointer shadow-sm
+                                {{ $colorClass }} peer-checked:border-purple-600 peer-checked:ring-2 peer-checked:ring-purple-200 transition-all transform peer-checked:scale-110 hover:scale-105"
+                        title="{{ $colorName }}"></span>
+                </label>
+            @endforeach
         </div>
+    </details>
+</div>
 
         <!-- Event Filter (Updated from Occasion) -->
         <div class="mb-6 border-b border-gray-200 pb-4">

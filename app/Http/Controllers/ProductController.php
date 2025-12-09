@@ -93,49 +93,63 @@ class ProductController extends Controller
 
         // Size filter
         if ($request->filled('size')) {
-            $sizeMapping = [
-                // Individual Sizes
-                'XS' => 'XS',
-                'S' => 'S',
-                'M' => 'M',
-                'L' => 'L',
-                'XL' => 'XL',
-                'XXL' => 'XXL',
-                'XXXL' => 'XXXL',
-                // --- Most Common Ranges ---
-                'XS-S' => 'XS-S',
-                'S-M' => 'S-M',
-                'M-L' => 'M-L',
-                'L-XL' => 'L-XL',
-                'XL-XXL' => 'XL-XXL',
-                // --- Extended Ranges ---
-                'XXS-S' => 'XXS-S',
-                'XS-M' => 'XS-M',
-                'S-L' => 'S-L',
-                'M-XL' => 'M-XL',
-                'L-XXL' => 'L-XXL',
-                'XXS-M' => 'XXS-M',
-                'XS-L' => 'XS-L',
-                'S-XL' => 'S-XL',
-                'M-XXL' => 'M-XXL',
-                // --- Broad Ranges ---
-                'XXS-L' => 'XXS-L',
-                'XS-XL' => 'XS-XL',
-                'S-XXL' => 'S-XXL',
-                'XXS-XL' => 'XXS-XL',
-                'XS-XXL' => 'XS-XXL',
-                'Adjustable' => 'Adjustable/Customizable',
-            ];
-
             $sizes = (array) $request->size;
-            $query->where(function ($q) use ($sizes, $sizeMapping) {
+
+            $query->where(function ($q) use ($sizes) {
                 foreach ($sizes as $size) {
-                    if (isset($sizeMapping[$size])) {
-                        $dbSize = $sizeMapping[$size];
-                        $q->orWhere('size', $dbSize);
-                    } else {
-                        // Fallback for any unmapped sizes
-                        $q->orWhere('size', 'LIKE', "%$size%");
+                    // If it's an individual size (XS, S, M, L, XL, XXL, XXXL)
+                    if (in_array($size, ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'])) {
+                        $q->orWhere(function ($subQ) use ($size) {
+                            // Match exact size
+                            $subQ->where('size', $size);
+
+                            // Match size ranges that include this size
+                            $subQ->orWhere('size', 'LIKE', "%-{$size}");
+                            $subQ->orWhere('size', 'LIKE', "{$size}-%");
+                            $subQ->orWhere('size', 'LIKE', "%-{$size}-%");
+
+                            // Match specific range patterns for this size
+                            $rangePatterns = [
+                                "XS-{$size}", "S-{$size}", "M-{$size}", "L-{$size}", "XL-{$size}",
+                                "XXS-{$size}", "XXS-{$size}", "{$size}-S", "{$size}-M", "{$size}-L",
+                                "{$size}-XL", "{$size}-XXL", "XXS-{$size}", "XXS-{$size}"
+                            ];
+
+                            foreach ($rangePatterns as $pattern) {
+                                $subQ->orWhere('size', $pattern);
+                            }
+                        });
+                    }
+                    // If it's a size range
+                    else {
+                        // Extract start and end sizes from the range
+                        if (strpos($size, '-') !== false) {
+                            list($startSize, $endSize) = explode('-', $size);
+
+                            $q->orWhere(function ($subQ) use ($size, $startSize, $endSize) {
+                                // Match exact range
+                                $subQ->where('size', $size);
+
+                                // Match ranges that overlap with this range
+                                $subQ->orWhere('size', 'LIKE', "{$startSize}-%");
+                                $subQ->orWhere('size', 'LIKE', "%-{$endSize}");
+
+                                // For adjustable sizes
+                                if ($size === 'Adjustable') {
+                                    $subQ->orWhere('size', 'LIKE', '%Adjustable%');
+                                    $subQ->orWhere('size', 'LIKE', '%Customizable%');
+                                }
+                            });
+                        }
+                        // For adjustable/customizable
+                        elseif ($size === 'Adjustable') {
+                            $q->orWhere('size', 'LIKE', '%Adjustable%');
+                            $q->orWhere('size', 'LIKE', '%Customizable%');
+                        }
+                        // Fallback for other sizes
+                        else {
+                            $q->orWhere('size', 'LIKE', "%{$size}%");
+                        }
                     }
                 }
             });
