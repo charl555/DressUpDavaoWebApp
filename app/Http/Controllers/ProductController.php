@@ -242,13 +242,11 @@ class ProductController extends Controller
             }
         }
 
-        // First, get the products without pagination to apply our custom sorting
-        $baseQuery = $query->clone();
+        // Calculate fit scores BEFORE pagination for consistent sorting
+        // First, get all filtered product IDs
+        $filteredProductIds = $query->pluck('products.product_id')->toArray();
 
-        // Get all product IDs that match our filters
-        $productIds = $baseQuery->pluck('products.product_id')->toArray();
-
-        if (empty($productIds)) {
+        if (empty($filteredProductIds)) {
             $products = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 12);
 
             if ($request->ajax()) {
@@ -258,67 +256,74 @@ class ProductController extends Controller
             return view('productlist', compact('products'));
         }
 
-        // Now create a new query with proper ordering
-        $orderedQuery = Products::whereIn('products.product_id', $productIds)
-            ->select('products.*')
-            ->leftJoin('product_measurements', 'products.product_id', '=', 'product_measurements.product_id')
-            ->leftJoin('users', 'products.user_id', '=', 'users.id')
-            ->leftJoin('shops', 'users.id', '=', 'shops.user_id')
-            // Primary sorting: Availability and measurements
-            ->orderByRaw("
-            CASE 
-                WHEN products.status != 'Available' THEN 3
-                WHEN product_measurements.product_id IS NOT NULL THEN 1
-                ELSE 2
-            END
-        ")
-            // Secondary sorting: Within same priority, randomize shop order
-            ->orderByRaw('RAND(UNIX_TIMESTAMP(NOW()))')
-            // Tertiary sorting: Created date for tie-breaking
-            ->orderBy('products.created_at', 'desc');
+        // Get ALL products with their fit scores in a single query
+        $allProducts = Products::whereIn('products.product_id', $filteredProductIds)
+            ->with(['product_images', 'events', 'user.shop', 'product_3d_models', 'product_measurements'])
+            ->get()
+            ->map(function ($product) {
+                $fitScore = $this->recommendationService->calculateFitScore($product);
+                $product->fit_score = $fitScore;
+                $product->recommendation_level = $this->recommendationService->getRecommendationLevel($fitScore);
+                $product->has_actual_measurements = $this->hasActualMeasurements($product);
+                return $product;
+            })
+            ->sort(function ($a, $b) {
+                // Primary: Products with measurements first
+                if ($a->has_actual_measurements && !$b->has_actual_measurements) {
+                    return -1;
+                }
+                if (!$a->has_actual_measurements && $b->has_actual_measurements) {
+                    return 1;
+                }
 
-        // Execute the paginated query
-        $products = $orderedQuery->paginate(12)->appends($request->query());
+                // Secondary: Sort by fit score (descending) for products with measurements
+                if ($a->has_actual_measurements && $b->has_actual_measurements) {
+                    $scoreComparison = $b->fit_score <=> $a->fit_score;
+                    if ($scoreComparison !== 0) {
+                        return $scoreComparison;
+                    }
+                }
 
-        // Calculate fit scores and add recommendation data
-        $products->getCollection()->transform(function ($product) {
-            $fitScore = $this->recommendationService->calculateFitScore($product);
-            $product->fit_score = $fitScore;
-            $product->recommendation_level = $this->recommendationService->getRecommendationLevel($fitScore);
+                // Tertiary: For products without measurements or with equal fit scores,
+                // use a deterministic order based on product_id and user_id
+                $aHash = crc32($a->product_id . $a->user_id . $a->created_at);
+                $bHash = crc32($b->product_id . $b->user_id . $b->created_at);
 
-            // Check if product has actual measurement values (not just a record)
-            $product->has_actual_measurements = $this->hasActualMeasurements($product);
+                // If still equal, use created_at as final tie-breaker
+                if ($aHash === $bHash) {
+                    return $b->created_at <=> $a->created_at;
+                }
 
-            return $product;
-        });
+                return $bHash <=> $aHash;
+            })
+            ->values();  // Reset keys to maintain order
 
-        // IMPORTANT: After calculating fit scores, we need to sort by fit score
-        // but we should preserve some randomness to avoid shop clustering
-        $sortedCollection = $products->getCollection()->sort(function ($a, $b) {
-            // First, prioritize products with actual measurements and higher fit scores
-            if ($a->has_actual_measurements && !$b->has_actual_measurements) {
-                return -1;
-            }
+        // Create a consistent seed for randomization based on filters
+        $filterString = json_encode($request->all());
+        $seed = crc32($filterString);
 
-            if (!$a->has_actual_measurements && $b->has_actual_measurements) {
-                return 1;
-            }
+        // Use the seed to shuffle products deterministically
+        mt_srand($seed);
+        $shuffledProducts = $allProducts->shuffle(mt_rand());
+        mt_srand();  // Reset seed
 
-            // If both have measurements, sort by fit score
-            if ($a->has_actual_measurements && $b->has_actual_measurements) {
-                return $b->fit_score <=> $a->fit_score;  // Descending
-            }
+        // Now paginate the already sorted collection
+        $page = $request->input('page', 1);
+        $perPage = 12;
+        $offset = ($page - 1) * $perPage;
 
-            // For products without measurements, maintain random order to mix shops
-            // We'll use a deterministic random based on product ID and shop ID
-            $aRandom = crc32($a->product_id . $a->user_id) % 100;
-            $bRandom = crc32($b->product_id . $b->user_id) % 100;
+        $paginatedProducts = new \Illuminate\Pagination\LengthAwarePaginator(
+            $shuffledProducts->slice($offset, $perPage)->values(),
+            $shuffledProducts->count(),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
 
-            return $bRandom <=> $aRandom;  // Sort by "random" value
-        });
-
-        // Set the sorted collection back to paginator
-        $products->setCollection($sortedCollection);
+        $products = $paginatedProducts;
 
         if ($request->ajax()) {
             return view('partials.products-grid', compact('products'))->render();
