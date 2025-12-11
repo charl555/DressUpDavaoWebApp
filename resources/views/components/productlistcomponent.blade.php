@@ -226,7 +226,7 @@
             
             <!-- Individual Sizes -->
             <div>
-                <h4 class="text-sm font-semibold text-gray-700 mb-3 pl-2 border-l-2 border-purple-500 pl-3">Individual Sizes</h4>
+                <h4 class="text-sm font-semibold text-gray-700 mb-3 pl-2 border-l-2 border-purple-500">Individual Sizes</h4>
                 <div class="grid grid-cols-3 gap-2">
                     @foreach(array_slice($sizeOptions, 0, 7) as $sizeValue => $sizeLabel)
                         <label class="block">
@@ -245,7 +245,7 @@
             
             <!-- Most Common Ranges -->
             <div>
-                <h4 class="text-sm font-semibold text-gray-700 mb-3 pl-2 border-l-2 border-purple-500 pl-3">Most Common Ranges</h4>
+                <h4 class="text-sm font-semibold text-gray-700 mb-3 pl-2 border-l-2 border-purple-500">Most Common Ranges</h4>
                 <div class="grid grid-cols-2 gap-2">
                     @foreach(array_slice($sizeOptions, 7, 5) as $sizeValue => $sizeLabel)
                         <label class="block">
@@ -264,7 +264,7 @@
             
             <!-- Extended Ranges -->
             <div>
-                <h4 class="text-sm font-semibold text-gray-700 mb-3 pl-2 border-l-2 border-purple-500 pl-3">Extended Ranges</h4>
+                <h4 class="text-sm font-semibold text-gray-700 mb-3 pl-2 border-l-2 border-purple-500">Extended Ranges</h4>
                 <div class="grid grid-cols-2 gap-2">
                     @foreach(array_slice($sizeOptions, 12, 9) as $sizeValue => $sizeLabel)
                         <label class="block">
@@ -283,7 +283,7 @@
             
             <!-- Broad Ranges & Adjustable -->
             <div>
-                <h4 class="text-sm font-semibold text-gray-700 mb-3 pl-2 border-l-2 border-purple-500 pl-3">Broad Ranges</h4>
+                <h4 class="text-sm font-semibold text-gray-700 mb-3 pl-2 border-l-2 border-purple-500">Broad Ranges</h4>
                 <div class="grid grid-cols-2 gap-2">
                     @foreach(array_slice($sizeOptions, 21) as $sizeValue => $sizeLabel)
                         <label class="block">

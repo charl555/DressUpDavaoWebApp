@@ -154,6 +154,10 @@ Route::get('/user/review-data/{shop}', [UserController::class, 'getReviewData'])
 Route::post('/account/request-deletion', [UserController::class, 'requestAccountDeletion'])->name('account.request-deletion');
 Route::delete('/account/cancel-deletion', [UserController::class, 'cancelAccountDeletion'])->name('account.cancel-deletion');
 
+Route::post('/account/validate-password', [UserController::class, 'validatePassword'])->name('account.validate-password');
+
+Route::get('/user/bookings', [UserController::class, 'getBookings'])->name('user.bookings');
+
 Route::middleware(['auth'])->group(function () {
     Route::put('/user/measurements', [UserController::class, 'updateMeasurements'])
         ->name('user.measurements.update');

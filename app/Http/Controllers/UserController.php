@@ -35,6 +35,29 @@ class UserController extends Controller
         return view('accountpage', compact('bookings', 'favorites'));
     }
 
+    public function getBookings(Request $request)
+    {
+        $user = Auth::user();
+        $perPage = 10;
+
+        $bookings = Bookings::with(['product.user.shop'])
+            ->where('user_id', $user->id)
+            ->latest('booking_date')
+            ->paginate($perPage, ['*'], 'page', $request->page);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'html' => view('partials.booking-history', ['bookings' => $bookings])->render(),
+                'current_page' => $bookings->currentPage(),
+                'last_page' => $bookings->lastPage(),
+                'total' => $bookings->total(),
+            ]);
+        }
+
+        return view('partials.booking-history', ['bookings' => $bookings]);
+    }
+
     public function update(Request $request)
     {
         $user = Auth::user();
@@ -221,6 +244,30 @@ class UserController extends Controller
         Auth::logout();
 
         return redirect('/')->with('success', 'Your account has been deleted successfully.');
+    }
+
+    /**
+     * Validate password before deletion request
+     */
+    public function validatePassword(Request $request)
+    {
+        $request->validate([
+            'password' => 'required|string'
+        ]);
+
+        $user = Auth::user();
+
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Incorrect password'
+            ], 401);
+        }
+
+        return response()->json([
+            'valid' => true,
+            'message' => 'Password is correct'
+        ]);
     }
 
     public function submitReview(Request $request)

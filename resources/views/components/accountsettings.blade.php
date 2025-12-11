@@ -192,7 +192,7 @@
                     </div>
 
                     <!-- Save/Cancel Buttons (Hidden by default) -->
-                    <div id="formActions" class="pt-8 flex justify-end space-x-4 hidden">
+                    <div id="formActions" class="pt-8 justify-end space-x-4 hidden">
                         <button type="button" id="cancelEditBtn"
                             class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
                             Cancel
@@ -373,27 +373,132 @@
                     <form method="POST" action="{{ route('account.request-deletion') }}" id="deleteAccountForm">
                         @csrf
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Delete Confirmation Field -->
                             <div>
-                                <label for="delete-confirmation" class="block text-sm font-semibold text-gray-700 mb-2">Type
-                                    "DELETE" to confirm:</label>
-                                <input type="text" id="delete-confirmation" name="delete_confirmation"
-                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
-                                    autocomplete="off">
+                                <label for="delete-confirmation" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Type "DELETE" to confirm:
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <div class="relative">
+                                    <input type="text" id="delete-confirmation" name="delete_confirmation"
+                                        class="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200 uppercase tracking-wide font-medium"
+                                        autocomplete="off" maxlength="6"
+                                        oninput="this.value = this.value.toUpperCase(); validateDeleteConfirmation()">
+
+                                    <!-- Validation Icon -->
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                        <span id="confirmation-icon" class="hidden">
+                                            <svg id="confirmation-check" class="w-5 h-5 text-green-600 hidden" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <svg id="confirmation-x" class="w-5 h-5 text-red-600 hidden" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div id="confirmation-error" class="mt-2 text-sm text-red-600 hidden  items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                    </svg>
+                                    <span>You must type exactly "DELETE" to proceed.</span>
+                                </div>
                             </div>
 
+                            <!-- Password Field -->
                             <div>
-                                <label for="delete-password" class="block text-sm font-semibold text-gray-700 mb-2">Enter
-                                    your password to confirm:</label>
-                                <input type="password" id="delete-password" name="delete_password"
-                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
-                                    autocomplete="new-password">
+                                <label for="delete-password" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Enter your password to confirm:
+                                    <span class="text-red-500 ml-1">*</span>
+                                </label>
+                                <div class="relative">
+                                    <input type="password" id="delete-password" name="delete_password"
+                                        class="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
+                                        autocomplete="new-password" oninput="validatePassword()">
+
+                                    <!-- Show/Hide Password Button -->
+                                    <button type="button"
+                                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-purple-600 transition-colors duration-200"
+                                        onclick="togglePasswordVisibility('delete-password')">
+                                        <svg id="password-eye" class="w-5 h-5" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        <svg id="password-eye-off" class="w-5 h-5 hidden" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div id="password-error" class="mt-2 text-sm text-red-600 hidden  items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                    </svg>
+                                    <span id="password-error-message"></span>
+                                </div>
                             </div>
                         </div>
 
+                        <!-- Server-side Errors Display -->
+                        @error('delete_confirmation')
+                            <div class="col-span-2 bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-red-600 mr-3" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                    </svg>
+                                    <span class="text-sm text-red-700">{{ $message }}</span>
+                                </div>
+                            </div>
+                        @enderror
+
+                        @error('delete_password')
+                            <div class="col-span-2 bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-red-600 mr-3" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                    </svg>
+                                    <span class="text-sm text-red-700">{{ $message }}</span>
+                                </div>
+                            </div>
+                        @enderror
+
+                        <!-- General Error Display -->
+                        @if(session('error'))
+                            <div class="col-span-2 bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-red-600 mr-3" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                    </svg>
+                                    <span class="text-sm text-red-700">{{ session('error') }}</span>
+                                </div>
+                            </div>
+                        @endif
+
                         <div class="pt-8 flex justify-end">
-                            <button type="button" onclick="openDeleteModal()"
+                            <button type="button" id="delete-account-btn" onclick="validateAndOpenDeleteModal()"
                                 class="px-8 py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-lg font-semibold hover:from-red-700 hover:to-pink-700 transition-all duration-300 shadow-md hover:shadow-lg">
-                                Request Account Deletion
+                                <span>Request Account Deletion</span>
+                                <svg id="loading-spinner" class="hidden w-5 h-5 ml-2 animate-spin" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
                             </button>
                         </div>
                     </form>
@@ -762,161 +867,9 @@
                 </div>
                 <p class="text-gray-600 pb-6 text-sm">View and manage your upcoming and past bookings.</p>
 
-                @if ($bookings->isEmpty())
-                    <div class="flex flex-col items-center justify-center py-12 text-gray-500">
-                        <svg class="w-16 h-16 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <p class="text-sm font-medium mb-2">You don't have any bookings yet.</p>
-                        <a href="{{ route('product.list') }}"
-                            class="mt-4 px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-md">
-                            Browse Products
-                        </a>
-                    </div>
-                @else
-                    <div class="overflow-x-auto shadow-sm rounded-xl border border-gray-100">
-                        <table class="w-full text-sm text-left text-gray-600">
-                            <thead class="text-xs uppercase bg-gray-50 border-b border-gray-100">
-                                <tr>
-                                    <th scope="col" class="py-4 px-6 font-semibold text-gray-700">Booking Date</th>
-                                    <th scope="col" class="py-4 px-6 font-semibold text-gray-700">Item</th>
-                                    <th scope="col" class="py-4 px-6 font-semibold text-gray-700">Shop</th>
-                                    <th scope="col" class="py-4 px-6 font-semibold text-gray-700">Address</th>
-                                    <th scope="col" class="py-4 px-6 font-semibold text-gray-700">Status</th>
-                                    <th scope="col" class="py-4 px-6 font-semibold text-gray-700">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($bookings as $booking)
-                                    <tr class="bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                                        <td class="py-4 px-6 font-semibold text-gray-900 whitespace-nowrap">
-                                            {{ \Carbon\Carbon::parse($booking->booking_date)->format('F j, Y') }}
-                                        </td>
-                                        <td class="py-4 px-6 text-gray-800">
-                                            {{ $booking->product->name ?? 'N/A' }}
-                                        </td>
-                                        <td class="py-4 px-6 text-gray-800">
-                                            {{ $booking->product->user->shop->shop_name ?? 'N/A' }}
-                                        </td>
-                                        <td class="py-4 px-6 text-gray-800">
-                                            {{ $booking->product->user->shop->shop_address ?? 'N/A' }}
-                                        </td>
-                                        <td class="py-4 px-6">
-                                            @php
-                                                $statusColors = [
-                                                    'Pending' => 'bg-yellow-100 text-yellow-800',
-                                                    'Confirmed' => 'bg-green-100 text-green-800',
-                                                    'Cancelled' => 'bg-red-100 text-red-800',
-                                                    'Completed' => 'bg-gray-100 text-gray-800',
-                                                    'On Going' => 'bg-blue-100 text-blue-800',
-                                                ];
-                                                $badgeClass = $statusColors[$booking->status] ?? 'bg-gray-100 text-gray-800';
-                                            @endphp
-                                            <span class="px-3 py-1.5 rounded-full text-xs font-semibold {{ $badgeClass }}">
-                                                {{ $booking->status }}
-                                            </span>
-                                        </td>
-                                        {{-- Review Button for Completed Bookings --}}
-                                        <td class="py-4 px-6 text-center">
-                                            @if ($booking->status === 'Completed')
-                                                @php
-                                                    $existingReview = \App\Models\ShopReviews::where('user_id', auth()->id())
-                                                        ->where('shop_id', $booking->product->user->shop->shop_id)
-                                                        ->first();
-                                                @endphp
-
-                                                @if (!$existingReview)
-                                                    <button
-                                                        onclick="openReviewModal('{{ $booking->product->user->shop->shop_id }}', '{{ $booking->product->user->shop->shop_name }}', false)"
-                                                        class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-sm">
-                                                        Leave Review
-                                                    </button>
-                                                @else
-                                                    <button
-                                                        onclick="openReviewModal('{{ $booking->product->user->shop->shop_id }}', '{{ $booking->product->user->shop->shop_name }}', true)"
-                                                        class="px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg font-semibold hover:bg-gray-200 transition-all duration-300">
-                                                        Update Review
-                                                    </button>
-                                                @endif
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Pagination -->
-                    <div class="mt-8 flex justify-center">
-                        <nav class="flex items-center gap-2">
-                            {{-- Previous Page Link --}}
-                            @if ($bookings->onFirstPage())
-                                <span
-                                    class="px-4 py-2 text-gray-400 bg-white border border-gray-200 rounded-lg cursor-not-allowed">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15 19l-7-7 7-7" />
-                                    </svg>
-                                </span>
-                            @else
-                                <a href="{{ $bookings->previousPageUrl() }}"
-                                    class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15 19l-7-7 7-7" />
-                                    </svg>
-                                </a>
-                            @endif
-
-                            {{-- Pagination Elements --}}
-                            @foreach ($bookings->links()->elements as $element)
-                                {{-- "Three Dots" Separator --}}
-                                @if (is_string($element))
-                                    <span class="px-4 py-2 text-gray-500 bg-white border border-gray-200 rounded-lg">
-                                        {{ $element }}
-                                    </span>
-                                @endif
-
-                                {{-- Array Of Links --}}
-                                @if (is_array($element))
-                                    @foreach ($element as $page => $url)
-                                        @if ($page == $bookings->currentPage())
-                                            <span
-                                                class="px-4 py-2 text-white bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-600 rounded-lg font-semibold">
-                                                {{ $page }}
-                                            </span>
-                                        @else
-                                            <a href="{{ $url }}"
-                                                class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
-                                                {{ $page }}
-                                            </a>
-                                        @endif
-                                    @endforeach
-                                @endif
-                            @endforeach
-
-                            {{-- Next Page Link --}}
-                            @if ($bookings->hasMorePages())
-                                <a href="{{ $bookings->nextPageUrl() }}"
-                                    class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </a>
-                            @else
-                                <span
-                                    class="px-4 py-2 text-gray-400 bg-white border border-gray-200 rounded-lg cursor-not-allowed">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </span>
-                            @endif
-                        </nav>
-                    </div>
-                @endif
+                <div id="booking-history-content">
+                    @include('partials.booking-history', ['bookings' => $bookings])
+                </div>
             </div>
 
             <!-- My Favorites -->
@@ -1156,33 +1109,235 @@
     </div>
 </div>
 
-<!-- Keep the existing JavaScript functions, they remain the same -->
 <script>
-    function openDeleteModal() {
-        const confirmation = document.getElementById('delete-confirmation').value;
-        const password = document.getElementById('delete-password').value;
+    function validateDeleteConfirmation() {
+        const confirmationInput = document.getElementById('delete-confirmation');
+        const confirmationError = document.getElementById('confirmation-error');
+        const iconContainer = document.getElementById('confirmation-icon');
+        const checkIcon = document.getElementById('confirmation-check');
+        const xIcon = document.getElementById('confirmation-x');
 
-        if (confirmation !== 'DELETE' || !password) {
+        const value = confirmationInput.value.trim();
+
+        if (value === '') {
+            confirmationError.classList.add('hidden');
+            iconContainer.classList.add('hidden');
+            confirmationInput.classList.remove('border-red-300', 'focus:ring-red-500', 'focus:border-red-500');
+            confirmationInput.classList.remove('border-green-300', 'focus:ring-green-500', 'focus:border-green-500');
+            return false;
+        }
+
+        if (value === 'DELETE') {
+            confirmationError.classList.add('hidden');
+            iconContainer.classList.remove('hidden');
+            checkIcon.classList.remove('hidden');
+            xIcon.classList.add('hidden');
+            confirmationInput.classList.remove('border-red-300', 'focus:ring-red-500', 'focus:border-red-500');
+            confirmationInput.classList.add('border-green-300', 'focus:ring-green-500', 'focus:border-green-500');
+            return true;
+        } else {
+            confirmationError.classList.remove('hidden');
+            iconContainer.classList.remove('hidden');
+            checkIcon.classList.add('hidden');
+            xIcon.classList.remove('hidden');
+            confirmationInput.classList.remove('border-green-300', 'focus:ring-green-500', 'focus:border-green-500');
+            confirmationInput.classList.add('border-red-300', 'focus:ring-red-500', 'focus:border-red-500');
+            return false;
+        }
+    }
+
+    function validatePassword() {
+        const passwordInput = document.getElementById('delete-password');
+        const passwordError = document.getElementById('password-error');
+        const errorMessage = document.getElementById('password-error-message');
+
+        const value = passwordInput.value.trim();
+
+        // Only validate if there's content
+        if (value === '') {
+            passwordError.classList.add('hidden');
+            passwordInput.classList.remove('border-red-300', 'focus:ring-red-500', 'focus:border-red-500');
+            passwordInput.classList.remove('border-green-300', 'focus:ring-green-500', 'focus:border-green-500');
+            return false;
+        }
+
+        // Input field turns green when something is entered
+        passwordError.classList.add('hidden');
+        passwordInput.classList.remove('border-red-300', 'focus:ring-red-500', 'focus:border-red-500');
+        passwordInput.classList.add('border-green-300', 'focus:ring-green-500', 'focus:border-green-500');
+        return true;
+    }
+
+    function togglePasswordVisibility(fieldId) {
+        const field = document.getElementById(fieldId);
+        const eyeIcon = document.getElementById('password-eye');
+        const eyeOffIcon = document.getElementById('password-eye-off');
+
+        if (field.type === 'password') {
+            field.type = 'text';
+            eyeIcon.classList.add('hidden');
+            eyeOffIcon.classList.remove('hidden');
+        } else {
+            field.type = 'password';
+            eyeIcon.classList.remove('hidden');
+            eyeOffIcon.classList.add('hidden');
+        }
+    }
+
+    function validateAndOpenDeleteModal() {
+        const confirmation = document.getElementById('delete-confirmation').value.trim();
+        const password = document.getElementById('delete-password').value.trim();
+
+        // Validate client-side first
+        if (confirmation !== 'DELETE') {
             if (typeof showToast === 'function') {
-                showToast('Please fill in both fields correctly.', 'error');
+                showToast('Please type exactly "DELETE" to confirm deletion.', 'error');
             } else {
-                alert('Please fill in both fields correctly.');
+                alert('Please type exactly "DELETE" to confirm deletion.');
             }
+            document.getElementById('delete-confirmation').focus();
             return;
         }
 
+        if (password.length === 0) {
+            if (typeof showToast === 'function') {
+                showToast('Please enter your password.', 'error');
+            } else {
+                alert('Please enter your password.');
+            }
+            document.getElementById('delete-password').focus();
+            return;
+        }
+
+        // Validate password via AJAX before opening modal
+        validatePasswordWithAjax(password);
+    }
+
+    function validatePasswordWithAjax(password) {
+        const deleteButton = document.getElementById('delete-account-btn');
+        const spinner = document.getElementById('loading-spinner');
+        const buttonText = deleteButton.querySelector('span');
+
+        // Show loading state
+        spinner.classList.remove('hidden');
+        buttonText.textContent = 'Verifying password...';
+
+        fetch("{{ route('account.validate-password') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                password: password
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.valid) {
+                    // Password is valid, open the modal
+                    openDeleteModal();
+                } else {
+                    // Password is invalid
+                    if (typeof showToast === 'function') {
+                        showToast('Incorrect password. Please try again.', 'error');
+                    } else {
+                        alert('Incorrect password. Please try again.');
+                    }
+
+                    // Show error on password field
+                    const passwordError = document.getElementById('password-error');
+                    const errorMessage = document.getElementById('password-error-message');
+                    const passwordInput = document.getElementById('delete-password');
+
+                    passwordError.classList.remove('hidden');
+                    errorMessage.textContent = 'Incorrect password. Please try again.';
+                    passwordInput.classList.remove('border-green-300', 'focus:ring-green-500', 'focus:border-green-500');
+                    passwordInput.classList.add('border-red-300', 'focus:ring-red-500', 'focus:border-red-500');
+                    passwordInput.focus();
+                    passwordInput.select();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (typeof showToast === 'function') {
+                    showToast('An error occurred. Please try again.', 'error');
+                } else {
+                    alert('An error occurred. Please try again.');
+                }
+            })
+            .finally(() => {
+                // Reset button state
+                spinner.classList.add('hidden');
+                buttonText.textContent = 'Request Account Deletion';
+            });
+    }
+
+    function openDeleteModal() {
         document.getElementById('deleteModal').classList.remove('hidden');
         document.getElementById('deleteModal').classList.add('flex');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling
     }
 
     function closeDeleteModal() {
         document.getElementById('deleteModal').classList.remove('flex');
         document.getElementById('deleteModal').classList.add('hidden');
+        document.body.style.overflow = ''; // Restore scrolling
     }
 
     function submitDeletionRequest() {
-        document.getElementById('deleteAccountForm').submit();
+        const form = document.getElementById('deleteAccountForm');
+        const confirmation = document.getElementById('delete-confirmation').value.trim();
+        const password = document.getElementById('delete-password').value.trim();
+
+        // Double-check validation before submission
+        if (confirmation !== 'DELETE') {
+            if (typeof showToast === 'function') {
+                showToast('Invalid confirmation text.', 'error');
+            }
+            return;
+        }
+
+        if (password.length === 0) {
+            if (typeof showToast === 'function') {
+                showToast('Please enter your password.', 'error');
+            }
+            return;
+        }
+
+        // Show loading in modal
+        const modalButton = document.querySelector('#deleteModal button[onclick="submitDeletionRequest()"]');
+        const originalText = modalButton.innerHTML;
+        modalButton.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Processing...
+    `;
+        modalButton.disabled = true;
+
+        // Submit the form
+        form.submit();
     }
+
+    // Initialize validation on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        // Add event listeners for real-time validation
+        const confirmationInput = document.getElementById('delete-confirmation');
+        const passwordInput = document.getElementById('delete-password');
+
+        if (confirmationInput) {
+            confirmationInput.addEventListener('input', validateDeleteConfirmation);
+            confirmationInput.addEventListener('blur', validateDeleteConfirmation);
+        }
+
+        if (passwordInput) {
+            passwordInput.addEventListener('input', validatePassword);
+            passwordInput.addEventListener('blur', validatePassword);
+        }
+    });
 
     // Tab Switching + Persistence
     document.addEventListener('DOMContentLoaded', () => {
@@ -1558,6 +1713,83 @@
         document.getElementById('reviewModal').classList.remove('flex');
         document.getElementById('reviewModal').classList.add('hidden');
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Handle pagination clicks
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.pagination-link')) {
+                e.preventDefault();
+                const link = e.target.closest('.pagination-link');
+                const page = link.getAttribute('data-page') || link.getAttribute('href').split('page=')[1];
+                loadBookings(page);
+            }
+        });
+
+        // Load bookings via AJAX
+        function loadBookings(page) {
+            const container = document.getElementById('booking-history-content');
+
+            // Show loading indicator
+            container.innerHTML = `
+            <div class="flex items-center justify-center py-12">
+                <div class="text-center">
+                    <svg class="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <p class="text-gray-600">Loading bookings...</p>
+                </div>
+            </div>
+        `;
+
+            // Make AJAX request
+            fetch(`/user/bookings?page=${page}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update the content
+                        container.innerHTML = data.html;
+
+                        // Update URL without page reload
+                        const url = new URL(window.location);
+                        url.searchParams.set('page', data.current_page);
+                        window.history.pushState({}, '', url);
+
+                        // Scroll to top of bookings section
+                        document.getElementById('my-bookings').scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                        throw new Error('Failed to load bookings');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    container.innerHTML = `
+                <div class="text-center py-12 text-red-600">
+                    <p>Failed to load bookings. Please try again.</p>
+                    <button onclick="loadBookings(1)" class="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                        Retry
+                    </button>
+                </div>
+            `;
+                });
+        }
+
+        // Initialize pagination on page load if we're on a specific page
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentPage = urlParams.get('page');
+
+        // Only load via AJAX if we're not on the first page
+        if (currentPage && currentPage > 1) {
+            // Check if we're on the booking history tab
+            const activeTab = localStorage.getItem('activeTab');
+            if (activeTab === 'my-bookings') {
+                loadBookings(currentPage);
+            }
+        }
+    });
 </script>
 
 <style>
