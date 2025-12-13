@@ -7,6 +7,7 @@ use App\Models\UserMeasurements;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 
 class RegistrationController extends Controller
 {
@@ -109,10 +110,22 @@ class RegistrationController extends Controller
     public function login(Request $request): \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
     {
         try {
+            // Add Turnstile validation to login
             $credentials = $request->validate([
                 'email' => ['required', 'email'],
                 'password' => ['required'],
+                'cf-turnstile-response' => ['required', 'string'],
             ]);
+
+            // Validate Turnstile token
+            $turnstileValid = $this->validateTurnstile($credentials['cf-turnstile-response']);
+            if (!$turnstileValid['success']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $turnstileValid['message'],
+                    'errors' => ['cf-turnstile-response' => [$turnstileValid['message']]]
+                ], 422);
+            }
         } catch (\Illuminate\Validation\ValidationException $e) {
             if ($request->expectsJson()) {
                 return response()->json([
@@ -141,7 +154,7 @@ class RegistrationController extends Controller
             ])->onlyInput('email');
         }
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        if (Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['password']], $request->boolean('remember'))) {
             $request->session()->regenerate();
 
             // Handle AJAX requests
@@ -168,6 +181,122 @@ class RegistrationController extends Controller
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',
         ])->onlyInput('email');
+    }
+
+    /** Validate Cloudflare Turnstile token */
+
+    /**
+     * Validate Cloudflare Turnstile token
+     */
+    private function validateTurnstile(string $token): array
+    {
+        $secretKey = config('services.cloudflare.secret_key');
+
+        if (empty($secretKey)) {
+            \Log::error('Cloudflare Turnstile secret key is not configured');
+            return [
+                'success' => false,
+                'message' => 'Security configuration error. Please contact support.'
+            ];
+        }
+
+        if (empty($token)) {
+            return [
+                'success' => false,
+                'message' => 'Please complete the security check.'
+            ];
+        }
+
+        try {
+            $response = Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+                'secret' => $secretKey,
+                'response' => $token,
+                'remoteip' => request()->ip(),
+            ]);
+
+            $data = $response->json();
+
+            if (!$data['success']) {
+                \Log::warning('Turnstile verification failed', [
+                    'error_codes' => $data['error-codes'] ?? [],
+                    'ip' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                ]);
+
+                $errorMessage = $this->getTurnstileErrorMessage($data['error-codes'] ?? []);
+
+                return [
+                    'success' => false,
+                    'message' => $errorMessage
+                ];
+            }
+
+            // UPDATED: Check hostname against ALLOWED domains
+            $allowedDomains = ['dressupdavao.shop', 'localhost', '127.0.0.1'];
+
+            if (isset($data['hostname']) && !in_array($data['hostname'], $allowedDomains)) {
+                \Log::warning('Turnstile hostname mismatch', [
+                    'allowed' => $allowedDomains,
+                    'received' => $data['hostname'],
+                    'ip' => request()->ip(),
+                ]);
+
+                return [
+                    'success' => false,
+                    'message' => 'Security verification failed. Invalid domain.'
+                ];
+            }
+
+            return [
+                'success' => true,
+                'message' => 'Verification successful'
+            ];
+        } catch (\Exception $e) {
+            \Log::error('Turnstile verification error: ' . $e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Unable to verify security check. Please try again.'
+            ];
+        }
+    }
+
+    /**
+     * Validate Turnstile token via AJAX (for client-side validation if needed)
+     */
+    public function validateTurnstileAjax(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $request->validate([
+            'token' => 'required|string'
+        ]);
+
+        $result = $this->validateTurnstile($request->token);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Get user-friendly error messages for Turnstile errors
+     */
+    private function getTurnstileErrorMessage(array $errorCodes): string
+    {
+        $errors = [
+            'missing-input-secret' => 'Security configuration error.',
+            'invalid-input-secret' => 'Security configuration error.',
+            'missing-input-response' => 'Please complete the security check.',
+            'invalid-input-response' => 'Security verification expired or invalid. Please try again.',
+            'bad-request' => 'Invalid request.',
+            'timeout-or-duplicate' => 'Security check expired. Please try again.',
+            'internal-error' => 'Security service error. Please try again.',
+        ];
+
+        foreach ($errorCodes as $code) {
+            if (isset($errors[$code])) {
+                return $errors[$code];
+            }
+        }
+
+        return 'Security verification failed. Please try again.';
     }
 
     /**

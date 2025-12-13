@@ -65,6 +65,9 @@ Route::get('/', function () {
 Route::get('/login', [HomeController::class, 'showLogin'])->name('login.show');
 Route::get('/register', [HomeController::class, 'showRegister'])->name('register.show');
 
+Route::post('/validate-turnstile', [RegistrationController::class, 'validateTurnstile'])->name('validate.turnstile');
+Route::post('/validate-turnstile-ajax', [RegistrationController::class, 'validateTurnstileAjax'])->name('validate.turnstile.ajax');
+
 Route::get('/about-us', function () {
     return view('aboutus');
 });

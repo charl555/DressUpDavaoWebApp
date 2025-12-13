@@ -33,4 +33,8 @@ return [
         'key' => env('KIRI_API_KEY'),
         'webhook_secret' => env('KIRI_WEBHOOK_SECRET'),
     ],
+    'cloudflare' => [
+        'site_key' => env('CLOUDFLARE_TURNSTILE_SITE_KEY'),
+        'secret_key' => env('CLOUDFLARE_TURNSTILE_SECRET_KEY'),
+    ],
 ];

@@ -62,6 +62,14 @@
                     <p x-show="errors.password" x-text="errors.password" class="mt-1 text-sm text-red-600"></p>
                 </div>
 
+                <!-- Cloudflare Turnstile Widget -->
+                <div>
+                    <div id="cf-turnstile-widget" class="flex justify-center"></div>
+                    <input type="hidden" name="cf-turnstile-response" id="cf-turnstile-response">
+                    <p x-show="errors.turnstile" x-text="errors.turnstile"
+                        class="mt-1 text-sm text-red-600 text-center"></p>
+                </div>
+
                 <!-- Remember Me & Forgot Password -->
                 <div class="flex items-center justify-between">
                     <div class="flex items-center">
@@ -81,10 +89,11 @@
 
                 <!-- Submit Button -->
                 <div>
-                    <button type="submit" :disabled="loading"
+                    <button type="submit" :disabled="loading || !turnstileToken"
                         class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white
                                bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500
-                               disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md">
+                               disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md"
+                        :class="{ 'bg-violet-400 hover:bg-violet-400': !turnstileToken }">
                         <span x-show="!loading">Sign in</span>
                         <span x-show="loading" class="flex items-center">
                             <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
@@ -130,8 +139,10 @@
             </p>
         </div>
     </div>
-
 </div>
+
+<!-- Cloudflare Turnstile Script -->
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 <script>
     function loginForm() {
@@ -145,6 +156,60 @@
             generalError: '',
             showPassword: false,
             loading: false,
+            turnstileToken: null,
+            turnstileWidgetId: null,
+
+            init() {
+                // Initialize Turnstile after Alpine is loaded
+                this.$nextTick(() => {
+                    this.initializeTurnstile();
+                });
+            },
+
+            initializeTurnstile() {
+                // Wait for turnstile to be available
+                const checkAndRender = () => {
+                    if (typeof turnstile === 'undefined') {
+                        // Check again in 50ms
+                        setTimeout(checkAndRender, 50);
+                        return;
+                    }
+
+                    // Render widget now that turnstile is available
+                    this.turnstileWidgetId = turnstile.render('#cf-turnstile-widget', {
+                        sitekey: '{{ config("services.cloudflare.site_key") }}',
+                        theme: 'auto',
+                        size: 'normal',
+                        callback: (token) => {
+                            this.turnstileToken = token;
+                            document.getElementById('cf-turnstile-response').value = token;
+                            this.errors.turnstile = '';
+                        },
+                        'expired-callback': () => {
+                            this.turnstileToken = null;
+                            document.getElementById('cf-turnstile-response').value = '';
+                            this.errors.turnstile = 'Security check expired.';
+                        },
+                        'error-callback': () => {
+                            this.turnstileToken = null;
+                            document.getElementById('cf-turnstile-response').value = '';
+                            this.errors.turnstile = 'Security verification failed.';
+                        }
+                    });
+                };
+
+                // Start the check
+                checkAndRender();
+            },
+
+            resetTurnstile() {
+                if (this.turnstileWidgetId && typeof turnstile !== 'undefined') {
+                    turnstile.reset(this.turnstileWidgetId);
+                    this.turnstileToken = null;
+                    document.getElementById('cf-turnstile-response').value = '';
+                    this.errors.turnstile = '';
+                }
+            },
 
             validateField(field) {
                 this.errors[field] = '';
@@ -175,11 +240,19 @@
             validateForm() {
                 this.validateField('email');
                 this.validateField('password');
-                return !this.errors.email && !this.errors.password;
+
+                // Validate Turnstile
+                if (!this.turnstileToken) {
+                    this.errors.turnstile = 'Please complete the security check';
+                    return false;
+                }
+
+                return !this.errors.email && !this.errors.password && !this.errors.turnstile;
             },
 
             async submitForm() {
                 this.generalError = '';
+                this.errors.turnstile = '';
 
                 if (!this.validateForm()) {
                     return;
@@ -191,6 +264,7 @@
                     const formData = new FormData();
                     formData.append('email', this.form.email);
                     formData.append('password', this.form.password);
+                    formData.append('cf-turnstile-response', this.turnstileToken);
                     if (this.form.remember) {
                         formData.append('remember', '1');
                     }
@@ -200,7 +274,8 @@
                         method: 'POST',
                         body: formData,
                         headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
                         }
                     });
 
@@ -218,8 +293,15 @@
                             window.location.href = data.redirect || '/';
                         }
                     } else {
+                        // Reset Turnstile on failed attempt
+                        this.resetTurnstile();
+
                         if (data.errors) {
                             this.errors = data.errors;
+                            // Show specific Turnstile error if present
+                            if (data.errors['cf-turnstile-response']) {
+                                this.errors.turnstile = data.errors['cf-turnstile-response'][0];
+                            }
                         } else {
                             this.generalError = data.message || 'Invalid credentials. Please try again.';
                             // Show error toast
@@ -229,7 +311,9 @@
                         }
                     }
                 } catch (error) {
+                    this.resetTurnstile();
                     this.generalError = 'An error occurred. Please try again.';
+                    console.error('Login error:', error);
                 } finally {
                     this.loading = false;
                 }
@@ -237,5 +321,3 @@
         }
     }
 </script>
-
-{{-- Alpine.js is loaded globally via app.js --}}
