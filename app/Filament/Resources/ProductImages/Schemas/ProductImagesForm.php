@@ -21,7 +21,7 @@ class ProductImagesForm
                             ->schema([
                                 FileUpload::make('thumbnail_image')
                                     ->label('Main Thumbnail Image')
-                                    ->helperText('Upload the main image that will be displayed as the product thumbnail. Recommended size: 800x800px')
+                                    ->helperText('Upload the main image that will be displayed as the product thumbnail.')
                                     ->disk('public')
                                     ->visibility('public')
                                     ->directory('product-images/thumbnails')
@@ -32,7 +32,7 @@ class ProductImagesForm
                                         '4:3',
                                         '16:9',
                                     ])
-                                    ->maxSize(5120)  // 5MB
+                                    ->maxSize(10240)  // 10MB
                                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                                     ->deletable(true)
                                     ->openable()
@@ -53,7 +53,7 @@ class ProductImagesForm
                             ->schema([
                                 FileUpload::make('images')
                                     ->label('Additional Gallery Images')
-                                    ->helperText('Upload additional images to show different angles and details of your product. Maximum 10 images, 5MB each')
+                                    ->helperText('Upload additional images to show different angles and details of your product. Maximum 10 images, 10MB each')
                                     ->disk('public')
                                     ->visibility('public')
                                     ->directory('product-images')
@@ -61,7 +61,7 @@ class ProductImagesForm
                                     ->imageEditor()
                                     ->multiple()
                                     ->maxFiles(10)
-                                    ->maxSize(5120)  // 5MB per file
+                                    ->maxSize(10240)  // 10MB per file
                                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                                     ->deletable(true)
                                     ->openable()
