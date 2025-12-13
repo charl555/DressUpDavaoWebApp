@@ -76,6 +76,7 @@ class RentalsForm
                                     ])
                                     ->default('customer')
                                     ->required()
+                                    ->native(false)
                                     ->reactive()
                                     ->helperText('Select whether the rental is for a registered user or a customer without an account.'),
                                 Select::make('client_id')

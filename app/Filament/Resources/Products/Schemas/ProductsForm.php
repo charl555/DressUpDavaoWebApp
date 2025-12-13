@@ -39,6 +39,7 @@ class ProductsForm
                                     ])
                                     ->required()
                                     ->reactive()
+                                    ->native(false)
                                     ->placeholder('Choose product type')
                                     ->columnSpan(1),
                             ])
@@ -48,7 +49,7 @@ class ProductsForm
                                 Select::make('subtype')
                                     ->label('Style/Cut')
                                     ->helperText('Select the specific style or cut of the garment')
-                                    ->maxItems(999)
+                                    ->optionsLimit(200)
                                     ->searchable()
                                     ->options(function ($get) {
                                         if ($get('type') === 'Gown') {
