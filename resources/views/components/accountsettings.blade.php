@@ -138,8 +138,8 @@
                             <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
                             <div class="relative">
                                 <input type="email" id="email" name="email" value="{{ Auth::user()->email }}"
-                                    class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
-                                    readonly>
+                                    class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200 email-masked"
+                                    readonly data-original="{{ Auth::user()->email }}">
                                 <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
@@ -161,6 +161,10 @@
                                     </option>
                                     <option value="Female" {{ Auth::user()->gender == 'Female' ? 'selected' : '' }}>Female
                                     </option>
+                                    <option value="Other" {{ Auth::user()->gender == 'Other' ? 'selected' : '' }}>Other
+                                    </option>
+                                    <option value="Prefer not to say" {{ Auth::user()->gender == 'Prefer not to say' ? 'selected' : '' }}>Prefer not to say
+                                    </option>
                                 </select>
                                 <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
@@ -178,8 +182,8 @@
                             <div class="relative">
                                 <input type="tel" id="phone" name="phone_number"
                                     value="{{ Auth::user()->phone_number }}"
-                                    class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
-                                    readonly>
+                                    class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200 phone-masked"
+                                    readonly data-original="{{ Auth::user()->phone_number }}">
                                 <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
@@ -192,7 +196,7 @@
                     </div>
 
                     <!-- Save/Cancel Buttons (Hidden by default) -->
-                    <div id="formActions" class="pt-8 justify-end space-x-4 hidden">
+                    <div id="formActions" class="pt-8 flex justify-end space-x-4">
                         <button type="button" id="cancelEditBtn"
                             class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
                             Cancel
@@ -402,10 +406,7 @@
                                     </div>
                                 </div>
                                 <div id="confirmation-error" class="mt-2 text-sm text-red-600 hidden  items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                                    </svg>
+
                                     <span>You must type exactly "DELETE" to proceed.</span>
                                 </div>
                             </div>
@@ -480,11 +481,7 @@
                         @if(session('error'))
                             <div class="col-span-2 bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
                                 <div class="flex items-center">
-                                    <svg class="w-5 h-5 text-red-600 mr-3" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                                    </svg>
+
                                     <span class="text-sm text-red-700">{{ session('error') }}</span>
                                 </div>
                             </div>
@@ -1369,7 +1366,51 @@
         });
     });
 
+    // Data masking functions
+    function maskEmail(email) {
+        if (!email) return '';
+        const [localPart, domain] = email.split('@');
+        if (localPart.length <= 2) {
+            return localPart.charAt(0) + '*'.repeat(localPart.length - 1) + '@' + domain;
+        } else {
+            const firstChar = localPart.charAt(0);
+            const lastChar = localPart.charAt(localPart.length - 1);
+            return firstChar + '*'.repeat(localPart.length - 2) + lastChar + '@' + domain;
+        }
+    }
+
+    function maskPhone(phone) {
+        if (!phone) return '';
+        // Keep last 4 digits visible
+        const visibleDigits = 4;
+        const phoneLength = phone.length;
+        if (phoneLength <= visibleDigits) {
+            return phone;
+        }
+        const maskedPart = '*'.repeat(phoneLength - visibleDigits);
+        const visiblePart = phone.slice(-visibleDigits);
+        return maskedPart + visiblePart;
+    }
+
+    // Apply initial masking
     document.addEventListener('DOMContentLoaded', function () {
+        // Get original values
+        const emailField = document.getElementById('email');
+        const phoneField = document.getElementById('phone');
+
+        if (emailField) {
+            const originalEmail = emailField.getAttribute('data-original') || emailField.value;
+            emailField.value = maskEmail(originalEmail);
+        }
+
+        if (phoneField) {
+            const originalPhone = phoneField.getAttribute('data-original') || phoneField.value;
+            phoneField.value = maskPhone(originalPhone);
+        }
+
+
+
+        // Enhanced edit profile functionality
         const editProfileBtn = document.getElementById('editProfileBtn');
         const cancelEditBtn = document.getElementById('cancelEditBtn');
         const saveProfileBtn = document.getElementById('saveProfileBtn');
@@ -1379,16 +1420,21 @@
         // Store original values for cancel functionality
         let originalValues = {};
 
-        // Function to enable form editing
+
         function enableFormEditing() {
             const inputs = profileForm.querySelectorAll('input, select');
 
             // Store original values
             inputs.forEach(input => {
-                originalValues[input.name] = input.value;
+                if (input.id === 'email' || input.id === 'phone') {
+                    // Store the unmasked original values
+                    originalValues[input.name] = input.getAttribute('data-original') || input.value;
+                } else {
+                    originalValues[input.name] = input.value;
+                }
             });
 
-            // Enable inputs and remove readonly/disabled states
+
             inputs.forEach(input => {
                 if (input.type === 'select-one') {
                     input.disabled = false;
@@ -1397,6 +1443,17 @@
                 }
                 input.classList.remove('bg-gray-50', 'text-gray-600');
                 input.classList.add('bg-white', 'text-gray-900');
+
+                // Keep email and phone masked even when editing
+                if (input.id === 'email') {
+                    const originalEmail = input.getAttribute('data-original') || originalValues[input.name];
+                    input.value = maskEmail(originalEmail); // Keep masked during editing
+                    input.setAttribute('data-original', originalEmail); // Store original for saving
+                } else if (input.id === 'phone') {
+                    const originalPhone = input.getAttribute('data-original') || originalValues[input.name];
+                    input.value = maskPhone(originalPhone); // Keep masked during editing
+                    input.setAttribute('data-original', originalPhone); // Store original for saving
+                }
             });
 
             // Show save/cancel buttons, hide edit button
@@ -1404,7 +1461,7 @@
             editProfileBtn.classList.add('hidden');
         }
 
-        // Function to disable form editing
+
         function disableFormEditing() {
             const inputs = profileForm.querySelectorAll('input, select');
 
@@ -1417,6 +1474,15 @@
                 }
                 input.classList.remove('bg-white', 'text-gray-900');
                 input.classList.add('bg-gray-50', 'text-gray-600');
+
+                // Apply masking when not editing
+                if (input.id === 'email') {
+                    const originalEmail = input.getAttribute('data-original') || input.value;
+                    input.value = maskEmail(originalEmail);
+                } else if (input.id === 'phone') {
+                    const originalPhone = input.getAttribute('data-original') || input.value;
+                    input.value = maskPhone(originalPhone);
+                }
             });
 
             // Hide save/cancel buttons, show edit button
@@ -1430,73 +1496,98 @@
             inputs.forEach(input => {
                 if (originalValues[input.name] !== undefined) {
                     input.value = originalValues[input.name];
+
+                    // Update data-original attribute for masked fields
+                    if (input.id === 'email' || input.id === 'phone') {
+                        input.setAttribute('data-original', originalValues[input.name]);
+                    }
                 }
             });
         }
 
         // Event Listeners
-        editProfileBtn.addEventListener('click', enableFormEditing);
+        if (editProfileBtn) {
+            editProfileBtn.addEventListener('click', enableFormEditing);
+        }
 
-        cancelEditBtn.addEventListener('click', function () {
-            restoreOriginalValues();
-            disableFormEditing();
-        });
+        if (cancelEditBtn) {
+            cancelEditBtn.addEventListener('click', function () {
+                restoreOriginalValues();
+                disableFormEditing();
+            });
+        }
 
         // Form submission handling
-        profileForm.addEventListener('submit', function (e) {
-            e.preventDefault();
+        if (profileForm) {
+            profileForm.addEventListener('submit', function (e) {
+                e.preventDefault();
 
-            // Show loading state
-            const originalText = saveProfileBtn.innerHTML;
-            saveProfileBtn.innerHTML = `
-            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Saving...
-        `;
-            saveProfileBtn.disabled = true;
+                // Show loading state
+                const originalText = saveProfileBtn.innerHTML;
+                saveProfileBtn.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Saving...
+            `;
+                saveProfileBtn.disabled = true;
 
-            // Submit form via AJAX
-            const formData = new FormData(profileForm);
+                // Submit form via AJAX
+                const formData = new FormData(profileForm);
 
-            fetch(profileForm.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        if (typeof showToast === 'function') {
-                            showToast(data.message || 'Profile updated successfully!', 'success');
-                        }
-                        disableFormEditing();
-                        // Update original values with new values
-                        const inputs = profileForm.querySelectorAll('input, select');
-                        inputs.forEach(input => {
-                            originalValues[input.name] = input.value;
-                        });
-                    } else {
-                        if (typeof showToast === 'function') {
-                            showToast(data.message || 'Failed to update profile.', 'error');
-                        }
+                fetch(profileForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
                     }
                 })
-                .catch(error => {
-                    console.error('Error:', error);
-                    if (typeof showToast === 'function') {
-                        showToast('An error occurred. Please try again.', 'error');
-                    }
-                })
-                .finally(() => {
-                    // Restore button state
-                    saveProfileBtn.innerHTML = originalText;
-                    saveProfileBtn.disabled = false;
-                });
-        });
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            if (typeof showToast === 'function') {
+                                showToast(data.message || 'Profile updated successfully!', 'success');
+                            }
+
+                            // Update data-original attributes with new values
+                            const emailField = document.getElementById('email');
+                            const phoneField = document.getElementById('phone');
+
+                            if (emailField) {
+                                emailField.setAttribute('data-original', emailField.value);
+                            }
+
+                            if (phoneField) {
+                                phoneField.setAttribute('data-original', phoneField.value);
+                            }
+
+                            disableFormEditing();
+
+                            // Update original values with new values
+                            const inputs = profileForm.querySelectorAll('input, select');
+                            inputs.forEach(input => {
+                                originalValues[input.name] = input.value;
+                            });
+                        } else {
+                            if (typeof showToast === 'function') {
+                                showToast(data.message || 'Failed to update profile.', 'error');
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        if (typeof showToast === 'function') {
+                            showToast('An error occurred. Please try again.', 'error');
+                        }
+                    })
+                    .finally(() => {
+                        // Restore button state
+                        saveProfileBtn.innerHTML = originalText;
+                        saveProfileBtn.disabled = false;
+                    });
+            });
+        }
 
         // Initialize form in disabled state
         disableFormEditing();

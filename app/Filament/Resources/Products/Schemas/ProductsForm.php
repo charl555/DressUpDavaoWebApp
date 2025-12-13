@@ -48,6 +48,7 @@ class ProductsForm
                                 Select::make('subtype')
                                     ->label('Style/Cut')
                                     ->helperText('Select the specific style or cut of the garment')
+                                    ->maxItems(999)
                                     ->searchable()
                                     ->options(function ($get) {
                                         if ($get('type') === 'Gown') {
