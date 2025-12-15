@@ -350,7 +350,7 @@ class RentalsTable
                                     return;
                                 }
 
-                                $record->payments()->create([
+                                $payment = $record->payments()->create([
                                     'rental_id' => $record->rental_id,
                                     'payment_method' => $paymentMethod,
                                     'amount_paid' => $amount,
@@ -360,6 +360,19 @@ class RentalsTable
                                 ]);
 
                                 $record->update(['balance_due' => max(0, ($record->balance_due ?? 0) - $amount)]);
+
+                                // Log payment transaction
+                                \Log::info('Payment recorded', [
+                                    'payment_id' => $payment->payment_id,
+                                    'rental_id' => $record->rental_id,
+                                    'amount' => $amount,
+                                    'payment_method' => $paymentMethod,
+                                    'remaining_balance' => $record->balance_due,
+                                    'recorded_by' => auth()->id(),
+                                    'recorded_by_email' => auth()->user()?->email,
+                                    'ip_address' => request()->ip(),
+                                    'recorded_at' => now()->toDateTimeString(),
+                                ]);
 
                                 Notification::make()
                                     ->title('Payment Added Successfully')

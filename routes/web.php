@@ -105,12 +105,7 @@ Route::get('/how-it-works', function () {
 
 Route::post('/contact', [App\Http\Controllers\ContactController::class, 'store'])->name('contact.submit');
 
-Route::post('/logout', function (Request $request) {
-    Auth::logout();
-    $request->session()->invalidate();
-    $request->session()->regenerateToken();
-    return redirect('/');
-})->name('logout');
+Route::post('/logout', [RegistrationController::class, 'logout'])->name('logout');
 
 Route::get('/forgot-password', [HomeController::class, 'showForgotPassword'])->name('forgot.password.show');
 

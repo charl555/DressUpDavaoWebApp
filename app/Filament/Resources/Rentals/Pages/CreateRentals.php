@@ -93,13 +93,23 @@ class CreateRentals extends CreateRecord
 
             // --- Step 6: Record initial payment (optional) ---
             if ($amountPaid > 0) {
-                $rental->payments()->create([
+                $payment = $rental->payments()->create([
                     'rental_id' => $rental->rental_id,
                     'payment_method' => 'Cash',
                     'amount_paid' => $amountPaid,
                     'payment_date' => now(),
                     'payment_status' => 'Paid',
                     'payment_type' => 'rental',
+                ]);
+
+                // Log initial payment
+                \Log::info('Initial payment recorded for rental', [
+                    'payment_id' => $payment->payment_id,
+                    'rental_id' => $rental->rental_id,
+                    'amount' => $amountPaid,
+                    'payment_method' => 'Cash',
+                    'recorded_by' => auth()->id(),
+                    'recorded_at' => now()->toDateTimeString(),
                 ]);
             }
 

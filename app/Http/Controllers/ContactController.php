@@ -30,13 +30,23 @@ class ContactController extends Controller
                 ->withInput();
         }
 
-        ContactMessage::create([
+        $contactMessage = ContactMessage::create([
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
             'message' => $request->message,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
+        ]);
+
+        // Log contact message submission
+        \Log::info('Contact message received', [
+            'message_id' => $contactMessage->id,
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'ip_address' => $request->ip(),
+            'received_at' => now()->toDateTimeString(),
         ]);
 
         if ($request->expectsJson()) {

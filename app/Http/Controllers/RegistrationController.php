@@ -183,6 +183,14 @@ class RegistrationController extends Controller
             // Record successful attempt
             $this->loginSecurity->recordAttempt($credentials['email'], $request->ip(), true);
 
+            // Log activity
+            \App\Models\ActivityLog::log(
+                'login',
+                "User {$credentials['email']} logged in successfully",
+                'User',
+                Auth::id()
+            );
+
             $request->session()->regenerate();
 
             // Handle AJAX requests
@@ -367,11 +375,34 @@ class RegistrationController extends Controller
      */
     public function logout(Request $request): \Illuminate\Http\RedirectResponse
     {
+        $user = Auth::user();
+        $userId = $user?->id;
+        $userEmail = $user?->email;
+        $userName = $user?->name;
+
+        // Log activity before logout
+        if ($userId) {
+            \App\Models\ActivityLog::log(
+                'logout',
+                "User {$userName} ({$userEmail}) logged out",
+                'User',
+                $userId
+            );
+        }
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/login')->with('success', 'You have been logged out.');
+        \Log::info('User logged out', [
+            'user_id' => $userId,
+            'email' => $userEmail,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'logged_out_at' => now()->toDateTimeString(),
+        ]);
+
+        return redirect('/')->with('success', 'You have been logged out.');
     }
 
     public function checkEmail(Request $request)

@@ -184,7 +184,7 @@ By checking the agreement box, you confirm that you understand and accept these 
             ]);
 
             // Create shop
-            Shops::create([
+            $shop = Shops::create([
                 'user_id' => $user->id,
                 'shop_name' => $data['shop_name'],
                 'shop_address' => $data['shop_address'],
@@ -195,6 +195,28 @@ By checking the agreement box, you confirm that you understand and accept these 
             // Create subscription
             Subscriptions::create([
                 'user_id' => $user->id,
+            ]);
+
+            // Log shop owner registration
+            \Log::info('Shop owner registered via Filament', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'name' => $user->name,
+                'shop_id' => $shop->shop_id,
+                'shop_name' => $data['shop_name'],
+                'ip_address' => request()->ip(),
+                'registered_at' => now()->toDateTimeString(),
+            ]);
+
+            // Activity log for SuperAdmin
+            \App\Models\ActivityLog::create([
+                'user_id' => $user->id,
+                'action' => 'create',
+                'model_type' => 'Shop',
+                'model_id' => $shop->shop_id,
+                'description' => "Shop owner registered: {$user->name} ({$user->email}) - Shop: {$data['shop_name']}",
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
             ]);
 
             return $user;

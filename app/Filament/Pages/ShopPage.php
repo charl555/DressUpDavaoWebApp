@@ -130,7 +130,7 @@ class ShopPage extends Page implements HasTable, HasSchemas, HasActions
 
                     if ($shop) {
                         // Create the verification request record
-                        ShopAccountRequests::create([
+                        $request = ShopAccountRequests::create([
                             'user_id' => $userId,
                             'shop_id' => $shop->shop_id,
                             'document_type' => $data['document_type'],
@@ -143,12 +143,28 @@ class ShopPage extends Page implements HasTable, HasSchemas, HasActions
                             'shop_status' => 'Under Review',
                         ]);
 
+                        // Log verification submission
+                        \Log::info('Shop verification request submitted', [
+                            'request_id' => $request->id,
+                            'user_id' => $userId,
+                            'shop_id' => $shop->shop_id,
+                            'shop_name' => $shop->shop_name,
+                            'document_type' => $data['document_type'],
+                            'ip_address' => request()->ip(),
+                            'submitted_at' => now()->toDateTimeString(),
+                        ]);
+
                         Notification::make()
                             ->title('Shop Verification Submitted')
                             ->body('Your verification document has been submitted and is now under review.')
                             ->success()
                             ->send();
                     } else {
+                        \Log::warning('Shop verification failed - shop not found', [
+                            'user_id' => $userId,
+                            'ip_address' => request()->ip(),
+                        ]);
+
                         Notification::make()
                             ->title('Error')
                             ->body('Shop record not found. Please make sure your shop profile exists.')

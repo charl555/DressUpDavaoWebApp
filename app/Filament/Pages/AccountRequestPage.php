@@ -127,6 +127,25 @@ class AccountRequestPage extends Page implements HasTable, HasSchemas
                                             $record->update(['status' => 'Verified']);
                                             $record->shop->update(['shop_status' => 'Verified']);
 
+                                            // Log shop verification approval
+                                            \Log::info('Shop verification approved', [
+                                                'request_id' => $record->id,
+                                                'shop_id' => $record->shop->shop_id,
+                                                'shop_name' => $record->shop->shop_name,
+                                                'approved_by' => auth()->id(),
+                                                'approved_by_email' => auth()->user()?->email,
+                                                'ip_address' => request()->ip(),
+                                                'approved_at' => now()->toDateTimeString(),
+                                            ]);
+
+                                            // Activity log
+                                            \App\Models\ActivityLog::log(
+                                                'approve',
+                                                "Shop verification approved for {$record->shop->shop_name}",
+                                                'Shop',
+                                                $record->shop->shop_id
+                                            );
+
                                             Notification::make()
                                                 ->title('Request Approved')
                                                 ->body("Shop verification for {$record->shop->shop_name} has been approved successfully.")
@@ -156,6 +175,26 @@ class AccountRequestPage extends Page implements HasTable, HasSchemas
                                                 'rejection_reason' => $data['rejection_reason']
                                             ]);
                                             $record->shop->update(['shop_status' => 'Rejected']);
+
+                                            // Log shop verification rejection
+                                            \Log::info('Shop verification rejected', [
+                                                'request_id' => $record->id,
+                                                'shop_id' => $record->shop->shop_id,
+                                                'shop_name' => $record->shop->shop_name,
+                                                'rejection_reason' => $data['rejection_reason'],
+                                                'rejected_by' => auth()->id(),
+                                                'rejected_by_email' => auth()->user()?->email,
+                                                'ip_address' => request()->ip(),
+                                                'rejected_at' => now()->toDateTimeString(),
+                                            ]);
+
+                                            // Activity log
+                                            \App\Models\ActivityLog::log(
+                                                'reject',
+                                                "Shop verification rejected for {$record->shop->shop_name}: {$data['rejection_reason']}",
+                                                'Shop',
+                                                $record->shop->shop_id
+                                            );
 
                                             Notification::make()
                                                 ->title('Request Rejected')
