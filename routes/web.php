@@ -245,15 +245,15 @@ Route::get('view3-d-model/{id}', View3DModel::class)
     ->middleware(['web', 'auth'])
     ->name('view-3d-model');
 
-Route::get('/test-email', function () {
-    Mail::raw('This is a test email from Dress Up Davao.', function ($message) {
-        $message
-            ->to('decoyyv1@gmail.com')
-            ->subject('SendGrid Test');
-    });
+// Route::get('/test-email', function () {
+//     Mail::raw('This is a test email from Dress Up Davao.', function ($message) {
+//         $message
+//             ->to('decoyyv1@gmail.com')
+//             ->subject('SendGrid Test');
+//     });
 
-    return 'Email sent!';
-});
+//     return 'Email sent!';
+// });
 
 Route::get('/test-storage', function () {
     $testPath = 'temp/test.txt';
@@ -272,4 +272,54 @@ Route::get('/test-storage', function () {
         'file_exists' => file_exists($absolutePath),
         'storage_exists' => Storage::disk('local')->exists($testPath),
     ];
+});
+
+Route::get('/test-email', function () {
+    try {
+        $testEmail = 'charldominicursabia@gmail.com';
+
+        Mail::send('emails.password-reset', [
+            'user' => (object) ['name' => 'Test User'],
+            'code' => '123456',
+            'ip' => request()->ip()
+        ], function ($message) use ($testEmail) {
+            $message
+                ->to($testEmail)
+                ->subject('Test Email from DressUp Davao - Gmail SMTP');
+        });
+
+        Log::info('Gmail test email sent successfully');
+        return response()->json([
+            'success' => true,
+            'message' => 'Test email sent! Check your inbox and spam folder.'
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Gmail test failed', ['error' => $e->getMessage()]);
+
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+            'tip' => 'Check: 1) App password 2) 2FA enabled 3) .env configuration'
+        ], 500);
+    }
+});
+
+Route::get('/test-login-attempts', function () {
+    $service = new \App\Services\LoginSecurityService();
+
+    // Test email blocking
+    $email = 'test@example.com';
+    $ip = '127.0.0.1';
+
+    for ($i = 0; $i < 5; $i++) {
+        $service->recordAttempt($email, $ip, false);
+    }
+
+    $blockStatus = $service->isEmailBlocked($email);
+
+    return response()->json([
+        'blocked' => $blockStatus['blocked'],
+        'remaining_seconds' => $blockStatus['remaining_seconds'] ?? 0,
+        'message' => $blockStatus['message'] ?? 'Not blocked'
+    ]);
 });

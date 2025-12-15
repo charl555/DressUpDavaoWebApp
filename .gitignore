@@ -25,3 +25,6 @@ Thumbs.db
 .htaccess
 .htaccess
 /storage/phpstan
+SECURITY_DOCUMENTATION.md
+PRODUCTION_DEPLOYMENT_GUIDE.md
+CHAT_SYSTEM_SETUP.md

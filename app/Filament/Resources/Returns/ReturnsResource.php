@@ -66,7 +66,7 @@ class ReturnsResource extends Resource
         return [
             'index' => ListReturns::route('/'),
             'create' => CreateReturns::route('/create'),
-            // 'edit' => EditReturns::route('/{record}/edit'),
+            'edit' => EditReturns::route('/{record}/edit'),
         ];
     }
 }

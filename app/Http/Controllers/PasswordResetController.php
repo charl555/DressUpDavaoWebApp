@@ -11,36 +11,90 @@ use Illuminate\Support\Facades\Mail;
 
 class PasswordResetController extends Controller
 {
-    // Step 1: Send code
+    private function checkGmailRateLimit($email)
+    {
+        $key = 'gmail_rate_limit_' . $email;
+        $attempts = Cache::get($key, 0);
+
+        // Gmail limit: Max 500 emails/day, 20/hour per sender
+        if ($attempts >= 3) {  // Conservative: 3 attempts per hour
+            Log::warning('Gmail rate limit hit for email', [
+                'email_hash' => hash('sha256', $email),
+                'attempts' => $attempts
+            ]);
+            return false;
+        }
+
+        Cache::put($key, $attempts + 1, now()->addHour());
+        return true;
+    }
+
     public function sendResetCode(Request $request)
     {
         $request->validate(['email' => 'required|email']);
 
+        $key = 'password_reset_rate_limit_' . md5($request->email);
+        $attempts = Cache::get($key, 0);
+        if ($attempts >= 3) {
+            Log::warning('Password reset rate limit hit', [
+                'email_hash' => hash('sha256', $request->email),
+                'attempts' => $attempts
+            ]);
+            return response()->json([
+                'error' => 'Too many reset attempts. Please try again in an hour.'
+            ], 429);
+        }
+        Cache::put($key, $attempts + 1, now()->addHour());
+
+        // ... (rest of the user lookup and code generation remains the same)
         $user = User::where('email', $request->email)->first();
         if (!$user) {
-            return response()->json(['error' => 'Email not found'], 404);
+            Log::info('Password reset request for non-existent email', [
+                'email_hash' => hash('sha256', $request->email),
+                'ip' => $request->ip()
+            ]);
+            return response()->json([
+                'message' => 'If your email exists, a reset code has been sent.'
+            ]);
         }
 
         $code = random_int(100000, 999999);
-
-        // Cache code for 10 minutes
         Cache::put('password_reset_' . $user->email, $code, now()->addMinutes(10));
 
         try {
-            Mail::raw("Your DressUp Davao password reset code is: {$code}", function ($message) use ($user) {
+            Mail::send('emails.password-reset', [
+                'user' => $user,
+                'code' => $code,
+                'ip' => $request->ip()
+            ], function ($message) use ($user) {
                 $message
                     ->to($user->email)
                     ->subject('Your Password Reset Code - DressUp Davao');
             });
-        } catch (\Exception $e) {
-            Log::error('Email send failed: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to send email'], 500);
-        }
 
-        return response()->json(['message' => 'Code sent']);
+            Log::info('Password reset code sent via Mailjet', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'ip' => $request->ip()
+            ]);
+
+            return response()->json([
+                'message' => 'If your email exists, a reset code has been sent.'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Mailjet email send failed', [
+                'error' => $e->getMessage(),
+                'user_email' => $user->email,
+                'smtp_user' => config('mail.username'),
+                'ip' => $request->ip()
+            ]);
+
+            return response()->json([
+                'error' => 'Unable to send email. Please try again later or contact support.'
+            ], 500);
+        }
     }
 
-    // Step 2: Verify code
     public function verifyCode(Request $request)
     {
         $request->validate([
@@ -51,16 +105,24 @@ class PasswordResetController extends Controller
         $cachedCode = Cache::get('password_reset_' . $request->email);
 
         if (!$cachedCode || $cachedCode != $request->code) {
+            Log::warning('Invalid password reset code attempt', [
+                'email_hash' => hash('sha256', $request->email),
+                'ip' => $request->ip()
+            ]);
+
             return response()->json(['error' => 'Invalid or expired code'], 400);
         }
 
-        // Mark verified
         Cache::put('password_reset_verified_' . $request->email, true, now()->addMinutes(10));
+
+        Log::info('Password reset code verified', [
+            'email_hash' => hash('sha256', $request->email),
+            'ip' => $request->ip()
+        ]);
 
         return response()->json(['message' => 'Code verified']);
     }
 
-    // Step 3: Reset password
     public function resetPassword(Request $request)
     {
         $request->validate([
@@ -83,6 +145,12 @@ class PasswordResetController extends Controller
         // Cleanup
         Cache::forget('password_reset_' . $request->email);
         Cache::forget('password_reset_verified_' . $request->email);
+
+        Log::info('Password reset successful', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'ip' => $request->ip()
+        ]);
 
         return response()->json(['message' => 'Password successfully reset']);
     }

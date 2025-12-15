@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\UserMeasurements;
+use App\Services\LoginSecurityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -11,6 +12,15 @@ use Illuminate\Support\Facades\Http;
 
 class RegistrationController extends Controller
 {
+    protected const MAX_ATTEMPTS = 5;
+
+    protected $loginSecurity;
+
+    public function __construct()
+    {
+        $this->loginSecurity = new LoginSecurityService();
+    }
+
     public function register(Request $request): \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
     {
         try {
@@ -117,9 +127,22 @@ class RegistrationController extends Controller
                 'cf-turnstile-response' => ['required', 'string'],
             ]);
 
+            // Check if email is blocked
+            $emailBlock = $this->loginSecurity->isEmailBlocked($credentials['email']);
+            if ($emailBlock['blocked']) {
+                return $this->handleBlockedLogin($request, $emailBlock);
+            }
+
+            // Check if IP is blocked
+            $ipBlock = $this->loginSecurity->isIpBlocked($request->ip());
+            if ($ipBlock['blocked']) {
+                return $this->handleBlockedLogin($request, $ipBlock);
+            }
+
             // Validate Turnstile token
             $turnstileValid = $this->validateTurnstile($credentials['cf-turnstile-response']);
             if (!$turnstileValid['success']) {
+                $this->loginSecurity->recordAttempt($credentials['email'], $request->ip(), false);
                 return response()->json([
                     'success' => false,
                     'message' => $turnstileValid['message'],
@@ -141,6 +164,8 @@ class RegistrationController extends Controller
         $user = User::where('email', $credentials['email'])->first();
 
         if ($user && in_array($user->role, ['Admin', 'SuperAdmin'])) {
+            $this->loginSecurity->recordAttempt($credentials['email'], $request->ip(), false);
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
@@ -155,6 +180,9 @@ class RegistrationController extends Controller
         }
 
         if (Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['password']], $request->boolean('remember'))) {
+            // Record successful attempt
+            $this->loginSecurity->recordAttempt($credentials['email'], $request->ip(), true);
+
             $request->session()->regenerate();
 
             // Handle AJAX requests
@@ -170,17 +198,52 @@ class RegistrationController extends Controller
         }
 
         // Handle failed login
+        $this->loginSecurity->recordAttempt($credentials['email'], $request->ip(), false);
+        $remainingAttempts = $this->loginSecurity->getRemainingAttempts($credentials['email']);
+
+        $message = 'The provided credentials do not match our records.';
+        if ($remainingAttempts > 0 && $remainingAttempts < self::MAX_ATTEMPTS) {
+            $message .= " You have {$remainingAttempts} attempt(s) remaining.";
+        }
+
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => false,
-                'message' => 'The provided credentials do not match our records.',
-                'errors' => ['email' => ['The provided credentials do not match our records.']]
+                'message' => $message,
+                'remaining_attempts' => $remainingAttempts,
+                'errors' => ['email' => [$message]]
             ], 422);
         }
 
         return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
+            'email' => $message,
         ])->onlyInput('email');
+    }
+
+    /**
+     * Handle blocked login attempts
+     */
+    protected function handleBlockedLogin(Request $request, array $blockData)
+    {
+        $message = $blockData['message'];
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'blocked' => true,
+                'blocked_until' => $blockData['blocked_until']->toIso8601String(),
+                'remaining_seconds' => $blockData['remaining_seconds'],
+                'errors' => ['email' => [$message]]
+            ], 429);  // 429 Too Many Requests
+        }
+
+        return back()
+            ->withErrors(['email' => $message])
+            ->withInput($request->only('email', 'remember'))
+            ->with('blocked', true)
+            ->with('blocked_until', $blockData['blocked_until']->toIso8601String())
+            ->with('remaining_seconds', $blockData['remaining_seconds']);
     }
 
     /** Validate Cloudflare Turnstile token */
