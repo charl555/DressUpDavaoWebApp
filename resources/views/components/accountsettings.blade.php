@@ -1,3 +1,4 @@
+<!-- accountpage.blade.php -->
 <div class="flex justify-center">
     <div
         class="w-full lg:w-[75%] flex flex-col lg:flex-row text-black pt-[100px] sm:pt-[100px] pb-[50px] justify-center lg:space-x-8 px-4 sm:px-6 lg:px-8">
@@ -99,14 +100,6 @@
                         </svg>
                         <h1 class="text-2xl font-bold text-gray-800">My Profile</h1>
                     </div>
-                    <button type="button" id="editProfileBtn"
-                        class="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg flex items-center">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Edit Profile
-                    </button>
                 </div>
                 <p class="text-gray-600 pb-6 text-sm">Manage and protect your account information.</p>
 
@@ -119,41 +112,36 @@
                         <div>
                             <label for="full-name" class="block text-sm font-semibold text-gray-700 mb-2">Full
                                 Name</label>
-                            <div class="relative">
+                            <div class="relative flex gap-2">
                                 <input type="text" id="full-name" name="name" value="{{ Auth::user()->name }}"
                                     class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
                                     readonly>
-                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                </div>
+                                <button type="button" onclick="editField('full-name')"
+                                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-all duration-200 whitespace-nowrap">
+                                    Edit
+                                </button>
                             </div>
                         </div>
 
                         <!-- Email -->
                         <div>
                             <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
-                            <div class="relative">
-                                <input type="email" id="email" name="email" value="{{ Auth::user()->email }}"
-                                    class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200 email-masked"
-                                    readonly data-original="{{ Auth::user()->email }}">
-                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                    </svg>
-                                </div>
+                            <div class="relative flex gap-2">
+                                <input type="email" id="email" name="email" value="{{ maskEmail(Auth::user()->email) }}"
+                                    class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
+                                    readonly data-original="{{ Auth::user()->email }}"
+                                    data-masked="{{ maskEmail(Auth::user()->email) }}">
+                                <button type="button" onclick="editField('email')"
+                                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-all duration-200 whitespace-nowrap">
+                                    Edit
+                                </button>
                             </div>
                         </div>
 
                         <!-- Gender -->
                         <div>
                             <label for="gender" class="block text-sm font-semibold text-gray-700 mb-2">Gender</label>
-                            <div class="relative">
+                            <div class="relative flex gap-2">
                                 <select id="gender" name="gender"
                                     class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200 appearance-none"
                                     disabled>
@@ -166,38 +154,33 @@
                                     <option value="Prefer not to say" {{ Auth::user()->gender == 'Prefer not to say' ? 'selected' : '' }}>Prefer not to say
                                     </option>
                                 </select>
-                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
-                                    </svg>
-                                </div>
+                                <button type="button" onclick="editField('gender')"
+                                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-all duration-200 whitespace-nowrap">
+                                    Edit
+                                </button>
                             </div>
                         </div>
 
                         <!-- Phone -->
                         <div>
                             <label for="phone" class="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
-                            <div class="relative">
+                            <div class="relative flex gap-2">
                                 <input type="tel" id="phone" name="phone_number"
-                                    value="{{ Auth::user()->phone_number }}"
-                                    class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200 phone-masked"
-                                    readonly data-original="{{ Auth::user()->phone_number }}">
-                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                    </svg>
-                                </div>
+                                    value="{{ maskPhone(Auth::user()->phone_number) }}"
+                                    class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
+                                    readonly data-original="{{ Auth::user()->phone_number }}"
+                                    data-masked="{{ maskPhone(Auth::user()->phone_number) }}">
+                                <button type="button" onclick="editField('phone')"
+                                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-all duration-200 whitespace-nowrap">
+                                    Edit
+                                </button>
                             </div>
                         </div>
                     </div>
 
                     <!-- Save/Cancel Buttons (Hidden by default) -->
-                    <div id="formActions" class="pt-8 flex justify-end space-x-4">
-                        <button type="button" id="cancelEditBtn"
+                    <div id="formActions" class="pt-8 flex justify-end space-x-4 hidden">
+                        <button type="button" id="cancelEditBtn" onclick="cancelEdit()"
                             class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
                             Cancel
                         </button>
@@ -1107,6 +1090,220 @@
 </div>
 
 <script>
+    // Store original values globally
+    let originalValues = {};
+    let currentEditingField = null;
+
+    // Function to edit a specific field
+    function editField(fieldId) {
+        const field = document.getElementById(fieldId);
+        const editBtn = field.parentElement.querySelector('button');
+
+        // Store current field being edited
+        currentEditingField = fieldId;
+
+        // Store original value
+        if (field.type === 'email' || field.type === 'tel') {
+            // For email and phone, use the original unmasked value
+            originalValues[fieldId] = field.getAttribute('data-original') || '';
+        } else if (field.tagName === 'SELECT') {
+            originalValues[fieldId] = field.value;
+        } else {
+            originalValues[fieldId] = field.value;
+        }
+
+        // Clear the field value
+        field.value = '';
+
+        // Enable the field for editing
+        if (field.tagName === 'SELECT') {
+            field.disabled = false;
+        } else {
+            field.readOnly = false;
+        }
+
+        // Change styles
+        field.classList.remove('bg-gray-50', 'text-gray-600');
+        field.classList.add('bg-white', 'text-gray-900', 'border-purple-300');
+        field.focus();
+
+        // Show save/cancel buttons
+        document.getElementById('formActions').classList.remove('hidden');
+
+        // Hide all edit buttons
+        document.querySelectorAll('[onclick^="editField"]').forEach(btn => {
+            btn.style.display = 'none';
+        });
+    }
+
+    // Function to cancel editing
+    function cancelEdit() {
+        if (!currentEditingField) return;
+
+        const field = document.getElementById(currentEditingField);
+
+        // Restore original value (show masked version for email/phone)
+        if (field.type === 'email' || field.type === 'tel') {
+            // Show masked version
+            field.value = field.getAttribute('data-masked');
+        } else {
+            field.value = originalValues[currentEditingField] || '';
+        }
+
+        // Disable the field
+        if (field.tagName === 'SELECT') {
+            field.disabled = true;
+        } else {
+            field.readOnly = true;
+        }
+
+        // Reset styles
+        field.classList.remove('bg-white', 'text-gray-900', 'border-purple-300');
+        field.classList.add('bg-gray-50', 'text-gray-600');
+
+        // Hide save/cancel buttons
+        document.getElementById('formActions').classList.add('hidden');
+
+        // Show all edit buttons
+        document.querySelectorAll('[onclick^="editField"]').forEach(btn => {
+            btn.style.display = 'block';
+        });
+
+        // Clear current editing field
+        currentEditingField = null;
+        originalValues = {};
+    }
+
+    // Form submission handling
+    document.addEventListener('DOMContentLoaded', function () {
+        const profileForm = document.getElementById('profileForm');
+
+        if (profileForm) {
+            profileForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                // Show loading state
+                const saveBtn = document.getElementById('saveProfileBtn');
+                const originalText = saveBtn.innerHTML;
+                saveBtn.innerHTML = `
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving...
+                `;
+                saveBtn.disabled = true;
+
+                // Create FormData with actual values
+                const formData = new FormData();
+
+                // Add CSRF token
+                formData.append('_token', document.querySelector('input[name="_token"]').value);
+                formData.append('_method', 'PUT');
+
+                // Get all field values
+                const fields = ['full-name', 'email', 'gender', 'phone'];
+                fields.forEach(fieldId => {
+                    const field = document.getElementById(fieldId);
+                    if (field) {
+                        // Use the current value (which should be unmasked if user edited it)
+                        let value = field.value;
+
+                        // If it's a masked field that wasn't edited, use the original value
+                        if ((field.type === 'email' || field.type === 'tel') && value === field.getAttribute('data-masked')) {
+                            value = field.getAttribute('data-original') || '';
+                        }
+
+                        formData.append(field.name, value);
+                    }
+                });
+
+                // Submit via AJAX
+                fetch(profileForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            if (typeof showToast === 'function') {
+                                showToast(data.message || 'Profile updated successfully!', 'success');
+                            }
+
+                            // Update data attributes with new values
+                            const emailField = document.getElementById('email');
+                            const phoneField = document.getElementById('phone');
+
+                            if (emailField) {
+                                const newEmail = formData.get('email');
+                                emailField.setAttribute('data-original', newEmail);
+                                emailField.setAttribute('data-masked', maskEmail(newEmail));
+                            }
+
+                            if (phoneField) {
+                                const newPhone = formData.get('phone_number');
+                                phoneField.setAttribute('data-original', newPhone);
+                                phoneField.setAttribute('data-masked', maskPhone(newPhone));
+                            }
+
+                            // Reset form state
+                            cancelEdit();
+
+                            // Reload page after a delay to show updated info
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1500);
+                        } else {
+                            if (typeof showToast === 'function') {
+                                showToast(data.message || 'Failed to update profile.', 'error');
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        if (typeof showToast === 'function') {
+                            showToast('An error occurred. Please try again.', 'error');
+                        }
+                    })
+                    .finally(() => {
+                        // Restore button state
+                        saveBtn.innerHTML = originalText;
+                        saveBtn.disabled = false;
+                    });
+            });
+        }
+    });
+
+    // Masking functions
+    function maskEmail(email) {
+        if (!email) return '';
+        const [localPart, domain] = email.split('@');
+        if (!localPart || !domain) return email;
+
+        if (localPart.length <= 2) {
+            return localPart.charAt(0) + '*'.repeat(localPart.length - 1) + '@' + domain;
+        } else {
+            const firstChar = localPart.charAt(0);
+            const lastChar = localPart.charAt(localPart.length - 1);
+            return firstChar + '*'.repeat(localPart.length - 2) + lastChar + '@' + domain;
+        }
+    }
+
+    function maskPhone(phone) {
+        if (!phone) return '';
+        const visibleDigits = 4;
+        const phoneLength = phone.length;
+        if (phoneLength <= visibleDigits) {
+            return '*'.repeat(phoneLength);
+        }
+        const maskedPart = '*'.repeat(phoneLength - visibleDigits);
+        const visiblePart = phone.slice(-visibleDigits);
+        return maskedPart + visiblePart;
+    }
+
     function validateDeleteConfirmation() {
         const confirmationInput = document.getElementById('delete-confirmation');
         const confirmationError = document.getElementById('confirmation-error');
@@ -1319,23 +1516,6 @@
         form.submit();
     }
 
-    // Initialize validation on page load
-    document.addEventListener('DOMContentLoaded', function () {
-        // Add event listeners for real-time validation
-        const confirmationInput = document.getElementById('delete-confirmation');
-        const passwordInput = document.getElementById('delete-password');
-
-        if (confirmationInput) {
-            confirmationInput.addEventListener('input', validateDeleteConfirmation);
-            confirmationInput.addEventListener('blur', validateDeleteConfirmation);
-        }
-
-        if (passwordInput) {
-            passwordInput.addEventListener('input', validatePassword);
-            passwordInput.addEventListener('blur', validatePassword);
-        }
-    });
-
     // Tab Switching + Persistence
     document.addEventListener('DOMContentLoaded', () => {
         const links = document.querySelectorAll('.nav-link');
@@ -1364,233 +1544,6 @@
                 });
             });
         });
-    });
-
-    // Data masking functions
-    function maskEmail(email) {
-        if (!email) return '';
-        const [localPart, domain] = email.split('@');
-        if (localPart.length <= 2) {
-            return localPart.charAt(0) + '*'.repeat(localPart.length - 1) + '@' + domain;
-        } else {
-            const firstChar = localPart.charAt(0);
-            const lastChar = localPart.charAt(localPart.length - 1);
-            return firstChar + '*'.repeat(localPart.length - 2) + lastChar + '@' + domain;
-        }
-    }
-
-    function maskPhone(phone) {
-        if (!phone) return '';
-        // Keep last 4 digits visible
-        const visibleDigits = 4;
-        const phoneLength = phone.length;
-        if (phoneLength <= visibleDigits) {
-            return phone;
-        }
-        const maskedPart = '*'.repeat(phoneLength - visibleDigits);
-        const visiblePart = phone.slice(-visibleDigits);
-        return maskedPart + visiblePart;
-    }
-
-    // Apply initial masking
-    document.addEventListener('DOMContentLoaded', function () {
-        // Get original values
-        const emailField = document.getElementById('email');
-        const phoneField = document.getElementById('phone');
-
-        if (emailField) {
-            const originalEmail = emailField.getAttribute('data-original') || emailField.value;
-            emailField.value = maskEmail(originalEmail);
-        }
-
-        if (phoneField) {
-            const originalPhone = phoneField.getAttribute('data-original') || phoneField.value;
-            phoneField.value = maskPhone(originalPhone);
-        }
-
-
-
-        // Enhanced edit profile functionality
-        const editProfileBtn = document.getElementById('editProfileBtn');
-        const cancelEditBtn = document.getElementById('cancelEditBtn');
-        const saveProfileBtn = document.getElementById('saveProfileBtn');
-        const formActions = document.getElementById('formActions');
-        const profileForm = document.getElementById('profileForm');
-
-        // Store original values for cancel functionality
-        let originalValues = {};
-
-
-        function enableFormEditing() {
-            const inputs = profileForm.querySelectorAll('input, select');
-
-            // Store original values
-            inputs.forEach(input => {
-                if (input.id === 'email' || input.id === 'phone') {
-                    // Store the unmasked original values
-                    originalValues[input.name] = input.getAttribute('data-original') || input.value;
-                } else {
-                    originalValues[input.name] = input.value;
-                }
-            });
-
-
-            inputs.forEach(input => {
-                if (input.type === 'select-one') {
-                    input.disabled = false;
-                } else {
-                    input.readOnly = false;
-                }
-                input.classList.remove('bg-gray-50', 'text-gray-600');
-                input.classList.add('bg-white', 'text-gray-900');
-
-                // Keep email and phone masked even when editing
-                if (input.id === 'email') {
-                    const originalEmail = input.getAttribute('data-original') || originalValues[input.name];
-                    input.value = maskEmail(originalEmail); // Keep masked during editing
-                    input.setAttribute('data-original', originalEmail); // Store original for saving
-                } else if (input.id === 'phone') {
-                    const originalPhone = input.getAttribute('data-original') || originalValues[input.name];
-                    input.value = maskPhone(originalPhone); // Keep masked during editing
-                    input.setAttribute('data-original', originalPhone); // Store original for saving
-                }
-            });
-
-            // Show save/cancel buttons, hide edit button
-            formActions.classList.remove('hidden');
-            editProfileBtn.classList.add('hidden');
-        }
-
-
-        function disableFormEditing() {
-            const inputs = profileForm.querySelectorAll('input, select');
-
-            // Disable inputs and set readonly/disabled states
-            inputs.forEach(input => {
-                if (input.type === 'select-one') {
-                    input.disabled = true;
-                } else {
-                    input.readOnly = true;
-                }
-                input.classList.remove('bg-white', 'text-gray-900');
-                input.classList.add('bg-gray-50', 'text-gray-600');
-
-                // Apply masking when not editing
-                if (input.id === 'email') {
-                    const originalEmail = input.getAttribute('data-original') || input.value;
-                    input.value = maskEmail(originalEmail);
-                } else if (input.id === 'phone') {
-                    const originalPhone = input.getAttribute('data-original') || input.value;
-                    input.value = maskPhone(originalPhone);
-                }
-            });
-
-            // Hide save/cancel buttons, show edit button
-            formActions.classList.add('hidden');
-            editProfileBtn.classList.remove('hidden');
-        }
-
-        // Function to restore original values
-        function restoreOriginalValues() {
-            const inputs = profileForm.querySelectorAll('input, select');
-            inputs.forEach(input => {
-                if (originalValues[input.name] !== undefined) {
-                    input.value = originalValues[input.name];
-
-                    // Update data-original attribute for masked fields
-                    if (input.id === 'email' || input.id === 'phone') {
-                        input.setAttribute('data-original', originalValues[input.name]);
-                    }
-                }
-            });
-        }
-
-        // Event Listeners
-        if (editProfileBtn) {
-            editProfileBtn.addEventListener('click', enableFormEditing);
-        }
-
-        if (cancelEditBtn) {
-            cancelEditBtn.addEventListener('click', function () {
-                restoreOriginalValues();
-                disableFormEditing();
-            });
-        }
-
-        // Form submission handling
-        if (profileForm) {
-            profileForm.addEventListener('submit', function (e) {
-                e.preventDefault();
-
-                // Show loading state
-                const originalText = saveProfileBtn.innerHTML;
-                saveProfileBtn.innerHTML = `
-                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Saving...
-            `;
-                saveProfileBtn.disabled = true;
-
-                // Submit form via AJAX
-                const formData = new FormData(profileForm);
-
-                fetch(profileForm.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            if (typeof showToast === 'function') {
-                                showToast(data.message || 'Profile updated successfully!', 'success');
-                            }
-
-                            // Update data-original attributes with new values
-                            const emailField = document.getElementById('email');
-                            const phoneField = document.getElementById('phone');
-
-                            if (emailField) {
-                                emailField.setAttribute('data-original', emailField.value);
-                            }
-
-                            if (phoneField) {
-                                phoneField.setAttribute('data-original', phoneField.value);
-                            }
-
-                            disableFormEditing();
-
-                            // Update original values with new values
-                            const inputs = profileForm.querySelectorAll('input, select');
-                            inputs.forEach(input => {
-                                originalValues[input.name] = input.value;
-                            });
-                        } else {
-                            if (typeof showToast === 'function') {
-                                showToast(data.message || 'Failed to update profile.', 'error');
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        if (typeof showToast === 'function') {
-                            showToast('An error occurred. Please try again.', 'error');
-                        }
-                    })
-                    .finally(() => {
-                        // Restore button state
-                        saveProfileBtn.innerHTML = originalText;
-                        saveProfileBtn.disabled = false;
-                    });
-            });
-        }
-
-        // Initialize form in disabled state
-        disableFormEditing();
     });
 
     function togglePassword(fieldId) {
