@@ -6,38 +6,44 @@ use App\Models\Shops;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Shops>
- */
 class ShopsFactory extends Factory
 {
     protected $model = Shops::class;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
-    public function definition(): array
+    public function definition()
     {
         return [
-            'user_id' => User::factory(),
-            'shop_name' => $this->faker->company() . ' Boutique',
-            'shop_address' => $this->faker->address(),
-            'shop_description' => $this->faker->paragraph(),
+            'user_id' => User::factory()->tailor(),
+            'shop_name' => $this->faker->company(),
             'shop_slug' => $this->faker->slug(),
+            'shop_description' => $this->faker->paragraph(),
+            'shop_address' => $this->faker->address(),
             'shop_logo' => null,
             'shop_policy' => $this->faker->paragraph(),
+            'shop_status' => 'Verified',
+            'facebook_url' => null,
+            'instagram_url' => null,
+            'tiktok_url' => null,
+            'payment_options' => null,
+            'allow_3d_model_access' => false,
         ];
     }
 
-    /**
-     * Set a specific user for the shop.
-     */
-    public function forUser(User $user): static
+    public function pending()
     {
-        return $this->state(fn (array $attributes) => [
-            'user_id' => $user->id,
-        ]);
+        return $this->state(function (array $attributes) {
+            return [
+                'shop_status' => 'Pending',
+            ];
+        });
+    }
+
+    public function suspended()
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'shop_status' => 'Suspended',
+            ];
+        });
     }
 }

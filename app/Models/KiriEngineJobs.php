@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class KiriEngineJobs extends Model
 {
+    use HasFactory;
+
     protected $table = 'kiri_engine_jobs';
     protected $primaryKey = 'kiri_engine_job_id';
 

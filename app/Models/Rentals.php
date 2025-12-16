@@ -4,12 +4,15 @@ namespace App\Models;
 
 use App\Services\RentalBusinessRules;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
 
 class Rentals extends Model
 {
+    use HasFactory;
+
     protected $table = 'rentals';
     protected $primaryKey = 'rental_id';
 

@@ -10,13 +10,12 @@ use Illuminate\Support\Facades\Cache;
 class LoginSecurityService
 {
     // Configuration
-    protected const MAX_ATTEMPTS = 5;
-    protected const BLOCK_DURATION = 900;  // 15 minutes
+    protected const MAX_ATTEMPTS = 3;
+    protected const BLOCK_DURATION = 20;
     protected const ATTEMPT_WINDOW = 300;  // 5 minutes
     protected const IP_MAX_ATTEMPTS = 10;
-    protected const IP_BLOCK_DURATION = 1800;  // 30 minutes
+    protected const IP_BLOCK_DURATION = 20;
 
-    // Use HMAC with app key for secure hashing
     private function getAttemptKey(string $email): string
     {
         $key = config('app.key');
@@ -41,9 +40,6 @@ class LoginSecurityService
         return 'ip_login_blocked:' . hash_hmac('sha256', $ip, $key);
     }
 
-    /**
-     * Check if login is blocked for email
-     */
     public function isEmailBlocked(string $email): array
     {
         // Check cache first
@@ -65,7 +61,6 @@ class LoginSecurityService
             }
         }
 
-        // Check database
         $block = LoginBlock::where('email', $email)
             ->where('blocked_until', '>', now())
             ->latest()
@@ -92,9 +87,6 @@ class LoginSecurityService
         return ['blocked' => false];
     }
 
-    /**
-     * Check if IP is blocked
-     */
     public function isIpBlocked(string $ip): array
     {
         // Check cache first
@@ -116,7 +108,6 @@ class LoginSecurityService
             }
         }
 
-        // Check database
         $block = LoginBlock::where('ip_address', $ip)
             ->whereNull('email')
             ->where('blocked_until', '>', now())
@@ -143,9 +134,6 @@ class LoginSecurityService
         return ['blocked' => false];
     }
 
-    /**
-     * Record login attempt
-     */
     public function recordAttempt(string $email, string $ip, bool $success): void
     {
         // Store in database
@@ -163,23 +151,17 @@ class LoginSecurityService
         }
     }
 
-    /**
-     * Handle failed login attempt
-     */
     protected function handleFailedAttempt(string $email, string $ip): void
     {
         $attemptKey = $this->getAttemptKey($email);
         $ipAttemptKey = $this->getIpAttemptKey($ip);
 
-        // Get current attempts
         $emailAttempts = Cache::get($attemptKey, 0) + 1;
         $ipAttempts = Cache::get($ipAttemptKey, 0) + 1;
 
-        // Store attempts with window
         Cache::put($attemptKey, $emailAttempts, self::ATTEMPT_WINDOW);
         Cache::put($ipAttemptKey, $ipAttempts, self::ATTEMPT_WINDOW);
 
-        // Check if we need to block
         if ($emailAttempts >= self::MAX_ATTEMPTS) {
             $this->blockEmail($email, $ip, $emailAttempts);
         }
@@ -189,14 +171,10 @@ class LoginSecurityService
         }
     }
 
-    /**
-     * Block email address
-     */
     protected function blockEmail(string $email, string $ip, int $attempts): void
     {
         $blockedUntil = now()->addSeconds(self::BLOCK_DURATION);
 
-        // Store in database
         LoginBlock::create([
             'email' => $email,
             'ip_address' => $ip,
@@ -205,7 +183,6 @@ class LoginSecurityService
             'reason' => 'Max failed attempts exceeded'
         ]);
 
-        // Store in cache
         Cache::put($this->getBlockKey($email), [
             'blocked_until' => $blockedUntil,
             'attempts' => $attempts
@@ -215,14 +192,10 @@ class LoginSecurityService
         Cache::forget($this->getAttemptKey($email));
     }
 
-    /**
-     * Block IP address
-     */
     protected function blockIp(string $ip, string $email, int $attempts): void
     {
         $blockedUntil = now()->addSeconds(self::IP_BLOCK_DURATION);
 
-        // Store in database
         LoginBlock::create([
             'email' => null,
             'ip_address' => $ip,
@@ -231,19 +204,14 @@ class LoginSecurityService
             'reason' => 'IP max attempts exceeded'
         ]);
 
-        // Store in cache
         Cache::put($this->getIpBlockKey($ip), [
             'blocked_until' => $blockedUntil,
             'attempts' => $attempts
         ], self::IP_BLOCK_DURATION);
 
-        // Clear IP attempts cache
         Cache::forget($this->getIpAttemptKey($ip));
     }
 
-    /**
-     * Clear attempts on successful login
-     */
     public function clearAttempts(string $email, string $ip): void
     {
         // Clear cache
@@ -252,7 +220,6 @@ class LoginSecurityService
         Cache::forget($this->getBlockKey($email));
         Cache::forget($this->getIpBlockKey($ip));
 
-        // Remove active blocks from database
         LoginBlock::where(function ($query) use ($email, $ip) {
             $query
                 ->where('email', $email)
@@ -260,18 +227,12 @@ class LoginSecurityService
         })->where('blocked_until', '>', now())->delete();
     }
 
-    /**
-     * Get remaining attempts for email
-     */
     public function getRemainingAttempts(string $email): int
     {
         $attempts = Cache::get($this->getAttemptKey($email), 0);
         return max(0, self::MAX_ATTEMPTS - $attempts);
     }
 
-    /**
-     * Format seconds to human readable
-     */
     protected function formatSeconds(int $seconds): string
     {
         if ($seconds < 60) {
@@ -282,9 +243,6 @@ class LoginSecurityService
         return $minutes . ' minute' . ($minutes > 1 ? 's' : '');
     }
 
-    /**
-     * Clean up old records (run via scheduled command)
-     */
     public function cleanupOldRecords(int $days = 30): void
     {
         $cutoffDate = now()->subDays($days);

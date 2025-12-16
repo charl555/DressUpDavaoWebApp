@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ProductEvents extends Model
 {
+    use HasFactory;
+
     protected $table = 'product_events';
     protected $primaryKey = 'product_event_id';
 

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ShopAccountRequests extends Model
 {
+    use HasFactory;
+
     protected $table = 'shop_account_requests';
     protected $primaryKey = 'shop_account_request_id';
 

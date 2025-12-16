@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ProductMeasurements extends Model
 {
+    use HasFactory;
+
     protected $table = 'product_measurements';
     protected $primaryKey = 'product_measurements_id';
 

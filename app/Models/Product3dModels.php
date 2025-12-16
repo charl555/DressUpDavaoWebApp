@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Product3dModels extends Model
 {
+    use HasFactory;
+
     protected $table = 'product_3d_models';
     protected $primaryKey = 'product_3d_model_id';
 

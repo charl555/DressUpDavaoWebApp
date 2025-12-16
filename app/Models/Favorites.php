@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 class Favorites extends Pivot
 {
+    use HasFactory;
+
     protected $table = 'favorites';
     protected $primaryKey = 'favorite_id';
 
