@@ -70,15 +70,23 @@ class AddProductToShopPage extends Page implements HasTable
                 TextColumn::make('subtype')
                     ->label('Style')
                     ->searchable(),
-                TextColumn::make('status')
+                TextColumn::make('current_status')
                     ->label('Status')
-                    ->searchable()
+                    ->getStateUsing(fn($record) => $record->current_status)
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
                         'Available' => 'success',
                         'Rented' => 'warning',
                         'Reserved' => 'info',
-                        'Maintenance' => 'danger',
+                        'Overdue' => 'danger',
+                        'Pending Cleaning' => 'warning',
+                        'In Cleaning' => 'warning',
+                        'Steamed & Pressed' => 'warning',
+                        'Quality Check' => 'warning',
+                        'Needs Repair' => 'danger',
+                        'In Alteration' => 'warning',
+                        'Damaged – Not Rentable' => 'danger',
+                        default => 'gray',
                     }),
             ])
             ->filters([
@@ -92,11 +100,15 @@ class AddProductToShopPage extends Page implements HasTable
                 SelectFilter::make('status')
                     ->options([
                         'Available' => 'Available',
-                        'Rented' => 'Rented',
-                        'Reserved' => 'Reserved',
-                        'Maintenance' => 'Maintenance',
+                        'Pending Cleaning' => 'Pending Cleaning',
+                        'In Cleaning' => 'In Cleaning',
+                        'Steamed & Pressed' => 'Steamed & Pressed',
+                        'Quality Check' => 'Quality Check',
+                        'Needs Repair' => 'Needs Repair',
+                        'In Alteration' => 'In Alteration',
+                        'Damaged – Not Rentable' => 'Damaged – Not Rentable',
                     ])
-                    ->label('Status')
+                    ->label('Base Status')
                     ->placeholder('All Statuses'),
                 SelectFilter::make('subtype')
                     ->label('Style')

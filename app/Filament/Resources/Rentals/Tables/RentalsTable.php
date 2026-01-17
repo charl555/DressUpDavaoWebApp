@@ -265,10 +265,8 @@ class RentalsTable
                                 $record->update([
                                     'rental_status' => 'Picked Up',
                                 ]);
-
-                                $record->product->update([
-                                    'status' => 'Rented',
-                                ]);
+                                // Note: Product status is now determined dynamically based on rental dates
+                                // No need to manually update product status
                             }),
                         Action::make('addPayment')
                             ->label('Add Payment')
@@ -475,8 +473,9 @@ class RentalsTable
                                 $record->is_returned = true;
                                 $record->save();
 
-                                // Update product back to available
-                                $record->product->update(['status' => 'Available']);
+                                // Note: Product status is now determined dynamically based on rental dates
+                                // No need to manually update product status - it will automatically
+                                // show as 'Available' once there are no active rentals for current date
 
                                 $message = 'Rental marked as returned successfully.';
                                 if ($paymentAmount > 0) {
@@ -529,10 +528,11 @@ class RentalsTable
             default => 'gray'
         };
 
-        $productStatusColor = match ($record->product->status) {
+        $productStatusColor = match ($record->product->current_status) {
             'Available' => 'success',
             'Rented' => 'warning',
             'Reserved' => 'info',
+            'Overdue' => 'danger',
             default => 'gray'
         };
 
@@ -587,7 +587,7 @@ class RentalsTable
                             Placeholder::make('product_status')
                                 ->label('Current Status')
                                 ->badge()
-                                ->content($record->product->status)
+                                ->content($record->product->current_status)
                                 ->color($productStatusColor),
                         ]),
                 ]),

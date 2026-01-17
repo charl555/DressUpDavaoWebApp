@@ -326,6 +326,8 @@ class ChatController extends Controller
 
     /**
      * Get available products for booking (admin only)
+     * Returns all rentable products (not in maintenance status)
+     * Date-specific availability is checked when creating the booking
      */
     public function getAvailableProducts()
     {
@@ -333,8 +335,10 @@ class ChatController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
+        // Get all rentable products (not in maintenance status)
+        // Products can be booked for future dates even if currently rented
         $products = Products::where('user_id', Auth::id())
-            ->where('status', 'Available')
+            ->whereNotIn('status', Products::MAINTENANCE_STATUSES)
             ->where('visibility', 'Yes')
             ->get(['product_id', 'name', 'type', 'rental_price']);
 
@@ -357,25 +361,21 @@ class ChatController extends Controller
         ]);
 
         try {
-            // Check if product is available
+            // Check if product exists and belongs to the admin
             $product = Products::findOrFail($request->product_id);
 
             if ($product->user_id !== Auth::id()) {
                 return response()->json(['error' => 'You can only book your own products'], 403);
             }
 
-            if ($product->status !== 'Available') {
-                return response()->json(['error' => 'Product is not available for booking'], 400);
+            // Check if product is rentable (not in maintenance status)
+            if (!$product->isRentable()) {
+                return response()->json(['error' => 'Product is currently under maintenance and not available for booking'], 400);
             }
 
-            // Check if there's already a booking for this product on this date
-            $existingBooking = Bookings::where('product_id', $request->product_id)
-                ->where('booking_date', $request->booking_date)
-                ->where('status', 'On Going')
-                ->first();
-
-            if ($existingBooking) {
-                return response()->json(['error' => 'Product is already booked for this date'], 400);
+            // Check if the date is available (no conflicts with existing rentals or bookings)
+            if (!$product->isDateAvailable($request->booking_date)) {
+                return response()->json(['error' => 'Product is not available for the selected date. Please check the availability calendar.'], 400);
             }
 
             // Create the booking
@@ -387,8 +387,8 @@ class ChatController extends Controller
                 'status' => 'On Going',
             ]);
 
-            // Update product status to Reserved
-            $product->update(['status' => 'Reserved']);
+            // Note: Product status is now determined dynamically based on rental/booking dates
+            // No need to manually update product status
 
             // Send a notification message to the user
             $user = User::findOrFail($request->user_id);

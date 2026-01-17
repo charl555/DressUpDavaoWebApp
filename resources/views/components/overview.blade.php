@@ -162,26 +162,6 @@
             <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4 font-serif">
                 {{ $product->name }}
             </h1>
-            <div class="flex items-center space-x-4">
-                @if ($product->status === 'Available')
-                    <span
-                        class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        Available
-                    </span>
-                @else
-                    <span
-                        class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        Unavailable
-                    </span>
-                @endif
-            </div>
         </div>
         {{-- Product Information --}}
         <div class="space-y-6 mb-8">
@@ -365,48 +345,6 @@
                     <span class="text-sm font-medium">Login to Favorite</span>
                 </div>
             @endauth
-
-            {{-- Availability Status --}}
-            <div class="mb-8">
-                @if ($product->status === 'Rented')
-                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                            </svg>
-                            <p class="text-yellow-800 font-medium">
-                                This product is currently rented and will be returned on
-                                <strong>{{ $product->rentals->first()->return_date->format('F j, Y') ?? 'N/A' }}</strong>.
-                            </p>
-                        </div>
-                    </div>
-                @elseif ($product->status === 'Reserved')
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            <p class="text-blue-800 font-medium">This product is currently reserved
-                                @if($product->bookings->first())
-                                    on <strong>{{ $product->bookings->first()->booking_date->format('F j, Y') }}</strong>.
-                                @endif
-                            </p>
-                        </div>
-                    </div>
-                @elseif ($product->status !== 'Available')
-                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                            </svg>
-                            <p class="text-red-800 font-medium">This product is currently unavailable.</p>
-                        </div>
-                    </div>
-                @endif
-            </div>
 
             {{-- Availability Calendar --}}
             <div class="bg-gray-50 rounded-lg p-6 mb-8">

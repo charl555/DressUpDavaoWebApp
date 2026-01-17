@@ -17,14 +17,10 @@ class CreateRentals extends CreateRecord
     protected function handleRecordCreation(array $data): Model
     {
         try {
-            // --- Step 1: Validate product existence and availability ---
+            // --- Step 1: Validate product existence ---
             $product = Products::find($data['product_id']);
             if (!$product) {
                 throw new \Exception('Product not found.');
-            }
-
-            if ($product->status !== 'Available') {
-                throw new \Exception('Product is no longer available for rental.');
             }
 
             // --- Step 2: Validate client type and ID ---
@@ -71,11 +67,20 @@ class CreateRentals extends CreateRecord
                 throw new \Exception('Return date cannot be before event date.');
             }
 
-            // --- Step 4: Prepare financial data ---
+            // --- Step 4: Check product availability for the requested dates ---
+            if (!$product->isRentable()) {
+                throw new \Exception('Product is currently under maintenance and not available for rental.');
+            }
+
+            if ($product->hasDateConflict($pickupDate, $returnDate)) {
+                throw new \Exception('Product is not available for the selected dates. Please check the availability calendar and choose different dates.');
+            }
+
+            // --- Step 5: Prepare financial data ---
             $amountPaid = (float) ($data['amount_paid'] ?? 0);
             $deposit = (float) ($data['deposit_amount'] ?? 0);
 
-            // --- Step 5: Create rental record ---
+            // --- Step 6: Create rental record ---
             $rental = Rentals::create([
                 'product_id' => $data['product_id'],
                 'customer_id' => $customerId,
@@ -91,7 +96,7 @@ class CreateRentals extends CreateRecord
                 'penalty_amount' => 0,
             ]);
 
-            // --- Step 6: Record initial payment (optional) ---
+            // --- Step 7: Record initial payment (optional) ---
             if ($amountPaid > 0) {
                 $payment = $rental->payments()->create([
                     'rental_id' => $rental->rental_id,
@@ -113,8 +118,7 @@ class CreateRentals extends CreateRecord
                 ]);
             }
 
-            // --- Step 7: Reserve product and increment count ---
-            $rental->product()->update(['status' => 'Rented']);
+            // --- Step 8: Increment rental count (no longer updating product status) ---
             $rental->product()->increment('rental_count');
 
             // --- Step 8: Log success ---

@@ -85,12 +85,6 @@
                                 </div>
                             </div>
                         @endif
-
-                        @if ($product->status !== 'Available')
-                            <div class="absolute inset-0 bg-gray-900/60 flex items-center justify-center">
-                                <span class="text-white text-sm sm:text-lg font-semibold tracking-wide px-2 text-center">Not Available</span>
-                            </div>
-                        @endif
                     </div>
 
                     <!-- Product Details - Responsive -->

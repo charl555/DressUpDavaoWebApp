@@ -50,15 +50,15 @@ class ProductsTable
                     ->searchable()
                     ->label('Events')
                     ->wrap(),
-                TextColumn::make('status')
-                    ->searchable()
-                    ->sortable()
+                TextColumn::make('current_status')
+                    ->label('Status')
+                    ->getStateUsing(fn($record) => $record->current_status)
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
                         'Available' => 'success',
                         'Rented' => 'warning',
                         'Reserved' => 'info',
-                        'Maintenance' => 'danger',
+                        'Overdue' => 'danger',
                         'Pending Cleaning' => 'warning',
                         'In Cleaning' => 'warning',
                         'Steamed & Pressed' => 'warning',
@@ -66,6 +66,7 @@ class ProductsTable
                         'Needs Repair' => 'danger',
                         'In Alteration' => 'warning',
                         'Damaged – Not Rentable' => 'danger',
+                        default => 'gray',
                     }),
                 TextColumn::make('colors'),
                 TextColumn::make('size'),
@@ -78,11 +79,15 @@ class ProductsTable
                 SelectFilter::make('status')
                     ->options([
                         'Available' => 'Available',
-                        'Rented' => 'Rented',
-                        'Reserved' => 'Reserved',
-                        'Maintenance' => 'Maintenance',
+                        'Pending Cleaning' => 'Pending Cleaning',
+                        'In Cleaning' => 'In Cleaning',
+                        'Steamed & Pressed' => 'Steamed & Pressed',
+                        'Quality Check' => 'Quality Check',
+                        'Needs Repair' => 'Needs Repair',
+                        'In Alteration' => 'In Alteration',
+                        'Damaged – Not Rentable' => 'Damaged – Not Rentable',
                     ])
-                    ->label('Status')
+                    ->label('Base Status')
                     ->placeholder('All Statuses'),
                 SelectFilter::make('type')
                     ->options([
@@ -149,16 +154,12 @@ class ProductsTable
                         ->label('Set Status')
                         ->icon('heroicon-o-wrench-screwdriver')
                         ->color('gray')
-                        ->disabled(fn($record) => $record->status === 'Rented')  // 🔒 disable if rented
-                        ->tooltip(fn($record) => $record->status === 'Rented'
-                            ? 'This product is currently rented and cannot be modified.'
-                            : 'Set or update the current product status.')
+                        ->tooltip('Set product availability or maintenance status. Rented/Reserved status is determined automatically based on active rentals and bookings.')
                         ->form([
                             Select::make('status')
                                 ->label('Product Status')
                                 ->options([
                                     'Available' => 'Available',
-                                    'Reserved' => 'Reserved',
                                     'Pending Cleaning' => 'Pending Cleaning',
                                     'In Cleaning' => 'In Cleaning',
                                     'Steamed & Pressed' => 'Steamed & Pressed',
@@ -168,7 +169,8 @@ class ProductsTable
                                     'Damaged – Not Rentable' => 'Damaged – Not Rentable',
                                 ])
                                 ->required()
-                                ->native(false),
+                                ->native(false)
+                                ->helperText('Note: Rented/Reserved status is determined automatically based on active rentals and bookings.'),
                         ])
                         ->requiresConfirmation()
                         ->action(function (array $data, $record): void {

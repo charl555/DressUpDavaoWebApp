@@ -34,7 +34,8 @@ class RentalsForm
                             ->schema([
                                 Select::make('product_id')
                                     ->options(function () {
-                                        return Products::where('status', 'Available')
+                                        // Show all rentable products (not in maintenance status)
+                                        return Products::whereNotIn('status', Products::MAINTENANCE_STATUSES)
                                             ->get()
                                             ->mapWithKeys(function ($product) {
                                                 return [$product->product_id => "{$product->name} - ₱" . number_format($product->rental_price, 2)];
@@ -57,7 +58,7 @@ class RentalsForm
                                         $set('amount_paid', 0);
                                         $set('deposit_amount', 0);
                                     })
-                                    ->helperText('Only available products are shown with their rental prices')
+                                    ->helperText('Select a product. Date availability will be validated when you save.')
                                     ->rules(['required', 'exists:products,product_id']),
                                 Hidden::make('product_name'),
                                 TextInput::make('rental_price')
@@ -126,6 +127,19 @@ class RentalsForm
                                     ->native(false)
                                     ->displayFormat('F j, Y')
                                     ->live()
+                                    ->disabledDates(function (callable $get) {
+                                        $productId = $get('product_id');
+                                        if (!$productId) {
+                                            return [];
+                                        }
+                                        $product = Products::find($productId);
+                                        if (!$product) {
+                                            return [];
+                                        }
+                                        // Get all unavailable dates for this product
+                                        $unavailableRanges = $product->getUnavailableDateRanges();
+                                        return array_keys($unavailableRanges);
+                                    })
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         // Auto-adjust event date if pickup is after event
                                         $eventDate = $get('event_date');
@@ -138,7 +152,7 @@ class RentalsForm
                                             $set('return_date', Carbon::parse($state)->addDays(2)->format('Y-m-d'));
                                         }
                                     })
-                                    ->helperText('Minimum 1 day advance booking required')
+                                    ->helperText('Minimum 1 day advance booking required. Red dates are unavailable.')
                                     ->rules(['required', 'after:today']),
                                 DatePicker::make('event_date')
                                     ->label('Event Date')
@@ -147,6 +161,19 @@ class RentalsForm
                                     ->native(false)
                                     ->displayFormat('F j, Y')
                                     ->live()
+                                    ->disabledDates(function (callable $get) {
+                                        $productId = $get('product_id');
+                                        if (!$productId) {
+                                            return [];
+                                        }
+                                        $product = Products::find($productId);
+                                        if (!$product) {
+                                            return [];
+                                        }
+                                        // Get all unavailable dates for this product
+                                        $unavailableRanges = $product->getUnavailableDateRanges();
+                                        return array_keys($unavailableRanges);
+                                    })
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         // Auto-adjust return date if event is after return
                                         $returnDate = $get('return_date');
@@ -154,7 +181,7 @@ class RentalsForm
                                             $set('return_date', Carbon::parse($state)->addDay()->format('Y-m-d'));
                                         }
                                     })
-                                    ->helperText('Date of the actual event')
+                                    ->helperText('Date of the actual event. Red dates are unavailable.')
                                     ->rules(['required', 'after_or_equal:pickup_date']),
                                 DatePicker::make('return_date')
                                     ->label('Return Date')
@@ -162,7 +189,20 @@ class RentalsForm
                                     ->minDate(now()->addDay())
                                     ->native(false)
                                     ->displayFormat('F j, Y')
-                                    ->helperText('When the product should be returned')
+                                    ->disabledDates(function (callable $get) {
+                                        $productId = $get('product_id');
+                                        if (!$productId) {
+                                            return [];
+                                        }
+                                        $product = Products::find($productId);
+                                        if (!$product) {
+                                            return [];
+                                        }
+                                        // Get all unavailable dates for this product
+                                        $unavailableRanges = $product->getUnavailableDateRanges();
+                                        return array_keys($unavailableRanges);
+                                    })
+                                    ->helperText('When the product should be returned. Red dates are unavailable.')
                                     ->rules(['required', 'after_or_equal:event_date']),
                                 Placeholder::make('rental_period')
                                     ->label('Rental Period')

@@ -363,15 +363,23 @@ class ShopPage extends Page implements HasTable, HasSchemas, HasActions
                 TextColumn::make('name')->label('Product Name')->searchable(),
                 TextColumn::make('type')->label('Product Type')->searchable(),
                 TextColumn::make('subtype')->label('Style')->searchable(),
-                TextColumn::make('status')
+                TextColumn::make('current_status')
                     ->label('Status')
-                    ->searchable()
+                    ->getStateUsing(fn($record) => $record->current_status)
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
                         'Available' => 'success',
                         'Rented' => 'warning',
                         'Reserved' => 'info',
-                        'Maintenance' => 'danger',
+                        'Overdue' => 'danger',
+                        'Pending Cleaning' => 'warning',
+                        'In Cleaning' => 'warning',
+                        'Steamed & Pressed' => 'warning',
+                        'Quality Check' => 'warning',
+                        'Needs Repair' => 'danger',
+                        'In Alteration' => 'warning',
+                        'Damaged – Not Rentable' => 'danger',
+                        default => 'gray',
                     }),
                 IconColumn::make('visibility')
                     ->label('Visibility')
