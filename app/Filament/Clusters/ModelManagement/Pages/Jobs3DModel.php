@@ -341,6 +341,16 @@ class Jobs3DModel extends Page implements HasTable
             ->columns([
                 TextColumn::make('serialize_id')
                     ->label('Job ID')
+                    ->formatStateUsing(function ($record) {
+                        $state = $record->serialize_id;
+
+                        if (strlen($state) >= 36 && str_contains($state, '-')) {
+                            $parts = explode('-', $state);
+                            return substr($parts[0], 0, 8);  // Just show the first segment
+                        }
+
+                        return substr($state, 0, 8);  // Show first 8 characters
+                    })
                     ->copyable()
                     ->searchable(),
                 TextColumn::make('status')

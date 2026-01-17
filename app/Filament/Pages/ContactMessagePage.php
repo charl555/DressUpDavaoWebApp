@@ -51,24 +51,6 @@ class ContactMessagePage extends Page Implements HasTable, HasSchemas
             ->columns([
                 TextColumn::make('name')
                     ->label('Name')
-                    ->formatStateUsing(function ($state) {
-                        // Mask name: John Doe -> Jo** D**
-                        if (empty($state))
-                            return 'Unknown';
-
-                        $nameParts = explode(' ', $state, 2);
-                        $maskedParts = [];
-
-                        foreach ($nameParts as $part) {
-                            if (strlen($part) <= 2) {
-                                $maskedParts[] = $part . '**';
-                            } else {
-                                $maskedParts[] = substr($part, 0, 2) . '**';
-                            }
-                        }
-
-                        return implode(' ', $maskedParts);
-                    })
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('email')
