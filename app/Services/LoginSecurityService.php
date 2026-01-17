@@ -10,11 +10,11 @@ use Illuminate\Support\Facades\Cache;
 class LoginSecurityService
 {
     // Configuration
-    protected const MAX_ATTEMPTS = 3;
-    protected const BLOCK_DURATION = 20;
+    protected const MAX_ATTEMPTS = 5;
+    protected const BLOCK_DURATION = 900;  // 15 minutes
     protected const ATTEMPT_WINDOW = 300;  // 5 minutes
-    protected const IP_MAX_ATTEMPTS = 10;
-    protected const IP_BLOCK_DURATION = 20;
+    protected const IP_MAX_ATTEMPTS = 10;  // 10 attempts per hour
+    protected const IP_BLOCK_DURATION = 1800;  // 15 minutes
 
     private function getAttemptKey(string $email): string
     {
