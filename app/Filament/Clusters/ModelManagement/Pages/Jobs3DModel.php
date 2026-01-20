@@ -26,8 +26,8 @@ class Jobs3DModel extends Page implements HasTable
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
     protected static ?string $slug = 'download-3d-models';
     protected string $view = 'filament.clusters.model-management.pages.jobs3-d-model';
-    protected static ?string $navigationLabel = 'Download 3D Models';
-    protected static ?string $title = 'Download 3D Models';
+    protected static ?string $navigationLabel = '3D Models';
+    protected static ?string $title = '3D Models';
     protected static ?int $navigationSort = 2;
     protected static ?string $cluster = ModelManagementCluster::class;
 
@@ -338,6 +338,7 @@ class Jobs3DModel extends Page implements HasTable
 
         return $table
             ->query(KiriEngineJobs::query()->where('user_id', Auth::id())->latest())
+            ->description('3D Model Generation tyically takes 1-5 minutes to complete.')
             ->columns([
                 TextColumn::make('serialize_id')
                     ->label('Job ID')
