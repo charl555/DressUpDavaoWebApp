@@ -356,23 +356,23 @@
                 }
 
                 contactsList.innerHTML = contacts.map(contact => `
-                                                                                                                                                    <div class="contact-item" data-user-id="${contact.id}" style="display: flex; align-items: center; padding: 0.75rem; cursor: pointer; transition: background-color 0.15s ease-in-out; border-bottom: 1px solid #f3f4f6;">
-                                                                                                                                                        <div style="width: 2.5rem; height: 2.5rem; border-radius: 50%; margin-right: 0.75rem; background-color: #dbeafe; display: flex; align-items: center; justify-content: center;">
-                                                                                                                                                            <span style="color: #2563eb; font-weight: 600;">${contact.name.charAt(0).toUpperCase()}</span>
-                                                                                                                                                        </div>
-                                                                                                                                                        <div style="flex-grow: 1; min-width: 0;">
-                                                                                                                                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                                                                                                                                                <p style="font-weight: 600; color: #1f2937; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${contact.name}</p>
-                                                                                                                                                                ${contact.role === 'User' ? '<span style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; background-color: #dcfce7; color: #166534; font-size: 0.75rem; border-radius: 0.25rem;">User</span>' : ''}
+                                                                                                                                                        <div class="contact-item" data-user-id="${contact.id}" style="display: flex; align-items: center; padding: 0.75rem; cursor: pointer; transition: background-color 0.15s ease-in-out; border-bottom: 1px solid #f3f4f6;">
+                                                                                                                                                            <div style="width: 2.5rem; height: 2.5rem; border-radius: 50%; margin-right: 0.75rem; background-color: #dbeafe; display: flex; align-items: center; justify-content: center;">
+                                                                                                                                                                <span style="color: #2563eb; font-weight: 600;">${contact.name.charAt(0).toUpperCase()}</span>
                                                                                                                                                             </div>
-                                                                                                                                                            <p style="font-size: 0.875rem; color: #6b7280; margin: 0; word-wrap: break-word; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${contact.latest_message || 'No messages yet'}</p>
+                                                                                                                                                            <div style="flex-grow: 1; min-width: 0;">
+                                                                                                                                                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                                                                                                                                    <p style="font-weight: 600; color: #1f2937; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${contact.name}</p>
+                                                                                                                                                                    ${contact.role === 'User' ? '<span style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; background-color: #dcfce7; color: #166534; font-size: 0.75rem; border-radius: 0.25rem;">User</span>' : ''}
+                                                                                                                                                                </div>
+                                                                                                                                                                <p style="font-size: 0.875rem; color: #6b7280; margin: 0; word-wrap: break-word; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${contact.latest_message || 'No messages yet'}</p>
+                                                                                                                                                            </div>
+                                                                                                                                                            <div style="text-align: right; margin-left: 0.5rem;">
+                                                                                                                                                                ${contact.unread_count > 0 ? `<span style="background-color: #ef4444; color: white; font-size: 0.75rem; border-radius: 50%; width: 1.25rem; height: 1.25rem; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.25rem;">${contact.unread_count}</span>` : ''}
+                                                                                                                                                                <div style="font-size: 0.75rem; color: #9ca3af;">${contact.latest_message_time ? formatTime(contact.latest_message_time) : ''}</div>
+                                                                                                                                                            </div>
                                                                                                                                                         </div>
-                                                                                                                                                        <div style="text-align: right; margin-left: 0.5rem;">
-                                                                                                                                                            ${contact.unread_count > 0 ? `<span style="background-color: #ef4444; color: white; font-size: 0.75rem; border-radius: 50%; width: 1.25rem; height: 1.25rem; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.25rem;">${contact.unread_count}</span>` : ''}
-                                                                                                                                                            <div style="font-size: 0.75rem; color: #9ca3af;">${contact.latest_message_time ? formatTime(contact.latest_message_time) : ''}</div>
-                                                                                                                                                        </div>
-                                                                                                                                                    </div>
-                                                                                                                                                `).join('');
+                                                                                                                                                    `).join('');
 
                 // Add click listeners to contact items
                 document.querySelectorAll('.contact-item').forEach(item => {
@@ -443,12 +443,12 @@
 
                     if (!data.messages || data.messages.length === 0) {
                         chatMessagesContainer.innerHTML = `
-                                                                                                                                                            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280;">
-                                                                                                                                                                <div style="text-align: center;">
-                                                                                                                                                                    <p>No messages yet. Start the conversation!</p>
+                                                                                                                                                                <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280;">
+                                                                                                                                                                    <div style="text-align: center;">
+                                                                                                                                                                        <p>No messages yet. Start the conversation!</p>
+                                                                                                                                                                    </div>
                                                                                                                                                                 </div>
-                                                                                                                                                            </div>
-                                                                                                                                                        `;
+                                                                                                                                                            `;
                     } else {
                         data.messages.forEach(message => {
                             appendMessage(message, message.sender_id === data.current_user_id);
@@ -524,10 +524,10 @@
                 if (isImageMessage) {
                     const imageUrl = `/uploads/${message.image_path}`;
                     messageContent = `
-                                <div style="margin-bottom: 0.5rem; text-align: center;">
-                                    <img src="${imageUrl}" alt="Shared image" style="max-width: 100%; max-height: 16rem; border-radius: 0.5rem; cursor: pointer; display: inline-block;" onclick="window.open('${imageUrl}', '_blank')">
-                                </div>
-                            `;
+                                    <div style="margin-bottom: 0.5rem; text-align: center;">
+                                        <img src="${imageUrl}" alt="Shared image" style="max-width: 100%; max-height: 16rem; border-radius: 0.5rem; cursor: pointer; display: inline-block;" onclick="window.open('${imageUrl}', '_blank')">
+                                    </div>
+                                `;
                     if (message.message && message.message.trim()) {
                         messageContent += `<p style="margin: 0.5rem 0 0 0; line-height: 1.4; text-align: left;">${escapeHtml(message.message)}</p>`;
                     }
@@ -537,26 +537,26 @@
                     const showBookingButton = isAdmin && !isSent && message.metadata;
 
                     messageContent = `
-                                <div style="margin-bottom: 0.5rem; text-align: center;">
-                                    <img src="${imageUrl}" alt="Product image" style="max-width: 100%; max-height: 12rem; border-radius: 0.5rem; display: inline-block;">
-                                </div>
-                                <div style="text-align: left;">
-                                    <p style="margin: 0.5rem 0 0 0; line-height: 1.4;">${escapeHtml(message.message)}</p>
-                                    ${showBookingButton ? `
-                                        <div style="margin-top: 0.75rem; text-align: center;">
-                                            <button onclick="openBookingModalFromInquiry(${JSON.stringify(message.metadata).replace(/"/g, '&quot;')})"
-                                                style="padding: 0.5rem 1rem; background-color: #7f23fe; color: white; border: none; border-radius: 0.375rem; font-size: 0.875rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.375rem; transition: background-color 0.2s; white-space: nowrap;"
-                                                onmouseover="this.style.backgroundColor='#6b1db8'"
-                                                onmouseout="this.style.backgroundColor='#7f23fe'">
-                                                <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                                </svg>
-                                                Create Booking
-                                            </button>
-                                        </div>
-                                    ` : ''}
-                                </div>
-                            `;
+                                    <div style="margin-bottom: 0.5rem; text-align: center;">
+                                        <img src="${imageUrl}" alt="Product image" style="max-width: 100%; max-height: 12rem; border-radius: 0.5rem; display: inline-block;">
+                                    </div>
+                                    <div style="text-align: left;">
+                                        <p style="margin: 0.5rem 0 0 0; line-height: 1.4;">${escapeHtml(message.message)}</p>
+                                        ${showBookingButton ? `
+                                            <div style="margin-top: 0.75rem; text-align: center;">
+                                                <button onclick="openBookingModalFromInquiry(${JSON.stringify(message.metadata).replace(/"/g, '&quot;')})"
+                                                    style="padding: 0.5rem 1rem; background-color: #7f23fe; color: white; border: none; border-radius: 0.375rem; font-size: 0.875rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.375rem; transition: background-color 0.2s; white-space: nowrap;"
+                                                    onmouseover="this.style.backgroundColor='#6b1db8'"
+                                                    onmouseout="this.style.backgroundColor='#7f23fe'">
+                                                    <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                    </svg>
+                                                    Create Booking
+                                                </button>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `;
                 } else {
                     messageContent = `<p style="margin: 0; line-height: 1.4;">${escapeHtml(message.message)}</p>`;
                 }
@@ -662,7 +662,7 @@
                     products.forEach(product => {
                         const option = document.createElement('option');
                         option.value = product.product_id;
-                        option.textContent = `${product.name} (${product.type}) - $${product.rental_price}`;
+                        option.textContent = `${product.name} (${product.type}) - ₱${product.rental_price}`;
                         productSelect.appendChild(option);
                     });
 
