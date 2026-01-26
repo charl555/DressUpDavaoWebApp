@@ -140,7 +140,7 @@ class Attach3dModelToProductsTable
                                     ->default($record->product_id),
                                 FileUpload::make('images')
                                     ->label('Upload Images')
-                                    ->helperText('Upload 20-100 high-quality images from all angles. Typical completion times: 40 images (~1-1.5 min), 100 images (~2-4 min). For optimal speed, use 40-80 images at 500kb-1mb each.')
+                                    ->helperText('Upload 20-100 high-quality images from all angles. Typical completion times at 35+ Mbps: 40 images (~1-1.5 min), 100 images (~2-4 min). For optimal speed, use 40-80 images at 500kb-1mb each.')
                                     ->multiple()
                                     ->maxParallelUploads(20)
                                     ->image()
