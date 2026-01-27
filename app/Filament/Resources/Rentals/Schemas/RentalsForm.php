@@ -38,7 +38,8 @@ class RentalsForm
                                         return Products::whereNotIn('status', Products::MAINTENANCE_STATUSES)
                                             ->get()
                                             ->mapWithKeys(function ($product) {
-                                                return [$product->product_id => "{$product->name} - ₱" . number_format($product->rental_price, 2)];
+                                                $size = $product->size ?? 'N/A';
+                                                return [$product->product_id => "{$product->name} | Size: {$size} | ₱" . number_format($product->rental_price, 2)];
                                             });
                                     })
                                     ->label('Product')
@@ -58,8 +59,30 @@ class RentalsForm
                                         $set('amount_paid', 0);
                                         $set('deposit_amount', 0);
                                     })
-                                    ->helperText('Select a product. Date availability will be validated when you save.')
                                     ->rules(['required', 'exists:products,product_id']),
+                                Placeholder::make('product_details')
+                                    ->label('Product Details')
+                                    ->content(function (callable $get) {
+                                        $productId = $get('product_id');
+                                        if (!$productId) {
+                                            return 'Select a product to see details.';
+                                        }
+                                        $product = Products::find($productId);
+                                        if (!$product) {
+                                            return 'Product not found.';
+                                        }
+
+                                        return new \Illuminate\Support\HtmlString(
+                                            "<div class='space-y-1'>
+                                                <p><strong>Name:</strong> {$product->name}</p>
+                                                <p><strong>Type:</strong> {$product->type}" . ($product->subtype ? " - {$product->subtype}" : '') . '</p>
+                                                <p><strong>Size:</strong> ' . ($product->size ?? 'N/A') . '</p>
+                                                <p><strong>Rental Price:</strong> ₱' . number_format($product->rental_price, 2) . "</p>
+                                                <p><strong>Status:</strong> {$product->status}</p>
+                                            </div>"
+                                        );
+                                    })
+                                    ->visible(fn(callable $get) => !empty($get('product_id'))),
                                 Hidden::make('product_name'),
                                 TextInput::make('rental_price')
                                     ->label('Rental Price')
