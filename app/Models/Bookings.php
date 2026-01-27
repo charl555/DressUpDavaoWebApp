@@ -18,10 +18,12 @@ class Bookings extends Model
         'product_id',
         'booking_date',
         'status',
+        'delay_notification_sent_at',
     ];
 
     protected $casts = [
         'booking_date' => 'date',
+        'delay_notification_sent_at' => 'datetime',
     ];
 
     public function user()

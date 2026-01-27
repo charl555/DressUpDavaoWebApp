@@ -6,6 +6,7 @@ use App\Events\MessageSent;
 use App\Models\Bookings;
 use App\Models\ChatMessage;
 use App\Models\Products;
+use App\Models\Rentals;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -414,6 +415,195 @@ class ChatController extends Controller
         } catch (\Exception $e) {
             \Log::error('Error creating booking: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to create booking'], 500);
+        }
+    }
+
+    /**
+     * Check for overdue rentals and send automatic notification messages
+     * Only sends notifications to users (user_id not null) who haven't been notified yet
+     */
+    public function checkOverdueRentals()
+    {
+        if (!Auth::check() || !in_array(Auth::user()->role, ['Admin', 'SuperAdmin'])) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        try {
+            $currentAdminId = Auth::id();
+
+            // Get overdue rentals that:
+            // 1. Are not returned
+            // 2. Have passed their return date
+            // 3. Have a user_id (registered user)
+            // 4. Haven't had an overdue notification sent yet
+            // 5. Belong to products owned by the current admin
+            $overdueRentals = Rentals::with(['product', 'user'])
+                ->where('is_returned', false)
+                ->whereDate('return_date', '<', now())
+                ->whereNotNull('user_id')
+                ->whereNull('overdue_notification_sent_at')
+                ->whereHas('product', function ($query) use ($currentAdminId) {
+                    $query->where('user_id', $currentAdminId);
+                })
+                ->get();
+
+            $notificationsSent = 0;
+
+            foreach ($overdueRentals as $rental) {
+                // Calculate how many days overdue (cast to int to remove decimals)
+                $daysOverdue = (int) now()->diffInDays($rental->return_date);
+                $returnDateFormatted = $rental->return_date->format('F j, Y');
+
+                // Create the overdue notification message
+                $message = "Overdue Rental Notice\n\n";
+                $message .= "Your rental for \"{$rental->product->name}\" is now overdue.\n\n";
+                $message .= "Return Date: {$returnDateFormatted}\n";
+                $message .= "Days Overdue: {$daysOverdue} day(s)\n\n";
+                $message .= "Please return the item as soon as possible to avoid additional penalties. Contact us if you need to extend your rental period.\n\n";
+                $message .= 'Thank you for your understanding.';
+
+                // Create the chat message from admin to user
+                $chatMessage = ChatMessage::create([
+                    'sender_id' => $currentAdminId,
+                    'receiver_id' => $rental->user_id,
+                    'message' => $message,
+                    'message_type' => 'text',
+                    'metadata' => [
+                        'rental_id' => $rental->rental_id,
+                        'type' => 'overdue_notification',
+                        'product_name' => $rental->product->name,
+                        'return_date' => $returnDateFormatted,
+                        'days_overdue' => $daysOverdue
+                    ]
+                ]);
+
+                // Broadcast the message
+                try {
+                    broadcast(new MessageSent($chatMessage))->toOthers();
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to broadcast overdue notification: ' . $e->getMessage());
+                }
+
+                // Mark the rental as notified
+                $rental->update([
+                    'overdue_notification_sent_at' => now()
+                ]);
+
+                $notificationsSent++;
+            }
+
+            return response()->json([
+                'success' => true,
+                'notifications_sent' => $notificationsSent,
+                'message' => $notificationsSent > 0
+                    ? "Sent {$notificationsSent} overdue notification(s)"
+                    : 'No new overdue rentals to notify'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error checking overdue rentals: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to check overdue rentals'], 500);
+        }
+    }
+
+    /**
+     * Check for bookings where the booking date has arrived but the product
+     * is still rented out (overdue) and send delay notification to the user
+     */
+    public function checkDelayedBookings()
+    {
+        if (!Auth::check() || !in_array(Auth::user()->role, ['Admin', 'SuperAdmin'])) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        try {
+            $currentAdminId = Auth::id();
+
+            // Get bookings where:
+            // 1. Booking date is today or past
+            // 2. Status is still "On Going" (not completed or cancelled)
+            // 3. Delay notification hasn't been sent yet
+            // 4. Product belongs to the current admin
+            // 5. Product has an active overdue rental (not returned and past return date)
+            $delayedBookings = Bookings::with(['product', 'user'])
+                ->whereDate('booking_date', '<=', now())
+                ->whereNotIn('status', ['Completed', 'Cancelled'])
+                ->whereNull('delay_notification_sent_at')
+                ->whereHas('product', function ($query) use ($currentAdminId) {
+                    $query->where('user_id', $currentAdminId);
+                })
+                ->get()
+                ->filter(function ($booking) {
+                    // Check if the product has an overdue rental
+                    $overdueRental = Rentals::where('product_id', $booking->product_id)
+                        ->where('is_returned', false)
+                        ->whereDate('return_date', '<', now())
+                        ->first();
+
+                    return $overdueRental !== null;
+                });
+
+            $notificationsSent = 0;
+
+            foreach ($delayedBookings as $booking) {
+                // Get the overdue rental details
+                $overdueRental = Rentals::where('product_id', $booking->product_id)
+                    ->where('is_returned', false)
+                    ->whereDate('return_date', '<', now())
+                    ->first();
+
+                $bookingDateFormatted = $booking->booking_date->format('F j, Y');
+                $expectedReturnDate = $overdueRental->return_date->format('F j, Y');
+                $daysOverdue = (int) now()->diffInDays($overdueRental->return_date);
+
+                // Create the cancellation notification message
+                $message = "Booking Cancellation Notice\n\n";
+                $message .= "We regret to inform you that your reservation for \"{$booking->product->name}\" scheduled for {$bookingDateFormatted} has been automatically cancelled.\n\n";
+                $message .= "The item is currently with another customer who was expected to return it on {$expectedReturnDate} ({$daysOverdue} day(s) overdue).\n\n";
+                $message .= "We are actively working to retrieve the item and will notify you once it becomes available for rebooking. We sincerely apologize for any inconvenience this may cause.\n\n";
+                $message .= 'Please contact us if you have any questions or would like to reschedule your reservation.';
+
+                // Create the chat message from admin to user
+                $chatMessage = ChatMessage::create([
+                    'sender_id' => $currentAdminId,
+                    'receiver_id' => $booking->user_id,
+                    'message' => $message,
+                    'message_type' => 'text',
+                    'metadata' => [
+                        'booking_id' => $booking->booking_id,
+                        'type' => 'booking_cancellation',
+                        'product_name' => $booking->product->name,
+                        'booking_date' => $bookingDateFormatted,
+                        'expected_return_date' => $expectedReturnDate,
+                        'days_overdue' => $daysOverdue
+                    ]
+                ]);
+
+                // Broadcast the message
+                try {
+                    broadcast(new MessageSent($chatMessage))->toOthers();
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to broadcast cancellation notification: ' . $e->getMessage());
+                }
+
+                // Mark the booking as cancelled and notified
+                $booking->update([
+                    'status' => 'Cancelled',
+                    'delay_notification_sent_at' => now()
+                ]);
+
+                $notificationsSent++;
+            }
+
+            return response()->json([
+                'success' => true,
+                'notifications_sent' => $notificationsSent,
+                'message' => $notificationsSent > 0
+                    ? "Cancelled {$notificationsSent} delayed booking(s) and sent notification(s)"
+                    : 'No delayed bookings to cancel'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error checking delayed bookings: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to check delayed bookings'], 500);
         }
     }
 }

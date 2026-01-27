@@ -30,6 +30,7 @@ class Rentals extends Model
         'actual_return_date',
         'penalty_amount',
         'is_returned',
+        'overdue_notification_sent_at',
     ];
 
     protected $casts = [
@@ -42,6 +43,7 @@ class Rentals extends Model
         'deposit_amount' => 'decimal:2',
         'balance_due' => 'decimal:2',
         'penalty_amount' => 'decimal:2',
+        'overdue_notification_sent_at' => 'datetime',
     ];
 
     public function product()

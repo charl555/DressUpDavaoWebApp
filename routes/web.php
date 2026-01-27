@@ -220,6 +220,12 @@ Route::middleware('auth')->group(function () {
     // Booking routes (admin only)
     Route::get('/chat/available-products', [App\Http\Controllers\ChatController::class, 'getAvailableProducts'])->name('chat.available-products');
     Route::post('/chat/create-booking', [App\Http\Controllers\ChatController::class, 'createBooking'])->name('chat.create-booking');
+
+    // Overdue rental notifications (admin only)
+    Route::post('/chat/check-overdue-rentals', [App\Http\Controllers\ChatController::class, 'checkOverdueRentals'])->name('chat.check-overdue-rentals');
+
+    // Delayed booking notifications (admin only)
+    Route::post('/chat/check-delayed-bookings', [App\Http\Controllers\ChatController::class, 'checkDelayedBookings'])->name('chat.check-delayed-bookings');
 });
 
 // Shop pages routes
