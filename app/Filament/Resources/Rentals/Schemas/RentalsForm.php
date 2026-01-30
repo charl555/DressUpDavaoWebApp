@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Rentals\Schemas;
 
 use App\Models\Customers;
 use App\Models\Products;
+use App\Models\Rentals;
 use App\Models\User;
 use App\Services\RentalBusinessRules;
 use Carbon\Carbon;
@@ -19,6 +20,7 @@ use Filament\Forms\Set;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Blade;
 
 class RentalsForm
 {
@@ -164,15 +166,54 @@ class RentalsForm
                                         return array_keys($unavailableRanges);
                                     })
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        $productId = $get('product_id');
+                                        $returnDate = $get('return_date');
+
+                                        if (!$productId || !$returnDate) {
+                                            return;
+                                        }
+
                                         // Auto-adjust event date if pickup is after event
                                         $eventDate = $get('event_date');
                                         if ($eventDate && Carbon::parse($state)->gt(Carbon::parse($eventDate))) {
                                             $set('event_date', Carbon::parse($state)->addDay()->format('Y-m-d'));
                                         }
                                         // Auto-adjust return date if pickup is after return
-                                        $returnDate = $get('return_date');
                                         if ($returnDate && Carbon::parse($state)->gte(Carbon::parse($returnDate))) {
                                             $set('return_date', Carbon::parse($state)->addDays(2)->format('Y-m-d'));
+                                        }
+
+                                        // Check for date conflicts
+                                        $product = Products::find($productId);
+                                        if ($product && $returnDate && $product->hasDateConflict($state, $returnDate)) {
+                                            // Clear all date fields
+                                            $set('pickup_date', null);
+                                            $set('event_date', null);
+                                            $set('return_date', null);
+
+                                            // Get conflicting rental details
+                                            $conflictingRentals = $product
+                                                ->rentals()
+                                                ->whereNotIn('rental_status', ['Returned', 'Cancelled'])
+                                                ->where('pickup_date', '<=', Carbon::parse($returnDate))
+                                                ->where('return_date', '>=', Carbon::parse($state))
+                                                ->get();
+
+                                            $conflictDates = $conflictingRentals->map(function ($rental) {
+                                                $start = Carbon::parse($rental->pickup_date)->format('M j, Y');
+                                                $end = Carbon::parse($rental->return_date)->format('M j, Y');
+                                                return "Rental #{$rental->rental_id}: {$start} to {$end}";
+                                            })->implode(', ');
+
+                                            // Trigger notification
+                                            \Filament\Notifications\Notification::make()
+                                                ->title('Date Conflict Detected!')
+                                                ->body("The selected date range conflicts with existing rentals: {$conflictDates}. All date fields have been cleared. Please select different dates.")
+                                                ->danger()
+                                                ->icon('heroicon-o-exclamation-triangle')
+                                                ->iconColor('danger')
+                                                ->duration(8000)
+                                                ->send();
                                         }
                                     })
                                     ->helperText('Minimum 1 day advance booking required. Red dates are unavailable.')
@@ -198,10 +239,50 @@ class RentalsForm
                                         return array_keys($unavailableRanges);
                                     })
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                        // Auto-adjust return date if event is after return
+                                        $productId = $get('product_id');
+                                        $pickupDate = $get('pickup_date');
                                         $returnDate = $get('return_date');
+
+                                        if (!$productId || !$pickupDate || !$returnDate) {
+                                            return;
+                                        }
+
+                                        // Auto-adjust return date if event is after return
                                         if ($returnDate && Carbon::parse($state)->gte(Carbon::parse($returnDate))) {
                                             $set('return_date', Carbon::parse($state)->addDay()->format('Y-m-d'));
+                                        }
+
+                                        // Check for date conflicts
+                                        $product = Products::find($productId);
+                                        if ($product && $product->hasDateConflict($pickupDate, $returnDate)) {
+                                            // Clear all date fields
+                                            $set('pickup_date', null);
+                                            $set('event_date', null);
+                                            $set('return_date', null);
+
+                                            // Get conflicting rental details
+                                            $conflictingRentals = $product
+                                                ->rentals()
+                                                ->whereNotIn('rental_status', ['Returned', 'Cancelled'])
+                                                ->where('pickup_date', '<=', Carbon::parse($returnDate))
+                                                ->where('return_date', '>=', Carbon::parse($pickupDate))
+                                                ->get();
+
+                                            $conflictDates = $conflictingRentals->map(function ($rental) {
+                                                $start = Carbon::parse($rental->pickup_date)->format('M j, Y');
+                                                $end = Carbon::parse($rental->return_date)->format('M j, Y');
+                                                return "Rental #{$rental->rental_id}: {$start} to {$end}";
+                                            })->implode(', ');
+
+                                            // Trigger notification
+                                            \Filament\Notifications\Notification::make()
+                                                ->title('Date Conflict Detected!')
+                                                ->body("The selected date range conflicts with existing rentals: {$conflictDates}. All date fields have been cleared. Please select different dates.")
+                                                ->danger()
+                                                ->icon('heroicon-o-exclamation-triangle')
+                                                ->iconColor('danger')
+                                                ->duration(8000)
+                                                ->send();
                                         }
                                     })
                                     ->helperText('Date of the actual event. Red dates are unavailable.')
@@ -212,6 +293,7 @@ class RentalsForm
                                     ->minDate(now()->addDay())
                                     ->native(false)
                                     ->displayFormat('F j, Y')
+                                    ->live()
                                     ->disabledDates(function (callable $get) {
                                         $productId = $get('product_id');
                                         if (!$productId) {
@@ -224,6 +306,47 @@ class RentalsForm
                                         // Get all unavailable dates for this product
                                         $unavailableRanges = $product->getUnavailableDateRanges();
                                         return array_keys($unavailableRanges);
+                                    })
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        $productId = $get('product_id');
+                                        $pickupDate = $get('pickup_date');
+
+                                        if (!$productId || !$pickupDate) {
+                                            return;
+                                        }
+
+                                        // Check for date conflicts
+                                        $product = Products::find($productId);
+                                        if ($product && $product->hasDateConflict($pickupDate, $state)) {
+                                            // Clear all date fields
+                                            $set('pickup_date', null);
+                                            $set('event_date', null);
+                                            $set('return_date', null);
+
+                                            // Get conflicting rental details
+                                            $conflictingRentals = $product
+                                                ->rentals()
+                                                ->whereNotIn('rental_status', ['Returned', 'Cancelled'])
+                                                ->where('pickup_date', '<=', Carbon::parse($state))
+                                                ->where('return_date', '>=', Carbon::parse($pickupDate))
+                                                ->get();
+
+                                            $conflictDates = $conflictingRentals->map(function ($rental) {
+                                                $start = Carbon::parse($rental->pickup_date)->format('M j, Y');
+                                                $end = Carbon::parse($rental->return_date)->format('M j, Y');
+                                                return "Rental #{$rental->rental_id}: {$start} to {$end}";
+                                            })->implode(', ');
+
+                                            // Trigger notification
+                                            \Filament\Notifications\Notification::make()
+                                                ->title('Date Conflict Detected!')
+                                                ->body("The selected date range conflicts with existing rentals: {$conflictDates}. All date fields have been cleared. Please select different dates.")
+                                                ->danger()
+                                                ->icon('heroicon-o-exclamation-triangle')
+                                                ->iconColor('danger')
+                                                ->duration(8000)
+                                                ->send();
+                                        }
                                     })
                                     ->helperText('When the product should be returned. Red dates are unavailable.')
                                     ->rules(['required', 'after_or_equal:event_date']),
@@ -240,6 +363,8 @@ class RentalsForm
 
                                         return 'Select dates to see rental period';
                                     }),
+                                Hidden::make('has_date_conflict')
+                                    ->default(false),
                             ]),
                     ])
                     ->columns(2),

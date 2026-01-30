@@ -27,6 +27,7 @@ class Rentals extends Model
         'rental_price',
         'deposit_amount',
         'balance_due',
+        'condition_notes',
         'actual_return_date',
         'penalty_amount',
         'is_returned',

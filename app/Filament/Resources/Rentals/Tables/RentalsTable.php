@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Rentals\Tables;
 
+use App\Models\Products;
 use App\Models\Rentals;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -12,6 +13,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
@@ -383,7 +385,8 @@ class RentalsTable
                             ->icon('heroicon-o-arrow-uturn-left')
                             ->color('warning')
                             ->modalHeading('Mark as Returned - Rental Details')
-                            ->visible(fn($record) => !$record->is_returned && in_array($record->rental_status, ['Picked Up', 'Overdue']))
+                            ->modalWidth('4xl')
+                            ->visible(fn($record) => !$record->is_returned && \in_array($record->rental_status, ['Picked Up', 'Overdue']))
                             ->form(function ($record) {
                                 $hasBalance = ($record->balance_due ?? 0) > 0;
                                 $returnDate = Carbon::parse($record->return_date)->startOfDay();
@@ -414,10 +417,10 @@ class RentalsTable
                                                             ->label('Current Balance Due')
                                                             ->content('₱ ' . number_format($record->balance_due, 2))
                                                             ->extraAttributes(['class' => 'text-lg font-bold text-center ' . ($hasBalance ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700') . ' rounded-lg p-3']),
-                                                        Placeholder::make('product_status')
-                                                            ->label('Product Will Be Set To')
-                                                            ->content('Available')
-                                                            ->extraAttributes(['class' => 'text-lg font-bold text-center bg-blue-50 text-blue-700 rounded-lg p-3']),
+                                                        Placeholder::make('current_product_status')
+                                                            ->label('Current Product Status')
+                                                            ->content($record->product->status ?? 'Unknown')
+                                                            ->extraAttributes(['class' => 'text-lg font-bold text-center bg-gray-50 text-gray-700 rounded-lg p-3']),
                                                     ]),
                                                 $hasBalance
                                                     ? TextInput::make('payment_amount')
@@ -434,21 +437,49 @@ class RentalsTable
                                                         ->badge()
                                                         ->color('success')
                                                         ->extraAttributes(['class' => 'text-center']),
-                                            ])
+                                            ]),
+                                        Section::make('Product Condition Summary')
+                                            ->description('Document the condition of the returned product')
+                                            ->schema([
+                                                Textarea::make('condition_notes')
+                                                    ->label('Condition Notes')
+                                                    ->placeholder('Describe the condition of the product upon return (e.g., any stains, tears, missing accessories, etc.)')
+                                                    ->rows(3)
+                                                    ->helperText('Optional: Write any notes about the condition of the product.'),
+                                                Select::make('product_status')
+                                                    ->label('Set Product Status')
+                                                    ->options([
+                                                        'Available' => 'Available - No issues, ready for next rental',
+                                                        'Pending Cleaning' => 'Pending Cleaning',
+                                                        'In Cleaning' => 'In Cleaning',
+                                                        'Steamed & Pressed' => 'Steamed & Pressed',
+                                                        'Quality Check' => 'Quality Check',
+                                                        'Needs Repair' => 'Needs Repair',
+                                                        'In Alteration' => 'In Alteration',
+                                                        'Damaged – Not Rentable' => 'Damaged – Not Rentable',
+                                                    ])
+                                                    ->default('Available')
+                                                    ->helperText('If the product has damage or needs maintenance, select the appropriate status. Leave as "Available" if no issues.')
+                                                    ->native(false),
+                                            ]),
                                     ]
                                 );
                             })
+                            ->requiresConfirmation()
+                            ->modalSubmitActionLabel('Confirm Return')
+                            ->color('primary')
                             ->action(function ($record, array $data) {
                                 $today = Carbon::today();
                                 $hasBalance = ($record->balance_due ?? 0) > 0;
                                 $paymentAmount = (float) ($data['payment_amount'] ?? 0);
+                                $conditionNotes = $data['condition_notes'] ?? null;
+                                $productStatus = $data['product_status'] ?? 'Available';
 
                                 // Validate payment amount
                                 if ($hasBalance && $paymentAmount > $record->balance_due) {
                                     Notification::make()
                                         ->title('Invalid Payment Amount')
                                         ->body('Payment amount cannot exceed the current balance due.')
-                                        ->danger()
                                         ->send();
                                     return;
                                 }
@@ -471,11 +502,25 @@ class RentalsTable
                                 $record->rental_status = 'Returned';
                                 $record->actual_return_date = $today;
                                 $record->is_returned = true;
+                                $record->condition_notes = $conditionNotes;
                                 $record->save();
 
-                                // Note: Product status is now determined dynamically based on rental dates
-                                // No need to manually update product status - it will automatically
-                                // show as 'Available' once there are no active rentals for current date
+                                // Update product status if specified
+                                if ($record->product) {
+                                    $record->product->update(['status' => $productStatus]);
+
+                                    // Log the condition notes if provided
+                                    if ($conditionNotes) {
+                                        \Log::info('Product return condition notes', [
+                                            'rental_id' => $record->rental_id,
+                                            'product_id' => $record->product_id,
+                                            'condition_notes' => $conditionNotes,
+                                            'new_product_status' => $productStatus,
+                                            'recorded_by' => auth()->id(),
+                                            'recorded_at' => now()->toDateTimeString(),
+                                        ]);
+                                    }
+                                }
 
                                 $message = 'Rental marked as returned successfully.';
                                 if ($paymentAmount > 0) {
@@ -483,6 +528,9 @@ class RentalsTable
                                 }
                                 if ($record->balance_due > 0) {
                                     $message .= ' Note: Balance of ₱' . number_format($record->balance_due, 2) . ' still remains.';
+                                }
+                                if ($productStatus !== 'Available') {
+                                    $message .= ' Product status set to: ' . $productStatus . '.';
                                 }
 
                                 Notification::make()
@@ -615,6 +663,15 @@ class RentalsTable
                         ->visible(fn() => $record->actual_return_date !== null)
                         ->extraAttributes(['class' => 'text-center bg-yellow-50 rounded-lg p-3']),
                 ]),
+            Section::make('Return Condition Notes')
+                ->schema([
+                    Placeholder::make('condition_notes')
+                        ->label('Condition Notes')
+                        ->content($record->condition_notes ?: 'No condition notes recorded')
+                        ->visible(fn() => $record->condition_notes !== null && $record->condition_notes !== '')
+                        ->extraAttributes(['class' => 'bg-amber-50 rounded-lg p-3']),
+                ])
+                ->visible(fn() => $record->condition_notes !== null && $record->condition_notes !== ''),
             // Financial Information
             Section::make('Financial Summary')
                 ->schema([
