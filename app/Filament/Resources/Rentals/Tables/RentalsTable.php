@@ -62,19 +62,39 @@ class RentalsTable
                         if (!$state)
                             return '-';
 
-                        $returnDate = Carbon::parse($state)->format('M j, Y');
+                        $returnDateCarbon = Carbon::parse($state)->startOfDay();
+                        $today = now()->startOfDay();
+
+                        $returnDate = $returnDateCarbon->format('M j, Y');
                         $actual = $record->actual_return_date
                             ? Carbon::parse($record->actual_return_date)->format('M j, Y')
                             : null;
 
-                        return $actual
-                            ? "<div>{$returnDate}<br><span class='text-xs text-gray-500'>(Actual: {$actual})</span></div>"
-                            : "<div>{$returnDate}</div>";
+                        $isOverdue = !$record->is_returned && $today->gt($returnDateCarbon);
+                        $overdueDays = $isOverdue ? $today->diffInDays($returnDateCarbon) : 0;
+
+                        if ($actual) {
+                            return "<div>{$returnDate}<br>
+                                <span class='text-xs text-gray-500'>(Actual: {$actual})</span>
+                            </div>";
+                        } elseif ($isOverdue) {
+                            return "<div>{$returnDate}<br>
+                                <span class='text-xs text-red-500 font-semibold'>
+                                    (Overdue: {$overdueDays} day(s))
+                                </span>
+                            </div>";
+                        }
+
+                        return "<div>{$returnDate}</div>";
                     })
                     ->tooltip(function ($record) {
-                        return $record->actual_return_date
-                            ? 'Returned on ' . $record->actual_return_date
-                            : 'Not yet returned';
+                        if ($record->actual_return_date) {
+                            return 'Returned on ' . $record->actual_return_date;
+                        } elseif (!$record->is_returned && Carbon::parse($record->return_date)->isPast()) {
+                            $overdueDays = Carbon::parse($record->return_date)->diffInDays(now());
+                            return 'Overdue by ' . $overdueDays . ' day(s)';
+                        }
+                        return 'Not yet returned';
                     })
                     ->sortable(),
                 TextColumn::make('rental_status')
@@ -96,6 +116,11 @@ class RentalsTable
                             default => 'gray',
                         };
                     }),
+                // Penalty amount column - using existing field from model
+                TextColumn::make('penalty_amount')
+                    ->label('Penalty')
+                    ->formatStateUsing(fn($state) => $state ? '₱' . number_format($state, 2) : '-')
+                    ->sortable(),
                 TextColumn::make('rental_price')
                     ->label('Price')
                     ->formatStateUsing(fn($state) => '₱' . number_format($state, 2))
@@ -182,27 +207,31 @@ class RentalsTable
                     ->label('Current Rentals Only'),
             ])
             ->actions([
-                Action::make('viewRental')
-                    ->label('View Details')
-                    ->icon('heroicon-o-eye')
-                    ->color('gray')
-                    ->modalHeading('Rental Details')
-                    ->modalSubmitAction(false)
-                    ->form(function ($record) {
-                        return self::getRentalDetailsFormSchema($record);
-                    }),
-                Action::make('rentalReceipt')
-                    ->label('Rental Receipt')
-                    ->icon('heroicon-o-printer')
-                    ->color('gray')
-                    ->modalHeading('Rental Receipt')
-                    ->modalSubmitAction(false)
-                    ->modalContent(function ($record) {
-                        $customerName = $record->customer
-                            ? "{$record->customer->first_name} {$record->customer->last_name}"
-                            : ($record->user?->name ?? 'Unknown');
+                ActionGroup::make(
+                    [
+                        EditAction::make()
+                            ->visible(fn($record) => $record->status !== 'Returned' || $record->balance_due > 0),
+                        Action::make('viewRental')
+                            ->label('View Details')
+                            ->icon('heroicon-o-eye')
+                            ->color('gray')
+                            ->modalHeading('Rental Details')
+                            ->modalSubmitAction(false)
+                            ->form(function ($record) {
+                                return self::getRentalDetailsFormSchema($record);
+                            }),
+                        Action::make('rentalReceipt')
+                            ->label('Rental Receipt')
+                            ->icon('heroicon-o-printer')
+                            ->color('gray')
+                            ->modalHeading('Rental Receipt')
+                            ->modalSubmitAction(false)
+                            ->modalContent(function ($record) {
+                                $customerName = $record->customer
+                                    ? "{$record->customer->first_name} {$record->customer->last_name}"
+                                    : ($record->user?->name ?? 'Unknown');
 
-                        $receipt = "
+                                $receipt = "
             <div style='font-family: Arial, sans-serif; padding: 1rem; width: 100%; max-width: 600px; margin: auto;'>
                 <h2 style='text-align: center; margin-bottom: 1rem;'>Rental Receipt</h2>
                 <p><strong>Receipt No:</strong> RNT-{$record->rental_id}</p>
@@ -216,8 +245,13 @@ class RentalsTable
                 <table style='width: 100%; border-collapse: collapse;'>
                     <tr>
                         <td style='padding: 5px;'>Rental Price</td>
-                        <td style='text-align: right;'>₱" . number_format($record->rental_price, 2) . "</td>
+                        <td style='text-align: right;'>₱" . number_format($record->rental_price, 2) . '</td>
                     </tr>
+                    ' . ($record->penalty_amount > 0 ? "
+                    <tr>
+                        <td style='padding: 5px;'>Penalty Amount</td>
+                        <td style='text-align: right;'>₱" . number_format($record->penalty_amount, 2) . '</td>
+                    </tr>' : '') . "
                     <tr>
                         <td style='padding: 5px;'>Deposit</td>
                         <td style='text-align: right;'>₱" . number_format($record->deposit_amount, 2) . "</td>
@@ -239,25 +273,82 @@ class RentalsTable
             </div>
         ";
 
-                        return new \Illuminate\Support\HtmlString($receipt);
-                    })
-                    ->extraModalFooterActions([
-                        Action::make('downloadReceipt')
-                            ->label('Download Receipt')
-                            ->icon('heroicon-o-arrow-down-tray')
-                            ->color('primary')
-                            ->action(function ($record) {
-                                $pdf = PDF::loadView('pdf.receipt', ['record' => $record]);
-                                return response()->streamDownload(
-                                    fn() => print ($pdf->output()),
-                                    "Rental_Receipt_{$record->rental_id}.pdf"
-                                );
-                            }),
-                    ]),
-                ActionGroup::make(
-                    [
-                        EditAction::make()
-                            ->visible(fn($record) => $record->status !== 'Returned' || $record->balance_due > 0),
+                                return new \Illuminate\Support\HtmlString($receipt);
+                            })
+                            ->extraModalFooterActions([
+                                Action::make('downloadReceipt')
+                                    ->label('Download Receipt')
+                                    ->icon('heroicon-o-arrow-down-tray')
+                                    ->color('primary')
+                                    ->action(function ($record) {
+                                        $pdf = PDF::loadView('pdf.receipt', ['record' => $record]);
+                                        return response()->streamDownload(
+                                            fn() => print ($pdf->output()),
+                                            "Rental_Receipt_{$record->rental_id}.pdf"
+                                        );
+                                    }),
+                            ]),
+                        // Add Penalty action - only for overdue rentals
+                        Action::make('addPenalty')
+                            ->label('Add Penalty')
+                            ->icon('heroicon-o-exclamation-triangle')
+                            ->color('danger')
+                            ->visible(fn($record) => !$record->is_returned && Carbon::parse($record->return_date)->isPast())
+                            ->modalHeading(fn($record) => 'Add Penalty - ' . $record->product->name)
+                            ->form(function ($record) {
+                                $overdueDays = Carbon::parse($record->return_date)->diffInDays(now());
+
+                                return [
+                                    Section::make('Overdue Information')
+                                        ->schema([
+                                            Grid::make(2)
+                                                ->schema([
+                                                    Placeholder::make('overdue_days')
+                                                        ->label('Days Overdue')
+                                                        ->content("{$overdueDays} day(s)")
+                                                        ->badge()
+                                                        ->color('danger'),
+                                                    Placeholder::make('current_penalty')
+                                                        ->label('Current Penalty')
+                                                        ->content('₱' . number_format($record->penalty_amount ?? 0, 2))
+                                                        ->badge()
+                                                        ->color('warning'),
+                                                ]),
+                                            Placeholder::make('return_date_info')
+                                                ->label('Return Date')
+                                                ->content('Was due on ' . Carbon::parse($record->return_date)->format('M j, Y'))
+                                                ->extraAttributes(['class' => 'text-sm text-gray-600']),
+                                        ]),
+                                    Section::make('Penalty Amount')
+                                        ->schema([
+                                            TextInput::make('penalty_amount')
+                                                ->label('Penalty Amount (₱)')
+                                                ->numeric()
+                                                ->minValue(0)
+                                                ->step(0.01)
+                                                ->required()
+                                                ->default($record->penalty_amount ?? 0)
+                                                ->helperText('Enter the penalty amount for overdue return.'),
+                                        ]),
+                                ];
+                            })
+                            ->action(function ($record, array $data) {
+                                $oldPenalty = $record->penalty_amount ?? 0;
+                                $newPenalty = (float) $data['penalty_amount'];
+
+                                $record->update([
+                                    'penalty_amount' => $newPenalty,
+                                ]);
+
+                                Notification::make()
+                                    ->title('Penalty Updated')
+                                    ->body('Penalty amount updated to ₱' . number_format($newPenalty, 2))
+                                    ->success()
+                                    ->send();
+                            })
+                            ->closeModalByClickingAway(false)
+                            ->modalCancelActionLabel('Cancel')
+                            ->modalSubmitActionLabel('Update Penalty'),
                         Action::make('markAsPickedUp')
                             ->label('Mark as Picked Up')
                             ->icon('heroicon-o-truck')
@@ -417,6 +508,15 @@ class RentalsTable
                                                             ->label('Current Balance Due')
                                                             ->content('₱ ' . number_format($record->balance_due, 2))
                                                             ->extraAttributes(['class' => 'text-lg font-bold text-center ' . ($hasBalance ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700') . ' rounded-lg p-3']),
+                                                        Placeholder::make('penalty_amount_display')
+                                                            ->label('Penalty Amount')
+                                                            ->content('₱ ' . number_format($record->penalty_amount ?? 0, 2))
+                                                            ->badge()
+                                                            ->color($record->penalty_amount > 0 ? 'danger' : 'success')
+                                                            ->extraAttributes(['class' => 'text-center rounded-lg p-3']),
+                                                    ]),
+                                                Grid::make(2)
+                                                    ->schema([
                                                         Placeholder::make('current_product_status')
                                                             ->label('Current Product Status')
                                                             ->content($record->product->status ?? 'Unknown')
@@ -566,8 +666,11 @@ class RentalsTable
         $customerContact = $record->customer?->phone_number ?? $record->user?->phone_number ?? 'N/A';
         $customerEmail = $record->customer?->email ?? $record->user?->email ?? 'N/A';
 
-        $isOverdue = !$record->is_returned && Carbon::parse($record->return_date)->isPast();
-        $daysOverdue = $isOverdue ? Carbon::parse($record->return_date)->diffInDays(now()) : 0;
+        $returnDate = Carbon::parse($record->return_date)->startOfDay();
+        $today = Carbon::today();
+
+        $isOverdue = !$record->is_returned && $today->gt($returnDate);
+        $daysOverdue = $isOverdue ? $today->diffInDays($returnDate) : 0;
 
         $statusColor = match ($record->rental_status) {
             'Rented' => 'warning',
@@ -663,6 +766,17 @@ class RentalsTable
                         ->visible(fn() => $record->actual_return_date !== null)
                         ->extraAttributes(['class' => 'text-center bg-yellow-50 rounded-lg p-3']),
                 ]),
+            // Penalty Information Section
+            Section::make('Penalty Information')
+                ->schema([
+                    Placeholder::make('penalty_amount')
+                        ->label('Penalty Amount')
+                        ->content($record->penalty_amount ? '₱' . number_format($record->penalty_amount, 2) : 'No Penalty')
+                        ->badge()
+                        ->color($record->penalty_amount ? 'danger' : 'success')
+                        ->extraAttributes(['class' => 'text-center p-3 rounded-lg']),
+                ])
+                ->visible($record->penalty_amount > 0),
             Section::make('Return Condition Notes')
                 ->schema([
                     Placeholder::make('condition_notes')
@@ -733,8 +847,11 @@ class RentalsTable
             ? "{$record->customer->first_name} {$record->customer->last_name}"
             : ($record->user?->name ?? 'Unknown');
 
-        $isOverdue = !$record->is_returned && Carbon::parse($record->return_date)->isPast();
-        $daysOverdue = $isOverdue ? Carbon::parse($record->return_date)->diffInDays(now()) : 0;
+        $returnDate = Carbon::parse($record->return_date)->startOfDay();
+        $today = Carbon::today();
+
+        $isOverdue = !$record->is_returned && $today->gt($returnDate);
+        $daysOverdue = $isOverdue ? $today->diffInDays($returnDate) : 0;
 
         $statusColor = match ($record->rental_status) {
             'Rented' => 'warning',
@@ -794,6 +911,10 @@ class RentalsTable
                                     Placeholder::make('rental_price')
                                         ->label('Rental Price')
                                         ->content('₱' . number_format($record->rental_price, 2)),
+                                    Placeholder::make('penalty_summary')
+                                        ->label('Penalty')
+                                        ->content('₱' . number_format($record->penalty_amount ?? 0, 2))
+                                        ->extraAttributes(['class' => $record->penalty_amount > 0 ? 'text-red-600 font-semibold' : '']),
                                     Placeholder::make('total_paid')
                                         ->label('Total Paid')
                                         ->content('₱' . number_format($record->total_paid, 2)),

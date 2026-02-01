@@ -36,8 +36,9 @@ class RentalsForm
                             ->schema([
                                 Select::make('product_id')
                                     ->options(function () {
-                                        // Show all rentable products (not in maintenance status)
-                                        return Products::whereNotIn('status', Products::MAINTENANCE_STATUSES)
+                                        // Show all available products for the current user
+                                        return Products::where('status', 'Available')
+                                            ->where('user_id', auth()->id())
                                             ->get()
                                             ->mapWithKeys(function ($product) {
                                                 $size = $product->size ?? 'N/A';
