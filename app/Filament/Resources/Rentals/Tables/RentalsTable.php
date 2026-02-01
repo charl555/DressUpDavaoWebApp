@@ -296,7 +296,11 @@ class RentalsTable
                             ->visible(fn($record) => !$record->is_returned && Carbon::parse($record->return_date)->isPast())
                             ->modalHeading(fn($record) => 'Add Penalty - ' . $record->product->name)
                             ->form(function ($record) {
-                                $overdueDays = Carbon::parse($record->return_date)->diffInDays(now());
+                                $returnDate = Carbon::parse($record->return_date)->startOfDay();
+                                $today = Carbon::today();
+
+                                $isOverdue = !$record->is_returned && $today->gt($returnDate);
+                                $overdueDays = $isOverdue ? $today->diffInDays($returnDate) : 0;
 
                                 return [
                                     Section::make('Overdue Information')
