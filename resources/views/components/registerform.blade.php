@@ -14,6 +14,159 @@
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <form @submit.prevent="submitForm" autocomplete="off">
                 @csrf
+                <!-- Step 0: Agreement (First Step) -->
+                <div x-show="currentStep === 0" class="space-y-6">
+                    <div class="text-center mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">Agreement</h3>
+                        <p class="text-sm text-gray-600">Please review and agree to our terms before proceeding</p>
+                    </div>
+
+                    <!-- Agreement Section -->
+                    <div class="border border-gray-200 rounded-lg p-6">
+                        <!-- Agreement Trigger -->
+                        <div class="text-center mb-4">
+                            <button type="button" @click="showAgreement = !showAgreement"
+                                class="text-violet-600 hover:text-violet-700 font-medium underline focus:outline-none focus:ring-2 focus:ring-violet-500 rounded">
+                                <span
+                                    x-text="showAgreement ? 'Hide Agreement' : 'Click to view Confidentiality & Data Consent Agreement'"></span>
+                            </button>
+                        </div>
+
+                        <!-- NDA Content - Collapsible -->
+                        <div x-show="showAgreement" x-transition
+                            class="bg-gray-50 border border-gray-200 rounded-lg p-6 max-h-96 overflow-y-auto mb-4">
+                            <div class="prose prose-sm max-w-none">
+                                <h4 class="text-lg font-semibold text-gray-900 mb-4">CUSTOMER CONFIDENTIALITY & DATA
+                                    CONSENT
+                                    AGREEMENT</h4>
+
+                                <p class="text-sm text-gray-700 mb-4">
+                                    <strong>Effective Date:</strong>
+                                    <span x-text="new Date().toLocaleDateString()"></span>
+                                </p>
+
+                                <div class="space-y-4 text-sm text-gray-700">
+                                    <p><strong>1. Purpose:</strong>
+                                        This Agreement ("Agreement") explains how confidential information is handled
+                                        between
+                                        <strong>DressUp Davao</strong> ("Company") and the registering user ("User")
+                                        while
+                                        using the platform,
+                                        including browsing products, marking favorites, chatting with shop owners,
+                                        submitting inquiries,
+                                        and providing body measurements for product recommendations.
+                                    </p>
+
+                                    <p><strong>2. What Counts as Confidential Information:</strong>
+                                        "Confidential Information" includes the following:
+                                    </p>
+                                    <ul class="list-disc pl-6 space-y-2">
+                                        <li>User personal information (name, email, birthdate, address, body
+                                            measurements,
+                                            preferences)</li>
+                                        <li>User activities (favorites, messages, inquiries, browsing behavior)</li>
+                                        <li>Non-public shop information shared inside the platform</li>
+                                        <li>Platform features, algorithms, recommendation logic, pricing structures</li>
+                                        <li>Any information not intended for public disclosure</li>
+                                    </ul>
+
+                                    <p><strong>3. Obligations of DressUp Davao:</strong>
+                                        DressUp Davao agrees to:
+                                    </p>
+                                    <ul class="list-disc pl-6 space-y-2">
+                                        <li>Protect User data using reasonable security measures</li>
+                                        <li>Not sell or disclose User information to unauthorized third parties</li>
+                                        <li>Use body measurement data only for recommendation systems and shop-related
+                                            assistance</li>
+                                        <li>Comply with applicable Philippine data privacy laws</li>
+                                    </ul>
+
+                                    <p><strong>4. Obligations of the User:</strong>
+                                        The User agrees to:
+                                    </p>
+                                    <ul class="list-disc pl-6 space-y-2">
+                                        <li>Keep non-public shop or platform information confidential</li>
+                                        <li>Not misuse platform features, data, or communication tools</li>
+                                        <li>Not copy, distribute, or attempt to reverse-engineer platform internals</li>
+                                    </ul>
+
+                                    <p><strong>5. Consent for Body Measurement Processing:</strong>
+                                        By registering, the User consents to the following:
+                                    </p>
+                                    <ul class="list-disc pl-6 space-y-2">
+                                        <li>Their submitted measurements will be used for automated gown/suit
+                                            recommendations</li>
+                                        <li>Shops they engage with may view relevant measurement data for inquiries or
+                                            rentals</li>
+                                    </ul>
+
+                                    <p><strong>6. Relationship:</strong>
+                                        This Agreement does not create an employer/employee, agency, or partnership
+                                        relationship
+                                        between the User and DressUp Davao.
+                                    </p>
+
+                                    <p><strong>7. Continuation of Confidentiality:</strong>
+                                        Confidentiality obligations continue even after the User deletes their account,
+                                        except for
+                                        information the User has already made public.
+                                    </p>
+
+                                    <p><strong>8. Legal Disclosures:</strong>
+                                        If DressUp Davao is legally required to disclose information, the User will be
+                                        informed whenever possible.
+                                    </p>
+                                </div>
+
+                                <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                                    <p class="text-sm text-yellow-800">
+                                        <strong>Important:</strong> By checking the box below, you acknowledge that you
+                                        have
+                                        read,
+                                        understood, and agree to this Confidentiality & Data Consent Agreement.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Agreement Checkbox -->
+                        <div class="flex items-start space-x-3 p-4 border border-gray-200 rounded-lg bg-white">
+                            <input type="checkbox" id="nda_agreement" x-model="form.nda_agreement" required
+                                class="mt-1 w-4 h-4 text-violet-600 border-gray-300 rounded focus:ring-violet-500">
+                            <label for="nda_agreement" class="text-sm text-gray-700">
+                                <span class="font-medium">I agree to the Confidentiality & Data Consent Agreement
+                                    above.</span>
+                                <span class="text-red-500 ml-1">*</span>
+                                <p class="mt-1 text-gray-600">
+                                    I understand that this is a legally binding agreement and that unauthorized
+                                    disclosure
+                                    or misuse
+                                    of platform information may result in account suspension or legal action.
+                                </p>
+                            </label>
+                        </div>
+                        <p x-show="errors.nda_agreement" x-text="errors.nda_agreement"
+                            class="mt-1 text-sm text-red-600">
+                        </p>
+
+                        <!-- Navigation for Agreement Step -->
+                        <div class="flex justify-between pt-6">
+                            <button type="button" @click="exitForm()"
+                                class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50
+                                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500
+                                transition-colors duration-200">
+                                Disagree & Exit
+                            </button>
+                            <button type="button" @click="nextStep()" :disabled="!form.nda_agreement"
+                                class="px-6 py-3 bg-violet-600 text-white font-medium rounded-md hover:bg-violet-700
+                                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500
+                                transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                                I Agree & Continue
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Step 1: Account Details -->
                 <div x-show="currentStep === 1" class="space-y-6">
                     <div class="text-center mb-6">
@@ -196,7 +349,12 @@
                             class="mt-1 text-sm text-red-600"></p>
                     </div>
 
-                    <div class="flex justify-end pt-6">
+                    <div class="flex justify-between pt-6">
+                        <button type="button" @click="prevStep()" class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50
+                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500
+                       transition-colors duration-200">
+                            Back
+                        </button>
                         <button type="button" @click="nextStep()" :disabled="!canProceedToStep2()"
                             class="px-6 py-3 bg-violet-600 text-white font-medium rounded-md hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                             Continue
@@ -303,7 +461,7 @@
                     </div>
                 </div>
 
-                <!-- Step 3: Body Measurements & Agreement -->
+                <!-- Step 3: Body Measurements -->
                 <div x-show="currentStep === 3" class="space-y-6">
                     <div class="text-center mb-6">
                         <h3 class="text-lg font-semibold text-gray-900">Body Measurements</h3>
@@ -415,141 +573,6 @@
                         </div>
                     </div>
 
-                    <!-- Agreement Section -->
-                    <div class="border-t border-gray-200 pt-6 mt-6">
-                        <div class="text-center mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900">Agreement</h3>
-                            <p class="text-sm text-gray-600">Please review and agree to our terms before creating your
-                                account</p>
-                        </div>
-
-                        <!-- Agreement Trigger -->
-                        <div class="text-center mb-4">
-                            <button type="button" @click="showAgreement = !showAgreement"
-                                class="text-violet-600 hover:text-violet-700 font-medium underline focus:outline-none focus:ring-2 focus:ring-violet-500 rounded">
-                                <span
-                                    x-text="showAgreement ? 'Hide Agreement' : 'Click to view Confidentiality & Data Consent Agreement'"></span>
-                            </button>
-                        </div>
-
-                        <!-- NDA Content - Collapsible -->
-                        <div x-show="showAgreement" x-transition
-                            class="bg-gray-50 border border-gray-200 rounded-lg p-6 max-h-96 overflow-y-auto mb-4">
-                            <div class="prose prose-sm max-w-none">
-                                <h4 class="text-lg font-semibold text-gray-900 mb-4">CUSTOMER CONFIDENTIALITY & DATA
-                                    CONSENT
-                                    AGREEMENT</h4>
-
-                                <p class="text-sm text-gray-700 mb-4">
-                                    <strong>Effective Date:</strong>
-                                    <span x-text="new Date().toLocaleDateString()"></span>
-                                </p>
-
-                                <div class="space-y-4 text-sm text-gray-700">
-                                    <p><strong>1. Purpose:</strong>
-                                        This Agreement ("Agreement") explains how confidential information is handled
-                                        between
-                                        <strong>DressUp Davao</strong> ("Company") and the registering user ("User")
-                                        while
-                                        using the platform,
-                                        including browsing products, marking favorites, chatting with shop owners,
-                                        submitting inquiries,
-                                        and providing body measurements for product recommendations.
-                                    </p>
-
-                                    <p><strong>2. What Counts as Confidential Information:</strong>
-                                        "Confidential Information" includes the following:
-                                    </p>
-                                    <ul class="list-disc pl-6 space-y-2">
-                                        <li>User personal information (name, email, birthdate, address, body
-                                            measurements,
-                                            preferences)</li>
-                                        <li>User activities (favorites, messages, inquiries, browsing behavior)</li>
-                                        <li>Non-public shop information shared inside the platform</li>
-                                        <li>Platform features, algorithms, recommendation logic, pricing structures</li>
-                                        <li>Any information not intended for public disclosure</li>
-                                    </ul>
-
-                                    <p><strong>3. Obligations of DressUp Davao:</strong>
-                                        DressUp Davao agrees to:
-                                    </p>
-                                    <ul class="list-disc pl-6 space-y-2">
-                                        <li>Protect User data using reasonable security measures</li>
-                                        <li>Not sell or disclose User information to unauthorized third parties</li>
-                                        <li>Use body measurement data only for recommendation systems and shop-related
-                                            assistance</li>
-                                        <li>Comply with applicable Philippine data privacy laws</li>
-                                    </ul>
-
-                                    <p><strong>4. Obligations of the User:</strong>
-                                        The User agrees to:
-                                    </p>
-                                    <ul class="list-disc pl-6 space-y-2">
-                                        <li>Keep non-public shop or platform information confidential</li>
-                                        <li>Not misuse platform features, data, or communication tools</li>
-                                        <li>Not copy, distribute, or attempt to reverse-engineer platform internals</li>
-                                    </ul>
-
-                                    <p><strong>5. Consent for Body Measurement Processing:</strong>
-                                        By registering, the User consents to the following:
-                                    </p>
-                                    <ul class="list-disc pl-6 space-y-2">
-                                        <li>Their submitted measurements will be used for automated gown/suit
-                                            recommendations</li>
-                                        <li>Shops they engage with may view relevant measurement data for inquiries or
-                                            rentals</li>
-                                    </ul>
-
-                                    <p><strong>6. Relationship:</strong>
-                                        This Agreement does not create an employer/employee, agency, or partnership
-                                        relationship
-                                        between the User and DressUp Davao.
-                                    </p>
-
-                                    <p><strong>7. Continuation of Confidentiality:</strong>
-                                        Confidentiality obligations continue even after the User deletes their account,
-                                        except for
-                                        information the User has already made public.
-                                    </p>
-
-                                    <p><strong>8. Legal Disclosures:</strong>
-                                        If DressUp Davao is legally required to disclose information, the User will be
-                                        informed whenever possible.
-                                    </p>
-                                </div>
-
-                                <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-                                    <p class="text-sm text-yellow-800">
-                                        <strong>Important:</strong> By checking the box below, you acknowledge that you
-                                        have
-                                        read,
-                                        understood, and agree to this Confidentiality & Data Consent Agreement.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Agreement Checkbox -->
-                        <div class="flex items-start space-x-3 p-4 border border-gray-200 rounded-lg bg-white">
-                            <input type="checkbox" id="nda_agreement" x-model="form.nda_agreement"
-                                class="mt-1 w-4 h-4 text-violet-600 border-gray-300 rounded focus:ring-violet-500">
-                            <label for="nda_agreement" class="text-sm text-gray-700">
-                                <span class="font-medium">I agree to the Confidentiality & Data Consent Agreement
-                                    above.</span>
-                                <span class="text-red-500 ml-1">*</span>
-                                <p class="mt-1 text-gray-600">
-                                    I understand that this is a legally binding agreement and that unauthorized
-                                    disclosure
-                                    or misuse
-                                    of platform information may result in account suspension or legal action.
-                                </p>
-                            </label>
-                        </div>
-                        <p x-show="errors.nda_agreement" x-text="errors.nda_agreement"
-                            class="mt-1 text-sm text-red-600">
-                        </p>
-                    </div>
-
                     <!-- Navigation -->
                     <div class="flex justify-between pt-6">
                         <button type="button" @click="prevStep()" class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50
@@ -558,7 +581,7 @@
                             Back
                         </button>
                         <div class="flex space-x-3">
-                            <button type="submit" :disabled="loading || !form.nda_agreement" class="px-6 py-3 bg-violet-600 text-white font-medium rounded-md hover:bg-violet-700
+                            <button type="submit" :disabled="loading" class="px-6 py-3 bg-violet-600 text-white font-medium rounded-md hover:bg-violet-700
                        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500
                        disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
                                 <span x-show="!loading">Create Account</span>
@@ -613,11 +636,11 @@
 <script>
     function registerForm() {
         return {
-            currentStep: 1, // Start with Account Details (Step 1)
+            currentStep: 0, // Start with Agreement (Step 0)
             measurementUnit: 'inches',
             showAgreement: false, // Controls agreement visibility
             form: {
-                nda_agreement: false, // Moved to measurements step
+                nda_agreement: false, // Now in Step 0
                 name: '',
                 email: '',
                 password: '',
@@ -656,6 +679,11 @@
                 if (this.form.measurements.shoulder) {
                     this.shoulderCm = this.convertToCm(this.form.measurements.shoulder);
                 }
+            },
+
+            // Exit form function - redirects to home
+            exitForm() {
+                window.location.href = '/';
             },
 
             // Conversion functions
@@ -814,6 +842,11 @@
                 return emailRegex.test(email);
             },
 
+            validateStep0() {
+                this.validateField('nda_agreement');
+                return !this.errors.nda_agreement;
+            },
+
             validateStep1() {
                 this.validateField('name');
                 this.validateField('gender');
@@ -832,9 +865,9 @@
                 return !this.errors.color_preference && !this.errors.occasion_preference && !this.errors.fabric_preference;
             },
 
-            validateStep3() {
-                this.validateField('nda_agreement');
-                return !this.errors.nda_agreement;
+            canProceedToStep1() {
+                // Check if agreement is checked
+                return this.form.nda_agreement;
             },
 
             canProceedToStep2() {
@@ -866,7 +899,11 @@
 
             nextStep() {
                 // Validate current step before proceeding
-                if (this.currentStep === 1) {
+                if (this.currentStep === 0) {
+                    if (!this.validateStep0()) {
+                        return;
+                    }
+                } else if (this.currentStep === 1) {
                     if (!this.validateStep1()) {
                         return;
                     }
@@ -891,7 +928,7 @@
             },
 
             prevStep() {
-                if (this.currentStep > 1) {
+                if (this.currentStep > 0) {
                     this.currentStep--;
                 }
             },
@@ -900,6 +937,11 @@
                 this.generalError = '';
 
                 // Validate all steps before submission
+                if (!this.validateStep0()) {
+                    this.currentStep = 0;
+                    return;
+                }
+
                 if (!this.validateStep1()) {
                     this.currentStep = 1;
                     return;
@@ -907,11 +949,6 @@
 
                 if (!this.validateStep2()) {
                     this.currentStep = 2;
-                    return;
-                }
-
-                if (!this.validateStep3()) {
-                    this.currentStep = 3;
                     return;
                 }
 
