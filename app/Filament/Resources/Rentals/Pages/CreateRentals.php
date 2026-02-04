@@ -3,10 +3,12 @@
 namespace App\Filament\Resources\Rentals\Pages;
 
 use App\Filament\Resources\Rentals\RentalsResource;
+use App\Models\Bookings;
 use App\Models\Customers;
 use App\Models\Products;
 use App\Models\Rentals;
 use App\Models\User;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 
@@ -80,7 +82,33 @@ class CreateRentals extends CreateRecord
             $amountPaid = (float) ($data['amount_paid'] ?? 0);
             $deposit = (float) ($data['deposit_amount'] ?? 0);
 
-            // --- Step 6: Create rental record ---
+            // --- Step 6: Check if we're converting from a booking ---
+            $bookingId = $data['booking_id'] ?? null;
+            $isFromBooking = !empty($bookingId);
+            $booking = null;
+
+            if ($isFromBooking) {
+                $booking = Bookings::find($bookingId);
+                if (!$booking) {
+                    throw new \Exception('Booking not found.');
+                }
+
+                // Verify that the booking matches the product and client
+                if ($booking->product_id != $data['product_id']) {
+                    throw new \Exception('Booking product does not match selected product.');
+                }
+
+                if ($booking->user_id != $userId) {
+                    throw new \Exception('Booking client does not match selected client.');
+                }
+
+                // Check if booking is in Confirmed status
+                if ($booking->status !== 'Confirmed') {
+                    throw new \Exception('Only Confirmed bookings can be converted to rentals.');
+                }
+            }
+
+            // --- Step 7: Create rental record ---
             $rental = Rentals::create([
                 'product_id' => $data['product_id'],
                 'customer_id' => $customerId,
@@ -96,7 +124,7 @@ class CreateRentals extends CreateRecord
                 'penalty_amount' => 0,
             ]);
 
-            // --- Step 7: Record initial payment (optional) ---
+            // --- Step 8: Record initial payment (optional) ---
             if ($amountPaid > 0) {
                 $payment = $rental->payments()->create([
                     'rental_id' => $rental->rental_id,
@@ -118,21 +146,66 @@ class CreateRentals extends CreateRecord
                 ]);
             }
 
-            // --- Step 8: Increment rental count (no longer updating product status) ---
+            // --- Step 9: Update product rental count ---
             $rental->product()->increment('rental_count');
 
-            // --- Step 8: Log success ---
+            // --- Step 10: Handle booking conversion if coming from booking ---
+            if ($isFromBooking && $booking) {
+                // Update booking status to Completed
+                $booking->update([
+                    'status' => 'Completed',
+                    'notes' => ($booking->notes ? $booking->notes . "\n" : '')
+                        . 'Converted to rental #' . $rental->rental_id . ' on ' . now()->format('Y-m-d')
+                ]);
+
+                // Update product status from Reserved to Available
+                $product->update([
+                    'status' => 'Available'
+                ]);
+
+                // Log the booking conversion
+                \Log::info('Booking converted to rental', [
+                    'booking_id' => $bookingId,
+                    'rental_id' => $rental->rental_id,
+                    'product_id' => $product->product_id,
+                    'old_product_status' => $product->status,
+                    'new_product_status' => 'Available',
+                    'old_booking_status' => 'Confirmed',
+                    'new_booking_status' => 'Completed',
+                    'converted_by' => auth()->id(),
+                    'converted_at' => now()->toDateTimeString(),
+                ]);
+
+                // Send notification about booking conversion
+                Notification::make()
+                    ->title('Booking Converted to Rental')
+                    ->body("Booking #{$bookingId} has been successfully converted to Rental #{$rental->rental_id}. Product status has been updated from Reserved to Available.")
+                    ->success()
+                    ->send();
+            } else {
+                // For regular rentals (not from booking), keep product status as is (Available)
+                // Don't change product status for regular rentals
+                \Log::info('Regular rental created', [
+                    'rental_id' => $rental->rental_id,
+                    'product_id' => $product->product_id,
+                    'product_status' => $product->status,
+                ]);
+            }
+
+            // --- Step 11: Log success ---
             \Log::info('Rental created successfully', [
                 'rental_id' => $rental->rental_id,
                 'product_id' => $rental->product_id,
                 'customer_id' => $rental->customer_id,
                 'user_id' => $rental->user_id,
                 'rental_price' => $rental->rental_price,
+                'from_booking' => $isFromBooking,
+                'booking_id' => $bookingId,
             ]);
 
             return $rental;
         } catch (\Exception $e) {
-            // --- Step 9: Log failure and rethrow ---
+            // --- Step 12: Log failure and rethrow ---
             \Log::error('Rental creation failed: ' . $e->getMessage(), [
                 'data' => $data,
                 'trace' => $e->getTraceAsString(),

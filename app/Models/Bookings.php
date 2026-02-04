@@ -18,6 +18,7 @@ class Bookings extends Model
         'product_id',
         'booking_date',
         'status',
+        'notes',
         'delay_notification_sent_at',
     ];
 

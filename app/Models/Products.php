@@ -198,37 +198,52 @@ class Products extends Model
      *
      * @return array Array of date ranges with their status
      */
+
+    /**
+     * Get all unavailable date ranges for this product
+     * Useful for calendar display
+     *
+     * @return array Array of date ranges with their status
+     */
     public function getUnavailableDateRanges(): array
     {
-        $unavailableDates = [];
+        try {
+            $unavailableDates = [];
 
-        // Get rental periods
-        $activeRentals = $this
-            ->rentals()
-            ->whereNotIn('rental_status', ['Returned', 'Cancelled'])
-            ->get();
+            // OPTIMIZED: Use direct database queries instead of loading relationships
+            // Get rental dates from active rentals
+            $activeRentals = \DB::table('rentals')
+                ->where('product_id', $this->product_id)
+                ->whereNotIn('rental_status', ['Returned', 'Cancelled'])
+                ->select('pickup_date', 'return_date')
+                ->get();
 
-        foreach ($activeRentals as $rental) {
-            $start = Carbon::parse($rental->pickup_date);
-            $end = Carbon::parse($rental->return_date);
+            foreach ($activeRentals as $rental) {
+                $start = Carbon::parse($rental->pickup_date);
+                $end = Carbon::parse($rental->return_date);
 
-            for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
-                $unavailableDates[$date->format('Y-m-d')] = 'rented';
+                for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+                    $unavailableDates[$date->format('Y-m-d')] = 'rented';
+                }
             }
+
+            // Get confirmed booking dates
+            $confirmedBookings = \DB::table('bookings')
+                ->where('product_id', $this->product_id)
+                ->whereIn('status', ['Pending', 'Confirmed'])
+                ->select('booking_date')
+                ->get();
+
+            foreach ($confirmedBookings as $booking) {
+                $bookingDate = Carbon::parse($booking->booking_date);
+                $unavailableDates[$bookingDate->format('Y-m-d')] = 'reserved';
+            }
+
+            return $unavailableDates;
+        } catch (\Exception $e) {
+            \Log::error('Error in getUnavailableDateRanges for product ' . $this->product_id . ': ' . $e->getMessage());
+            return [];  // Return empty array on error
         }
-
-        // Get booking dates
-        $activeBookings = $this
-            ->bookings()
-            ->whereIn('status', ['Pending', 'On Going', 'Confirmed'])
-            ->get();
-
-        foreach ($activeBookings as $booking) {
-            $bookingDate = Carbon::parse($booking->booking_date);
-            $unavailableDates[$bookingDate->format('Y-m-d')] = 'reserved';
-        }
-
-        return $unavailableDates;
     }
 
     public function bookings()

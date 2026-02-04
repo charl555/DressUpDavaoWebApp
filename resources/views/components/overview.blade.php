@@ -385,7 +385,7 @@
                         // Get booking dates (booking_date only) - ONLY mark bookings as reserved if status is 'On Going'
                         foreach ($product->bookings as $booking) {
 
-                            if ($booking->status === 'On Going') {
+                            if ($booking->status === 'Confirmed') {
                                 $bookingDate = \Carbon\Carbon::parse($booking->booking_date);
                                 $unavailableDates[$bookingDate->format('Y-m-d')] = 'reserved';
                             }

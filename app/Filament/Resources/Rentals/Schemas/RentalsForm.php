@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Rentals\Schemas;
 
+use App\Models\Bookings;
 use App\Models\Customers;
 use App\Models\Products;
 use App\Models\Rentals;
@@ -34,11 +35,15 @@ class RentalsForm
                     ->schema([
                         Group::make()
                             ->schema([
+                                // Add hidden fields to track booking conversion
+                                Hidden::make('from_booking')
+                                    ->default(fn() => request()->has('prefill') && request('prefill') === 'true'),
+                                Hidden::make('booking_id')
+                                    ->default(fn() => request()->has('booking_id') ? request('booking_id') : null),
                                 Select::make('product_id')
                                     ->options(function () {
                                         // Show all available products for the current user
-                                        return Products::where('status', 'Available')
-                                            ->where('user_id', auth()->id())
+                                        return Products::where('user_id', auth()->id())
                                             ->get()
                                             ->mapWithKeys(function ($product) {
                                                 $size = $product->size ?? 'N/A';
@@ -49,6 +54,31 @@ class RentalsForm
                                     ->required()
                                     ->live()
                                     ->searchable()
+                                    ->default(function () {
+                                        // Prefill product_id from booking if present
+                                        if (request()->has('product_id') && request()->has('prefill') && request('prefill') === 'true') {
+                                            $product = Products::find(request('product_id'));
+                                            // Only prefill if product belongs to current user
+                                            if ($product && $product->user_id == auth()->id()) {
+                                                return request('product_id');
+                                            }
+                                        }
+                                        return null;
+                                    })
+                                    ->disabled(function () {
+                                        // Disable if prefilling from booking
+                                        return request()->has('product_id') && request()->has('prefill') && request('prefill') === 'true';
+                                    })
+                                    ->afterStateHydrated(function ($component, $state, callable $set) {
+                                        // When state is hydrated (loaded), update the rental price
+                                        if ($state) {
+                                            $product = Products::find($state);
+                                            if ($product) {
+                                                $set('rental_price', $product->rental_price);
+                                                $set('product_name', $product->name);
+                                            }
+                                        }
+                                    })
                                     ->afterStateUpdated(function ($state, callable $set) {
                                         $product = Products::find($state);
                                         if ($product) {
@@ -94,17 +124,36 @@ class RentalsForm
                                     ->prefix('₱')
                                     ->disabled()
                                     ->dehydrated()
-                                    ->formatStateUsing(fn($state) => number_format($state, 2)),
+                                    ->formatStateUsing(fn($state) => $state ? number_format($state, 2) : '')
+                                    ->afterStateHydrated(function ($component, $state, callable $set, callable $get) {
+                                        // When rental_price is hydrated, also update from product if needed
+                                        if (!$state && $get('product_id')) {
+                                            $product = Products::find($get('product_id'));
+                                            if ($product) {
+                                                $set('rental_price', $product->rental_price);
+                                            }
+                                        }
+                                    }),
                                 Select::make('client_type')
                                     ->label('Client Type')
                                     ->options([
                                         'customer' => 'Customer (No Account)',
                                         'user' => 'Registered User (Has Account)',
                                     ])
-                                    ->default('customer')
+                                    ->default(function () {
+                                        // Always default to 'user' when converting from booking
+                                        if (request()->has('user_id') && request()->has('prefill') && request('prefill') === 'true') {
+                                            return 'user';
+                                        }
+                                        return 'customer';
+                                    })
                                     ->required()
                                     ->native(false)
                                     ->reactive()
+                                    ->disabled(function () {
+                                        // Disable if prefilling from booking (bookings are always for registered users)
+                                        return request()->has('prefill') && request('prefill') === 'true';
+                                    })
                                     ->helperText('Select whether the rental is for a registered user or a customer without an account.'),
                                 Select::make('client_id')
                                     ->label('Client')
@@ -142,14 +191,30 @@ class RentalsForm
                                         return $customer ? "{$customer->first_name} {$customer->last_name} - {$customer->phone_number}" : null;
                                     })
                                     ->required()
-                                    ->helperText('Search by name, email, or phone number based on client type.'),
+                                    ->default(function () {
+                                        // Prefill client_id from booking if present
+                                        if (request()->has('user_id') && request()->has('prefill') && request('prefill') === 'true') {
+                                            return request('user_id');
+                                        }
+                                        return null;
+                                    })
+                                    ->disabled(function () {
+                                        // Disable if prefilling from booking
+                                        return request()->has('user_id') && request()->has('prefill') && request('prefill') === 'true';
+                                    })
+                                    ->helperText(function (callable $get) {
+                                        if (request()->has('prefill') && request('prefill') === 'true') {
+                                            return 'Prefilled from booking record';
+                                        }
+                                        return 'Search by name, email, or phone number based on client type.';
+                                    }),
                             ]),
                         Group::make()
                             ->schema([
                                 DatePicker::make('pickup_date')
                                     ->label('Pickup Date')
                                     ->required()
-                                    ->minDate(now()->addDay())
+                                    ->minDate(now()->startOfDay())  // CHANGED: Can be today for rentals (not +1 day)
                                     ->native(false)
                                     ->displayFormat('F j, Y')
                                     ->live()
@@ -158,13 +223,42 @@ class RentalsForm
                                         if (!$productId) {
                                             return [];
                                         }
-                                        $product = Products::find($productId);
-                                        if (!$product) {
+
+                                        try {
+                                            // OPTIMIZED: Direct database query instead of model method
+                                            $unavailableDates = [];
+
+                                            // Get rental dates
+                                            $rentalDates = \DB::table('rentals')
+                                                ->where('product_id', $productId)
+                                                ->whereNotIn('rental_status', ['Returned', 'Cancelled'])
+                                                ->select('pickup_date', 'return_date')
+                                                ->get();
+
+                                            foreach ($rentalDates as $rental) {
+                                                $start = Carbon::parse($rental->pickup_date);
+                                                $end = Carbon::parse($rental->return_date);
+
+                                                for ($date = $start; $date->lte($end); $date->addDay()) {
+                                                    $unavailableDates[] = $date->format('Y-m-d');
+                                                }
+                                            }
+
+                                            // Get confirmed booking dates
+                                            $bookingDates = \DB::table('bookings')
+                                                ->where('product_id', $productId)
+                                                ->where('status', 'Confirmed')
+                                                ->pluck('booking_date')
+                                                ->map(function ($date) {
+                                                    return Carbon::parse($date)->format('Y-m-d');
+                                                })
+                                                ->toArray();
+
+                                            return array_merge($unavailableDates, $bookingDates);
+                                        } catch (\Exception $e) {
+                                            \Log::error('Error getting disabled dates: ' . $e->getMessage());
                                             return [];
                                         }
-                                        // Get all unavailable dates for this product
-                                        $unavailableRanges = $product->getUnavailableDateRanges();
-                                        return array_keys($unavailableRanges);
                                     })
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $productId = $get('product_id');
@@ -217,12 +311,12 @@ class RentalsForm
                                                 ->send();
                                         }
                                     })
-                                    ->helperText('Minimum 1 day advance booking required. Red dates are unavailable.')
-                                    ->rules(['required', 'after:today']),
+                                    ->helperText('Select pickup date. Can be today or any future date. Red dates are unavailable.')
+                                    ->rules(['required', 'date', 'after_or_equal:today']),  // CHANGED: after:today to after_or_equal:today
                                 DatePicker::make('event_date')
                                     ->label('Event Date')
                                     ->required()
-                                    ->minDate(now()->addDay())
+                                    ->minDate(now()->startOfDay())  // CHANGED: Can be today
                                     ->native(false)
                                     ->displayFormat('F j, Y')
                                     ->live()
@@ -231,13 +325,42 @@ class RentalsForm
                                         if (!$productId) {
                                             return [];
                                         }
-                                        $product = Products::find($productId);
-                                        if (!$product) {
+
+                                        try {
+                                            // OPTIMIZED: Direct database query instead of model method
+                                            $unavailableDates = [];
+
+                                            // Get rental dates
+                                            $rentalDates = \DB::table('rentals')
+                                                ->where('product_id', $productId)
+                                                ->whereNotIn('rental_status', ['Returned', 'Cancelled'])
+                                                ->select('pickup_date', 'return_date')
+                                                ->get();
+
+                                            foreach ($rentalDates as $rental) {
+                                                $start = Carbon::parse($rental->pickup_date);
+                                                $end = Carbon::parse($rental->return_date);
+
+                                                for ($date = $start; $date->lte($end); $date->addDay()) {
+                                                    $unavailableDates[] = $date->format('Y-m-d');
+                                                }
+                                            }
+
+                                            // Get confirmed booking dates
+                                            $bookingDates = \DB::table('bookings')
+                                                ->where('product_id', $productId)
+                                                ->where('status', 'Confirmed')
+                                                ->pluck('booking_date')
+                                                ->map(function ($date) {
+                                                    return Carbon::parse($date)->format('Y-m-d');
+                                                })
+                                                ->toArray();
+
+                                            return array_merge($unavailableDates, $bookingDates);
+                                        } catch (\Exception $e) {
+                                            \Log::error('Error getting disabled dates: ' . $e->getMessage());
                                             return [];
                                         }
-                                        // Get all unavailable dates for this product
-                                        $unavailableRanges = $product->getUnavailableDateRanges();
-                                        return array_keys($unavailableRanges);
                                     })
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $productId = $get('product_id');
@@ -286,12 +409,12 @@ class RentalsForm
                                                 ->send();
                                         }
                                     })
-                                    ->helperText('Date of the actual event. Red dates are unavailable.')
-                                    ->rules(['required', 'after_or_equal:pickup_date']),
+                                    ->helperText('Date of the actual event. Must be on or after pickup date. Red dates are unavailable.')
+                                    ->rules(['required', 'date', 'after_or_equal:pickup_date']),
                                 DatePicker::make('return_date')
                                     ->label('Return Date')
                                     ->required()
-                                    ->minDate(now()->addDay())
+                                    ->minDate(now()->startOfDay())  // CHANGED: Can be today
                                     ->native(false)
                                     ->displayFormat('F j, Y')
                                     ->live()
@@ -300,13 +423,42 @@ class RentalsForm
                                         if (!$productId) {
                                             return [];
                                         }
-                                        $product = Products::find($productId);
-                                        if (!$product) {
+
+                                        try {
+                                            // OPTIMIZED: Direct database query instead of model method
+                                            $unavailableDates = [];
+
+                                            // Get rental dates
+                                            $rentalDates = \DB::table('rentals')
+                                                ->where('product_id', $productId)
+                                                ->whereNotIn('rental_status', ['Returned', 'Cancelled'])
+                                                ->select('pickup_date', 'return_date')
+                                                ->get();
+
+                                            foreach ($rentalDates as $rental) {
+                                                $start = Carbon::parse($rental->pickup_date);
+                                                $end = Carbon::parse($rental->return_date);
+
+                                                for ($date = $start; $date->lte($end); $date->addDay()) {
+                                                    $unavailableDates[] = $date->format('Y-m-d');
+                                                }
+                                            }
+
+                                            // Get confirmed booking dates
+                                            $bookingDates = \DB::table('bookings')
+                                                ->where('product_id', $productId)
+                                                ->where('status', 'Confirmed')
+                                                ->pluck('booking_date')
+                                                ->map(function ($date) {
+                                                    return Carbon::parse($date)->format('Y-m-d');
+                                                })
+                                                ->toArray();
+
+                                            return array_merge($unavailableDates, $bookingDates);
+                                        } catch (\Exception $e) {
+                                            \Log::error('Error getting disabled dates: ' . $e->getMessage());
                                             return [];
                                         }
-                                        // Get all unavailable dates for this product
-                                        $unavailableRanges = $product->getUnavailableDateRanges();
-                                        return array_keys($unavailableRanges);
                                     })
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $productId = $get('product_id');
@@ -349,8 +501,8 @@ class RentalsForm
                                                 ->send();
                                         }
                                     })
-                                    ->helperText('When the product should be returned. Red dates are unavailable.')
-                                    ->rules(['required', 'after_or_equal:event_date']),
+                                    ->helperText('When the product should be returned. Must be on or after event date. Red dates are unavailable.')
+                                    ->rules(['required', 'date', 'after_or_equal:event_date']),
                                 Placeholder::make('rental_period')
                                     ->label('Rental Period')
                                     ->content(function (callable $get) {

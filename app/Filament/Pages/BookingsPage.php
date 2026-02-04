@@ -6,6 +6,7 @@ use App\Models\Bookings;
 use App\Models\Customers;
 use App\Models\Products;
 use App\Models\User;
+use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
@@ -13,6 +14,7 @@ use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -32,7 +34,7 @@ use Illuminate\Support\Facades\Auth;
 use BackedEnum;
 use UnitEnum;
 
-class BookingsPage extends Page implements HasTable, hasSchemas
+class BookingsPage extends Page implements HasTable, HasSchemas
 {
     use InteractsWithTable;
     use InteractsWithSchemas;
@@ -65,11 +67,11 @@ class BookingsPage extends Page implements HasTable, hasSchemas
     {
         return [
             Action::make('BookProduct')
-                ->label('Make Reservation')
+                ->label('Create Booking Request')
                 ->icon('heroicon-o-calendar-days')
                 ->color('primary')
-                ->modalHeading('Create New Reservation')
-                ->modalDescription('Book a product for a client. Select the client type, choose a product, and pick a reservation date.')
+                ->modalHeading('Create New Booking Request')
+                ->modalDescription('Create a booking request. Product will not be reserved until confirmed.')
                 ->form([
                     // Client Selection Section
                     Section::make('Client Information')
@@ -137,7 +139,7 @@ class BookingsPage extends Page implements HasTable, hasSchemas
                         ->columns(2),
                     // Product Selection Section
                     Section::make('Product Selection')
-                        ->description('Choose a product to reserve. Products under maintenance are not shown.')
+                        ->description('Choose a product to request booking for.')
                         ->icon('heroicon-o-shopping-bag')
                         ->schema([
                             Select::make('product_id')
@@ -149,7 +151,7 @@ class BookingsPage extends Page implements HasTable, hasSchemas
                                         ->mapWithKeys(function ($product) {
                                             $size = $product->size ?? 'N/A';
                                             return [
-                                                $product->product_id => "{$product->name} | Size: {$size} | ₱" . number_format($product->rental_price, 2)
+                                                $product->product_id => "{$product->name} | Size: {$size} | Status: {$product->status}"
                                             ];
                                         });
                                 })
@@ -168,7 +170,6 @@ class BookingsPage extends Page implements HasTable, hasSchemas
                                     if (!$product) {
                                         return 'Product not found.';
                                     }
-
                                     return new \Illuminate\Support\HtmlString(
                                         "<div class='space-y-1'>
                                             <p><strong>Name:</strong> {$product->name}</p>
@@ -181,15 +182,15 @@ class BookingsPage extends Page implements HasTable, hasSchemas
                                 })
                                 ->visible(fn(callable $get) => !empty($get('product_id'))),
                         ]),
-                    // Date Selection Section
-                    Section::make('Reservation Date')
-                        ->description('Select a date for the reservation. Dates with existing rentals or bookings are disabled.')
+                    // Date Selection Section - FIXED
+                    Section::make('Booking Date')
+                        ->description('Select desired booking date. Booking date must be at least 2 days from today to allow time for confirmation.')
                         ->icon('heroicon-o-calendar')
                         ->schema([
                             DatePicker::make('booking_date')
-                                ->label('Reservation Date')
+                                ->label('Desired Booking Date')
                                 ->required()
-                                ->minDate(now()->addDay())
+                                ->minDate(now()->addDays(2)->startOfDay())
                                 ->native(false)
                                 ->displayFormat('F j, Y')
                                 ->disabledDates(function (callable $get) {
@@ -197,14 +198,45 @@ class BookingsPage extends Page implements HasTable, hasSchemas
                                     if (!$productId) {
                                         return [];
                                     }
-                                    $product = Products::find($productId);
-                                    if (!$product) {
+
+                                    try {
+                                        // OPTIMIZED: Direct database query instead of model method
+                                        $unavailableDates = [];
+
+                                        // Get rental dates
+                                        $rentalDates = \DB::table('rentals')
+                                            ->where('product_id', $productId)
+                                            ->whereNotIn('rental_status', ['Returned', 'Cancelled'])
+                                            ->select('pickup_date', 'return_date')
+                                            ->get();
+
+                                        foreach ($rentalDates as $rental) {
+                                            $start = Carbon::parse($rental->pickup_date);
+                                            $end = Carbon::parse($rental->return_date);
+
+                                            for ($date = $start; $date->lte($end); $date->addDay()) {
+                                                $unavailableDates[] = $date->format('Y-m-d');
+                                            }
+                                        }
+
+                                        // Get confirmed booking dates
+                                        $bookingDates = \DB::table('bookings')
+                                            ->where('product_id', $productId)
+                                            ->where('status', 'Confirmed')
+                                            ->pluck('booking_date')
+                                            ->map(function ($date) {
+                                                return Carbon::parse($date)->format('Y-m-d');
+                                            })
+                                            ->toArray();
+
+                                        return array_merge($unavailableDates, $bookingDates);
+                                    } catch (\Exception $e) {
+                                        \Log::error('Error getting disabled dates: ' . $e->getMessage());
                                         return [];
                                     }
-                                    // Get all unavailable dates for this product
-                                    $unavailableRanges = $product->getUnavailableDateRanges();
-                                    return array_keys($unavailableRanges);
-                                }),
+                                })
+                                ->helperText('Select the date the customer wants to use the product. Earliest available date: '
+                                    . now()->addDays(2)->startOfDay()->format('F j, Y')),
                         ]),
                 ])
                 ->action(function (array $data): void {
@@ -230,8 +262,23 @@ class BookingsPage extends Page implements HasTable, hasSchemas
                         return;
                     }
 
-                    // Check if date is available
-                    if (!$product->isDateAvailable($data['booking_date'])) {
+                    // Check if date is available (considering confirmed bookings and rentals)
+                    $bookingDate = Carbon::parse($data['booking_date'])->startOfDay();  // FIXED: added startOfDay()
+                    $today = now()->startOfDay();  // For comparison
+                    $minimumDate = $today->copy()->addDays(2);  // Earliest allowed date
+
+                    // Validate booking date is at least 2 days from now
+                    if ($bookingDate->lt($minimumDate)) {  // FIXED: Use lt() (less than) instead of diffInDays()
+                        Notification::make()
+                            ->title('Invalid Booking Date')
+                            ->body('Booking date must be at least 2 days from today to allow time for confirmation. Earliest allowed date: '
+                                . $minimumDate->format('F j, Y'))
+                            ->danger()
+                            ->send();
+                        return;
+                    }
+
+                    if (!$product->isDateAvailable($bookingDate, true)) {  // true = check confirmed bookings too
                         Notification::make()
                             ->title('Date Unavailable')
                             ->body('The selected date is not available for this product. Please choose another date.')
@@ -245,28 +292,27 @@ class BookingsPage extends Page implements HasTable, hasSchemas
                     if ($data['client_type'] === 'user') {
                         $userId = $data['client_id'];
                     } else {
-                        // For customers, check if they have an associated user
                         $customer = Customers::find($data['client_id']);
                         if ($customer?->user_id) {
                             $userId = $customer->user_id;
                         } else {
-                            // Customer has no associated user - can't create standard booking
                             Notification::make()
                                 ->title('Cannot Create Booking')
-                                ->body('Bookings for customers without accounts are not currently supported. Please use "Add New Rental" instead or select a registered user.')
+                                ->body('Bookings for customers without accounts are not currently supported.')
                                 ->warning()
                                 ->send();
                             return;
                         }
                     }
 
-                    // Create the booking
+                    // Create the booking with Pending status
                     Bookings::create([
                         'user_id' => $userId,
                         'created_by' => Auth::id(),
                         'product_id' => $data['product_id'],
-                        'booking_date' => $data['booking_date'],
-                        'status' => 'On Going',
+                        'booking_date' => $bookingDate,
+                        'status' => 'Pending',
+                        'notes' => 'Booking request created. Awaiting confirmation.',
                     ]);
 
                     // Get client name for notification
@@ -279,9 +325,13 @@ class BookingsPage extends Page implements HasTable, hasSchemas
                         $clientName = $customer ? "{$customer->first_name} {$customer->last_name}" : 'Unknown';
                     }
 
+                    // Calculate confirmation deadline
+                    $confirmationDeadline = $bookingDate->copy()->subDay()->format('F j, Y');
+
                     Notification::make()
-                        ->title('Reservation Created Successfully')
-                        ->body("Booking for {$product->name} has been created for {$clientName} on " . \Carbon\Carbon::parse($data['booking_date'])->format('F j, Y') . '.')
+                        ->title('Booking Request Created')
+                        ->body("Booking request for {$product->name} has been created for {$clientName} on "
+                            . $bookingDate->format('F j, Y') . ". Please confirm booking by {$confirmationDeadline}.")
                         ->success()
                         ->send();
                 }),
@@ -296,11 +346,9 @@ class BookingsPage extends Page implements HasTable, hasSchemas
                     ->label('Product Image')
                     ->disk('public')
                     ->getStateUsing(function ($record) {
-                        // Get the first product image's thumbnail
                         return $record->product->product_images->first()?->thumbnail_image;
                     })
                     ->defaultImageUrl(function ($record) {
-                        // Fallback to first product image if thumbnail doesn't exist
                         return $record->product->product_images->first()?->image_path;
                     }),
                 TextColumn::make('user.name')
@@ -312,38 +360,81 @@ class BookingsPage extends Page implements HasTable, hasSchemas
                 TextColumn::make('booking_date')
                     ->label('Booking Date')
                     ->date('F j, Y')
-                    ->sortable(),
+                    ->sortable()
+                    ->description(function ($record) {
+                        if ($record->status === 'Pending') {
+                            $daysUntilBooking = Carbon::parse($record->booking_date)->diffInDays(now());
+                            $confirmationDeadline = Carbon::parse($record->booking_date)->subDay();
+
+                            if ($confirmationDeadline->isToday()) {
+                                return 'Confirm by END OF TODAY';
+                            } elseif ($confirmationDeadline->isPast()) {
+                                return 'OVERDUE: Should have been confirmed by ' . $confirmationDeadline->format('M j');
+                            } else {
+                                return 'Confirm by ' . $confirmationDeadline->format('M j');
+                            }
+                        }
+                        return null;
+                    }),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
                         'Pending' => 'warning',
-                        'On Going' => 'info',
                         'Confirmed' => 'success',
-                        'Cancelled' => 'gray',
-                        'Completed' => 'success',
+                        'Completed' => 'info',
+                        'Cancelled' => 'danger',
+                        'No Show' => 'gray',
+                        default => 'info',
+                    })
+                    ->tooltip(function ($record) {
+                        if ($record->status === 'Pending') {
+                            $confirmationDeadline = Carbon::parse($record->booking_date)->subDay();
+                            return 'Needs confirmation by ' . $confirmationDeadline->format('F j, Y');
+                        }
+                        return null;
                     }),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                Filter::make('exclude_cancelled')
-                    ->label('Exclude Cancelled Bookings')
-                    ->default()
-                    ->query(fn(Builder $query): Builder => $query->where('status', '!=', 'Cancelled'))
-                    ->toggle()
-                    ->indicateUsing(function () {
-                        return 'Excluding cancelled bookings';
-                    }),
                 SelectFilter::make('status')
                     ->options([
-                        'Pending' => 'Pending',
-                        'On Going' => 'On Going',
-                        'Confirmed' => 'Confirmed',
+                        'Pending' => 'Pending - Needs Confirmation',
+                        'Confirmed' => 'Confirmed - Product Reserved',
+                        'Completed' => 'Completed - Converted to Rental',
                         'Cancelled' => 'Cancelled',
-                        'Completed' => 'Completed',
+                        'No Show' => 'No Show',
                     ])
                     ->label('Booking Status')
                     ->placeholder('All Statuses'),
+                Filter::make('needs_confirmation')
+                    ->label('Needs Confirmation Today')
+                    ->query(fn(Builder $query): Builder => $query
+                        ->where('status', 'Pending')
+                        ->whereDate('booking_date', '<=', now()->addDay()))
+                    ->toggle(),
+                Filter::make('urgent_confirmation')
+                    ->label('URGENT: Confirm Today')
+                    ->query(fn(Builder $query): Builder => $query
+                        ->where('status', 'Pending')
+                        ->whereDate('booking_date', '=', now()->addDay()))
+                    ->toggle(),
+                Filter::make('overdue_confirmation')
+                    ->label('Overdue Confirmation')
+                    ->query(fn(Builder $query): Builder => $query
+                        ->where('status', 'Pending')
+                        ->whereDate('booking_date', '=', now()))
+                    ->toggle(),
+                Filter::make('pending_bookings')
+                    ->label('All Pending Bookings')
+                    ->query(fn(Builder $query): Builder => $query->where('status', 'Pending'))
+                    ->toggle(),
+                Filter::make('upcoming_confirmed')
+                    ->label('Upcoming Confirmed')
+                    ->query(fn(Builder $query): Builder => $query
+                        ->where('status', 'Confirmed')
+                        ->whereDate('booking_date', '>=', now()))
+                    ->toggle(),
                 Filter::make('booking_date')
                     ->form([
                         DatePicker::make('booking_from')
@@ -365,163 +456,241 @@ class BookingsPage extends Page implements HasTable, hasSchemas
                             );
                     })
                     ->label('Booking Date Range'),
-                Filter::make('exclude_cancelled')
-                    ->label('Exclude Cancelled Bookings')
-                    ->default()
-                    ->query(fn(Builder $query): Builder => $query->where('status', '!=', 'Cancelled'))
-                    ->toggle()
-                    ->indicateUsing(function () {
-                        return 'Excluding cancelled bookings';
-                    }),
-                Filter::make('exclude_cancelled')
-                    ->label('Exclude Cancelled Bookings')
-                    ->default()
-                    ->query(fn(Builder $query): Builder => $query->where('status', '!=', 'Cancelled'))
-                    ->toggle()
-                    ->indicateUsing(function () {
-                        return 'Excluding cancelled bookings';
-                    }),
-                Filter::make('exclude_completed')
-                    ->label('Exclude Completed Bookings')
-                    ->query(fn(Builder $query): Builder => $query->where('status', '!=', 'Completed'))
-                    ->toggle(),
-                Filter::make('upcoming_bookings')
-                    ->query(fn(Builder $query): Builder => $query->where('booking_date', '>=', now()))
-                    ->toggle()
-                    ->label('Upcoming Bookings Only'),
-                Filter::make('past_bookings')
-                    ->query(fn(Builder $query): Builder => $query->where('booking_date', '<', now()))
-                    ->toggle()
-                    ->label('Past Bookings Only'),
-                Filter::make('today_bookings')
-                    ->query(fn(Builder $query): Builder => $query->whereDate('booking_date', now()))
-                    ->toggle()
-                    ->label("Today's Bookings Only"),
-                Filter::make('tomorrow_bookings')
-                    ->query(fn(Builder $query): Builder => $query->whereDate('booking_date', now()->addDay()))
-                    ->toggle()
-                    ->label("Tomorrow's Bookings Only"),
-                Filter::make('yesterday_bookings')
-                    ->query(fn(Builder $query): Builder => $query->whereDate('booking_date', now()->subDay()))
-                    ->toggle()
-                    ->label("Yesterday's Bookings Only"),
-                Filter::make('this_week_bookings')
-                    ->query(fn(Builder $query): Builder => $query->whereBetween('booking_date', [now()->startOfWeek(), now()->endOfWeek()]))
-                    ->toggle()
-                    ->label("This Week's Bookings Only"),
             ])
             ->actions([
                 ActionGroup::make([
-                    // 👁 View Action — visible only when record is Completed or Cancelled
+                    // View Action
                     ViewAction::make('viewBooking')
-                        ->visible(fn($record) => in_array($record->status, ['Completed', 'Cancelled']))
                         ->label('View Details')
                         ->icon('heroicon-o-eye')
                         ->modalHeading('Booking Details')
                         ->modalDescription('Review the details of this booking.')
                         ->form(function (Bookings $record) {
+                            $confirmationDeadline = Carbon::parse($record->booking_date)->subDay();
+                            $isOverdue = $record->status === 'Pending' && $confirmationDeadline->isPast();
+                            $needsConfirmationToday = $record->status === 'Pending' && $confirmationDeadline->isToday();
+
                             return [
                                 Section::make('Booking Information')
                                     ->schema([
-                                        TextInput::make('user.name')
+                                        Placeholder::make('customer_info')
                                             ->label('Customer')
-                                            ->disabled(),
-                                        TextInput::make('product.name')
+                                            ->content($record->user?->name ?? 'Unknown'),
+                                        Placeholder::make('product_info')
                                             ->label('Product')
-                                            ->disabled(),
-                                        TextInput::make('status')
+                                            ->content($record->product?->name ?? 'Unknown'),
+                                        Placeholder::make('status_info')
                                             ->label('Status')
-                                            ->disabled(),
-                                        DatePicker::make('booking_date')
+                                            ->content($record->status)
+                                            ->badge()
+                                            ->color(match ($record->status) {
+                                                'Pending' => $isOverdue ? 'danger' : 'warning',
+                                                'Confirmed' => 'success',
+                                                'Completed' => 'info',
+                                                'Cancelled' => 'danger',
+                                                default => 'info'
+                                            }),
+                                        Placeholder::make('booking_date_info')
                                             ->label('Booking Date')
-                                            ->disabled(),
+                                            ->content($record->booking_date->format('F j, Y')),
+                                        Placeholder::make('confirmation_deadline')
+                                            ->label('Confirmation Deadline')
+                                            ->content($confirmationDeadline->format('F j, Y'))
+                                            ->badge()
+                                            ->color($isOverdue ? 'danger' : ($needsConfirmationToday ? 'warning' : 'info'))
+                                            ->visible($record->status === 'Pending'),
+                                        Placeholder::make('confirmation_status')
+                                            ->label('Confirmation Status')
+                                            ->content($isOverdue
+                                                ? 'OVERDUE: Confirmation missed!'
+                                                : ($needsConfirmationToday
+                                                    ? 'URGENT: Confirm TODAY!'
+                                                    : ($record->status === 'Pending' ? 'Awaiting confirmation' : 'Confirmed')))
+                                            ->badge()
+                                            ->color($isOverdue ? 'danger' : ($needsConfirmationToday ? 'warning' : 'info'))
+                                            ->visible($record->status !== 'Cancelled'),
                                     ])
                                     ->columns(2),
                             ];
                         }),
-                    // ✏️ Edit Action — hidden when Completed or Cancelled
-                    EditAction::make('editBooking')
-                        ->visible(fn($record) => !in_array($record->status, ['Completed', 'Cancelled']))
-                        ->label('Edit Booking')
-                        ->icon('heroicon-o-pencil-square')
-                        ->modalHeading('Edit Booking')
-                        ->modalDescription('Modify the booking date or details below.')
-                        ->form(function (Bookings $record) {
-                            return [
-                                Section::make('Booking Information')
-                                    ->schema([
-                                        TextInput::make('user.name')
-                                            ->label('Customer')
-                                            ->disabled(),
-                                        TextInput::make('product.name')
-                                            ->label('Product')
-                                            ->disabled(),
-                                        TextInput::make('status')
-                                            ->label('Status')
-                                            ->disabled(),
-                                        DatePicker::make('booking_date')
-                                            ->label('Booking Date')
-                                            ->required()
-                                            ->minDate(now()->addDay())
-                                            ->native(false)
-                                            ->displayFormat('F j, Y'),
-                                    ])
-                                    ->columns(2),
-                            ];
-                        }),
-                    // ✅ Complete Booking — only visible if today == booking_date and not completed/cancelled
-                    Action::make('completeBooking')
-                        ->hidden(fn($record) => in_array($record->status, ['Completed', 'Cancelled']))
-                        ->visible(fn($record) =>
-                            $record->booking_date->isSameDay(now()) ||
-                            $record->booking_date->isPast())
-                        ->label('Complete Booking')
+                    // Confirm Booking Action - only for Pending bookings
+                    // Confirm Booking Action - only for Pending bookings
+                    Action::make('confirmBooking')
+                        ->label('Confirm Booking')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
-                        ->requiresConfirmation()
-                        ->modalHeading('Complete Booking')
-                        ->modalDescription('Are you sure you want to complete this booking?')
-                        ->action(function ($record) {
-                            $record->update(['status' => 'Completed']);
-
-                            if ($record->product) {
-                                $record->product->update(['status' => 'Available']);
+                        ->visible(fn($record) =>
+                            $record->status === 'Pending' &&
+                            Carbon::parse($record->booking_date)->subDay()->isToday())
+                        ->modalHeading('Confirm Booking')
+                        ->modalDescription('Confirm this booking and reserve the product for the customer.')
+                        ->form([
+                            Placeholder::make('confirmation_deadline_info')
+                                ->label('Confirmation Deadline')
+                                ->content(function ($record) {
+                                    $deadline = Carbon::parse($record->booking_date)->subDay();
+                                    return 'Today is the confirmation deadline! Must be confirmed by end of today.';
+                                }),
+                            Textarea::make('confirmation_notes')
+                                ->label('Confirmation Notes (Optional)')
+                                ->placeholder('Add any notes about the confirmation...')
+                                ->rows(3),
+                        ])
+                        ->action(function ($record, array $data) {
+                            // Check if it's still the confirmation day (day before booking)
+                            if (!Carbon::parse($record->booking_date)->subDay()->isToday()) {
+                                Notification::make()
+                                    ->title('Confirmation Deadline Passed')
+                                    ->body('The confirmation deadline was yesterday. This booking can no longer be confirmed.')
+                                    ->danger()
+                                    ->send();
+                                return;
                             }
 
-                            // Send Filament notification
+                            // Check if booking is too late to confirm (past booking date)
+                            if ($record->booking_date->isPast()) {
+                                Notification::make()
+                                    ->title('Cannot Confirm Past Booking')
+                                    ->body('Booking date has already passed. Please cancel this booking.')
+                                    ->danger()
+                                    ->send();
+                                return;
+                            }
+
+                            // Check if product is still available (excluding this booking)
+                            // Check for conflicting CONFIRMED bookings (excluding this one)
+                            $conflictingBookings = Bookings::where('product_id', $record->product_id)
+                                ->where('booking_date', $record->booking_date)
+                                ->where('status', 'Confirmed')  // Only check CONFIRMED bookings
+                                ->where('booking_id', '!=', $record->booking_id)  // Exclude this booking
+                                ->exists();
+
+                            if ($conflictingBookings) {
+                                Notification::make()
+                                    ->title('Product No Longer Available')
+                                    ->body('Another customer has already confirmed this product for this date. Please cancel this booking.')
+                                    ->danger()
+                                    ->send();
+                                return;
+                            }
+
+                            // Check if product is rented on this date using your existing method
+                            // Use isDateAvailable() but exclude this booking ID
+                            if (!$record->product->isDateAvailable($record->booking_date, null, $record->booking_id)) {
+                                Notification::make()
+                                    ->title('Product No Longer Available')
+                                    ->body('The product is already rented or has another booking for this date. Please cancel this booking.')
+                                    ->danger()
+                                    ->send();
+                                return;
+                            }
+
+                            // Update booking status
+                            $record->update([
+                                'status' => 'Confirmed',
+                                'notes' => 'Booking confirmed on ' . now()->format('Y-m-d')
+                                    . ($data['confirmation_notes'] ? "\nNotes: " . $data['confirmation_notes'] : ''),
+                            ]);
+
+                            // Reserve the product
+                            $record->product->update([
+                                'status' => 'Reserved',
+                            ]);
+
                             Notification::make()
+                                ->title('Booking Confirmed')
+                                ->body("Booking for {$record->product->name} has been confirmed and product is now reserved for "
+                                    . $record->booking_date->format('F j, Y'))
                                 ->success()
-                                ->title('Booking Completed')
-                                ->body('The booking has been successfully marked as completed.')
                                 ->send();
                         }),
-                    // ⚠️ Cancel Booking — hidden when Completed or Cancelled
+                    // Cancel Booking Action
                     Action::make('cancelBooking')
-                        ->hidden(fn($record) => in_array($record->status, ['Completed', 'Cancelled']))
                         ->label('Cancel Booking')
                         ->icon('heroicon-o-x-circle')
-                        ->color('warning')
+                        ->color('danger')
+                        ->visible(fn($record) => in_array($record->status, ['Pending', 'Confirmed']))
                         ->requiresConfirmation()
                         ->modalHeading('Cancel Booking')
-                        ->modalDescription('Are you sure you want to cancel this booking? This action cannot be undone.')
-                        ->action(function ($record) {
-                            $record->update(['status' => 'Cancelled']);
-
-                            if ($record->product) {
-                                $record->product->update(['status' => 'Available']);
+                        ->modalDescription('Are you sure you want to cancel this booking?')
+                        ->form([
+                            Select::make('cancellation_reason')
+                                ->label('Cancellation Reason')
+                                ->options([
+                                    'customer_cancelled' => 'Customer Cancelled',
+                                    'no_response' => 'No Response from Customer',
+                                    'product_unavailable' => 'Product Unavailable',
+                                    'other' => 'Other',
+                                ])
+                                ->required(),
+                            Textarea::make('cancellation_notes')
+                                ->label('Cancellation Notes')
+                                ->placeholder('Add details about the cancellation...')
+                                ->rows(3),
+                        ])
+                        ->action(function ($record, array $data) {
+                            // If booking was confirmed, make product available again
+                            if ($record->status === 'Confirmed') {
+                                $record->product->update([
+                                    'status' => 'Available',
+                                ]);
                             }
+
+                            $record->update([
+                                'status' => 'Cancelled',
+                                'notes' => 'Cancelled on ' . now()->format('Y-m-d')
+                                    . "\nReason: " . $data['cancellation_reason']
+                                    . ($data['cancellation_notes'] ? "\nNotes: " . $data['cancellation_notes'] : ''),
+                            ]);
+
                             Notification::make()
-                                ->success()
                                 ->title('Booking Cancelled')
-                                ->body('The booking has been successfully cancelled.')
+                                ->body('The booking has been cancelled successfully.')
+                                ->success()
                                 ->send();
                         }),
-                    Action::make('createRental')
-                        ->visible(fn($record) => $record->status === 'Completed')
-                        ->label('Create Rental')
-                        ->icon('heroicon-o-plus-circle')
-                        ->color('success')
-                        ->url(fn($record) => route('filament.admin.resources.rentals.create', ['booking_id' => $record->booking_id])),
+                    // Mark as No Show Action - for Confirmed bookings after booking date
+                    Action::make('markNoShow')
+                        ->label('Mark as No Show')
+                        ->icon('heroicon-o-user-minus')
+                        ->color('warning')
+                        ->visible(fn($record) =>
+                            $record->status === 'Confirmed' &&
+                            $record->booking_date->isPast())
+                        ->requiresConfirmation()
+                        ->modalHeading('Mark as No Show')
+                        ->modalDescription('Customer did not show up for their confirmed booking?')
+                        ->action(function ($record) {
+                            // Make product available again
+                            $record->product->update([
+                                'status' => 'Available',
+                            ]);
+
+                            $record->update([
+                                'status' => 'No Show',
+                                'notes' => ($record->notes ? $record->notes . "\n" : '')
+                                    . 'Marked as No Show on ' . now()->format('Y-m-d'),
+                            ]);
+
+                            Notification::make()
+                                ->title('Marked as No Show')
+                                ->body('Booking has been marked as No Show. Product is now available again.')
+                                ->warning()
+                                ->send();
+                        }),
+                    Action::make('convertToRental')
+                        ->label('Convert to Rental')
+                        ->icon('heroicon-o-arrow-right-circle')
+                        ->color('primary')
+                        ->visible(fn($record) =>
+                            $record->status === 'Confirmed' &&
+                            ($record->booking_date->isToday() || $record->booking_date->isPast()))
+                        ->url(fn($record) => route('filament.admin.resources.rentals.create', [
+                            'booking_id' => $record->booking_id,
+                            'product_id' => $record->product_id,
+                            'user_id' => $record->user_id,
+                            'prefill' => 'true',
+                        ])),
                 ])
                     ->label('Manage')
                     ->button()
