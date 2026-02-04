@@ -452,15 +452,32 @@
                     if (this.form.remember) {
                         formData.append('remember', '1');
                     }
-                    formData.append('_token', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
+
+                    // 🔥 PWA FIX: Get CSRF token properly
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                    formData.append('_token', csrfToken);
+
+                    // 🔥 PWA FIX: Add PWA detection headers
+                    const headers = {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    };
+
+                    // Check if running in PWA mode
+                    const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
+                        window.navigator.standalone;
+
+                    if (isPWA) {
+                        headers['X-PWA-Request'] = 'true';
+                        headers['Sec-Fetch-Dest'] = 'empty';
+                        console.log('PWA Login: Adding PWA-specific headers');
+                    }
 
                     const response = await fetch('{{ route("login") }}', {
                         method: 'POST',
                         body: formData,
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json'
-                        }
+                        headers: headers,
+                        credentials: 'include' // 🔥 IMPORTANT: Include cookies for PWA
                     });
 
                     const data = await response.json();
@@ -469,6 +486,15 @@
                         // Clear any block data
                         this.clearBlock();
                         sessionStorage.removeItem('remaining_attempts');
+
+                        // 🔥 PWA FIX: Update CSRF token if provided
+                        if (data.csrf_token) {
+                            const metaTag = document.querySelector('meta[name="csrf-token"]');
+                            if (metaTag) {
+                                metaTag.setAttribute('content', data.csrf_token);
+                                console.log('PWA Login: Updated CSRF token');
+                            }
+                        }
 
                         // Show success toast before redirect
                         if (typeof showToast === 'function') {
@@ -483,6 +509,15 @@
                     } else {
                         // Reset Turnstile on failed attempt
                         this.resetTurnstile();
+
+                        // 🔥 PWA FIX: Update CSRF token if provided (even on error)
+                        if (data.csrf_token) {
+                            const metaTag = document.querySelector('meta[name="csrf-token"]');
+                            if (metaTag) {
+                                metaTag.setAttribute('content', data.csrf_token);
+                                console.log('PWA Login: Updated CSRF token on error');
+                            }
+                        }
 
                         // Handle blocked response
                         if (data.blocked) {

@@ -119,6 +119,28 @@ class RegistrationController extends Controller
 
     public function login(Request $request): \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
     {
+        // 🔥 PWA FIX: Check if request is from PWA
+        $isPwaRequest = $request->header('Sec-Fetch-Dest') === 'empty' ||
+            $request->header('X-Requested-With') === 'XMLHttpRequest' ||
+            $request->header('X-PWA-Request') === 'true' ||
+            !$request->expectsJson();  // PWA often doesn't set proper headers
+
+        // 🔥 PWA FIX: If PWA request, adjust session handling
+        if ($isPwaRequest) {
+            // Ensure session is properly started
+            $request->session()->start();
+
+            // Re-generate session token for PWA context
+            $request->session()->regenerateToken();
+
+            // Log PWA request for debugging
+            \Log::info('PWA Login Attempt', [
+                'ip' => $request->ip(),
+                'headers' => $request->headers->all(),
+                'session_id' => $request->session()->getId(),
+            ]);
+        }
+
         try {
             // Add Turnstile validation to login
             $credentials = $request->validate([
@@ -130,32 +152,47 @@ class RegistrationController extends Controller
             // Check if email is blocked
             $emailBlock = $this->loginSecurity->isEmailBlocked($credentials['email']);
             if ($emailBlock['blocked']) {
-                return $this->handleBlockedLogin($request, $emailBlock);
+                return $this->handleBlockedLogin($request, $emailBlock, $isPwaRequest);
             }
 
             // Check if IP is blocked
             $ipBlock = $this->loginSecurity->isIpBlocked($request->ip());
             if ($ipBlock['blocked']) {
-                return $this->handleBlockedLogin($request, $ipBlock);
+                return $this->handleBlockedLogin($request, $ipBlock, $isPwaRequest);
             }
 
             // Validate Turnstile token
             $turnstileValid = $this->validateTurnstile($credentials['cf-turnstile-response']);
             if (!$turnstileValid['success']) {
                 $this->loginSecurity->recordAttempt($credentials['email'], $request->ip(), false);
-                return response()->json([
+
+                $responseData = [
                     'success' => false,
                     'message' => $turnstileValid['message'],
                     'errors' => ['cf-turnstile-response' => [$turnstileValid['message']]]
-                ], 422);
+                ];
+
+                // 🔥 PWA FIX: Add CSRF token for PWA
+                if ($isPwaRequest) {
+                    $responseData['csrf_token'] = csrf_token();
+                }
+
+                return response()->json($responseData, 422);
             }
         } catch (\Illuminate\Validation\ValidationException $e) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $e->errors()
-                ], 422);
+            $responseData = [
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ];
+
+            // 🔥 PWA FIX: Add CSRF token for PWA
+            if ($isPwaRequest) {
+                $responseData['csrf_token'] = csrf_token();
+            }
+
+            if ($request->expectsJson() || $isPwaRequest) {
+                return response()->json($responseData, 422);
             }
             throw $e;
         }
@@ -166,12 +203,19 @@ class RegistrationController extends Controller
         if ($user && in_array($user->role, ['Admin', 'SuperAdmin'])) {
             $this->loginSecurity->recordAttempt($credentials['email'], $request->ip(), false);
 
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Admin accounts must use the admin login page.',
-                    'errors' => ['email' => ['Admin accounts must use the admin login page.']]
-                ], 422);
+            $responseData = [
+                'success' => false,
+                'message' => 'Admin accounts must use the admin login page.',
+                'errors' => ['email' => ['Admin accounts must use the admin login page.']]
+            ];
+
+            // 🔥 PWA FIX: Add CSRF token for PWA
+            if ($isPwaRequest) {
+                $responseData['csrf_token'] = csrf_token();
+            }
+
+            if ($request->expectsJson() || $isPwaRequest) {
+                return response()->json($responseData, 422);
             }
 
             return back()->withErrors([
@@ -193,7 +237,23 @@ class RegistrationController extends Controller
 
             $request->session()->regenerate();
 
-            // Handle AJAX requests
+            // 🔥 PWA FIX: Special handling for PWA requests
+            if ($isPwaRequest) {
+                // For PWA, ensure session is properly saved
+                $request->session()->save();
+
+                // Return JSON with session info for PWA
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Login successful! Welcome back!',
+                    'redirect' => '/',
+                    'session_refreshed' => true,
+                    'csrf_token' => csrf_token(),  // Send new CSRF token
+                    'is_pwa' => true,
+                ]);
+            }
+
+            // Handle regular AJAX requests
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => true,
@@ -214,13 +274,20 @@ class RegistrationController extends Controller
             $message .= " You have {$remainingAttempts} attempt(s) remaining.";
         }
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => false,
-                'message' => $message,
-                'remaining_attempts' => $remainingAttempts,
-                'errors' => ['email' => [$message]]
-            ], 422);
+        $responseData = [
+            'success' => false,
+            'message' => $message,
+            'remaining_attempts' => $remainingAttempts,
+            'errors' => ['email' => [$message]]
+        ];
+
+        // 🔥 PWA FIX: Add CSRF token for PWA
+        if ($isPwaRequest) {
+            $responseData['csrf_token'] = csrf_token();
+        }
+
+        if ($request->expectsJson() || $isPwaRequest) {
+            return response()->json($responseData, 422);
         }
 
         return back()->withErrors([
@@ -231,19 +298,26 @@ class RegistrationController extends Controller
     /**
      * Handle blocked login attempts
      */
-    protected function handleBlockedLogin(Request $request, array $blockData)
+    protected function handleBlockedLogin(Request $request, array $blockData, bool $isPwaRequest = false)
     {
         $message = $blockData['message'];
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => false,
-                'message' => $message,
-                'blocked' => true,
-                'blocked_until' => $blockData['blocked_until']->toIso8601String(),
-                'remaining_seconds' => $blockData['remaining_seconds'],
-                'errors' => ['email' => [$message]]
-            ], 429);  // 429 Too Many Requests
+        $responseData = [
+            'success' => false,
+            'message' => $message,
+            'blocked' => true,
+            'blocked_until' => $blockData['blocked_until']->toIso8601String(),
+            'remaining_seconds' => $blockData['remaining_seconds'],
+            'errors' => ['email' => [$message]]
+        ];
+
+        // 🔥 PWA FIX: Add CSRF token for PWA
+        if ($isPwaRequest) {
+            $responseData['csrf_token'] = csrf_token();
+        }
+
+        if ($request->expectsJson() || $isPwaRequest) {
+            return response()->json($responseData, 429);  // 429 Too Many Requests
         }
 
         return back()
@@ -253,8 +327,6 @@ class RegistrationController extends Controller
             ->with('blocked_until', $blockData['blocked_until']->toIso8601String())
             ->with('remaining_seconds', $blockData['remaining_seconds']);
     }
-
-    /** Validate Cloudflare Turnstile token */
 
     /**
      * Validate Cloudflare Turnstile token

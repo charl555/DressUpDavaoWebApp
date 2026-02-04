@@ -1,6 +1,6 @@
 <footer class="bg-white text-black pt-24 md:pt-24 pb-8 md:pb-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-8">
 
             <!-- Logo & Socials - Always visible -->
             <div class="col-span-1 flex flex-col items-center md:items-start text-center md:text-left">
@@ -8,7 +8,6 @@
                     <a href="/">
                         <img src="{{ asset('images/Dressupdavaologo.png') }}" alt="DressUp Davao Logo"
                             class="h-20 w-auto md:h-24 lg:h-28 mx-auto md:mx-0"></a>
-
                 </div>
                 <p class="text-base mb-6 leading-relaxed">
                     Wear the moment.<br>Rent with Ease.
@@ -90,21 +89,108 @@
                     <li><a href="/forum" class="hover:text-purple-600 transition duration-300 block py-1">Forum</a></li>
                 </ul>
             </div>
+
+            <!-- Download App Button Section -->
+            <div class="md:col-span-1">
+                <div class="text-lg font-semibold mb-4 md:mb-4 text-center md:text-left">
+                    <span>Get Our App</span>
+                </div>
+
+                <!-- Download App Button -->
+                <button id="download-app-button"
+                    class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center space-x-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                    <i class="fas fa-download text-lg"></i>
+                    <span class="font-semibold">Download App</span>
+                </button>
+
+                <!-- Simple Text -->
+                <p class="text-xs text-gray-500 mt-3 text-center md:text-left">
+                    Install to your home screen
+                </p>
+            </div>
         </div>
 
         <!-- Footer Bottom -->
-        {{-- <div class="mt-12 border-t border-gray-300 pt-6 text-center text-sm">
+        <div class="mt-12 border-t border-gray-300 pt-6 text-center text-sm">
             <p>&copy; {{ date('Y') }} DressUp Davao. All rights reserved.</p>
-        </div> --}}
+        </div>
     </div>
 </footer>
 
-<!-- JavaScript for collapsible functionality -->
+<!-- Minimal JavaScript for PWA Installation -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const downloadButton = document.getElementById('download-app-button');
+        let deferredPrompt = null;
+
+        // Check if PWA is already installed
+        const isPWAInstalled = window.matchMedia('(display-mode: standalone)').matches ||
+            window.navigator.standalone === true;
+
+        if (isPWAInstalled) {
+            downloadButton.innerHTML = '<i class="fas fa-check"></i><span>App Installed</span>';
+            downloadButton.classList.remove('bg-purple-600', 'hover:bg-purple-700', 'hover:shadow-lg', 'transform', 'hover:-translate-y-0.5');
+            downloadButton.classList.add('bg-green-500', 'cursor-default');
+            downloadButton.disabled = true;
+        }
+
+        // Listen for beforeinstallprompt event (Chrome, Edge, etc.)
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+
+            // Update button text
+            downloadButton.innerHTML = '<i class="fas fa-download"></i><span>Install Now</span>';
+        });
+
+        // Handle button click
+        downloadButton.addEventListener('click', function () {
+            if (deferredPrompt) {
+                // Show browser's native install prompt
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                        downloadButton.innerHTML = '<i class="fas fa-check"></i><span>App Installed</span>';
+                        downloadButton.classList.remove('bg-purple-600', 'hover:bg-purple-700', 'hover:shadow-lg', 'transform', 'hover:-translate-y-0.5');
+                        downloadButton.classList.add('bg-green-500', 'cursor-default');
+                        downloadButton.disabled = true;
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                // Show instructions based on device
+                showInstallInstructions();
+            }
+        });
+
+        // Detect when app is successfully installed
+        window.addEventListener('appinstalled', () => {
+            downloadButton.innerHTML = '<i class="fas fa-check"></i><span>App Installed</span>';
+            downloadButton.classList.remove('bg-purple-600', 'hover:bg-purple-700', 'hover:shadow-lg', 'transform', 'hover:-translate-y-0.5');
+            downloadButton.classList.add('bg-green-500', 'cursor-default');
+            downloadButton.disabled = true;
+        });
+
+        // Simple install instructions
+        function showInstallInstructions() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            let message = '';
+
+            if (/iphone|ipad|ipod/.test(userAgent)) {
+                message = 'To install: Tap Share (⎙) → "Add to Home Screen" → "Add"';
+            } else if (/android/.test(userAgent)) {
+                message = 'To install: Tap Menu (⋮) → "Add to Home screen" → "Add"';
+            } else {
+                message = 'To install: Look for the install icon (⊕) in your browser\'s address bar';
+            }
+
+            alert('Install DressUp Davao App\n\n' + message);
+        }
+
+        // Keep your existing accordion functionality
         const accordionToggles = document.querySelectorAll('.accordion-toggle');
 
-        // Initialize all accordions as closed on mobile
         function initializeAccordions() {
             if (window.innerWidth < 768) {
                 document.querySelectorAll('.accordion-content').forEach(content => {
@@ -114,40 +200,26 @@
                     icon.style.transform = 'rotate(0deg)';
                 });
             } else {
-                // On desktop, ensure all content is visible
                 document.querySelectorAll('.accordion-content').forEach(content => {
                     content.classList.remove('hidden');
                 });
             }
         }
 
-        // Initialize on page load
         initializeAccordions();
 
         accordionToggles.forEach(toggle => {
             toggle.addEventListener('click', function () {
-                // Only toggle on mobile screens
                 if (window.innerWidth < 768) {
                     const content = this.nextElementSibling;
                     const icon = this.querySelector('i');
-
-                    // Toggle content visibility
                     content.classList.toggle('hidden');
-
-                    // Rotate chevron icon
-                    if (content.classList.contains('hidden')) {
-                        icon.style.transform = 'rotate(0deg)';
-                    } else {
-                        icon.style.transform = 'rotate(180deg)';
-                    }
+                    icon.style.transform = content.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
                 }
             });
         });
 
-        // Handle window resize to ensure proper state
-        window.addEventListener('resize', function () {
-            initializeAccordions();
-        });
+        window.addEventListener('resize', initializeAccordions);
     });
 </script>
 
@@ -155,6 +227,11 @@
     /* Smooth transitions for the accordion */
     .accordion-content {
         transition: all 0.3s ease-in-out;
+    }
+
+    /* Button hover effects */
+    #download-app-button {
+        transition: all 0.2s ease;
     }
 
     /* Ensure proper spacing on mobile */
