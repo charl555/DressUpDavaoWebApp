@@ -1,0 +1,13 @@
+[
+    {
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "shop.dressupdavao.twa",
+        "sha256_cert_fingerprints": [
+          "53:7B:BC:3F:33:D3:24:2A:94:18:F9:B5:03:DB:1F:9A:F3:1D:A0:C4:C1:ED:BE:40:5F:86:E6:7F:49:21:29:19"
+        ]
+      }
+    }
+  ]
+  
