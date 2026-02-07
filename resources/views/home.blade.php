@@ -8,10 +8,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 
-
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap"
         as="style">
-
 
     <link rel="preload" href="{{ asset('frontend-images/optimized-images/hero-mobile.webp') }}" as="image"
         media="(max-width: 768px)">
@@ -28,7 +26,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="DressUp" />
     <link rel="apple-touch-icon" href="/images/icons/icon-192x192.png" />
-
 
     <style>
         .bg-black {
@@ -99,35 +96,49 @@
                 background-position: -200% 0;
             }
         }
+
+        /* Mobile app specific styles - applied conditionally via PHP */
+        @php
+            $isMobileApp = request()->has('app') ||
+                request()->has('mobile_nav') ||
+                str_contains(request()->header('User-Agent'), 'DressUpDavaoApp');
+        @endphp
+
+        @if($isMobileApp)
+            body {
+                padding-top: 64px !important;
+                padding-bottom: 64px !important;
+
+            }
+        @endif
     </style>
 
-
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-
 
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap">
 </head>
 
 <body class="bg-white min-h-screen flex flex-col">
     <main class="flex-grow">
-        <x-navbar />
+        {{-- Navbar (contains both web and mobile versions) --}}
+<x-navbar />
+        
+        {{-- Your page content --}}
         <x-hero />
         <x-infocardscomponent />
         <x-category />
-        <x-productcards :products="$products" />
+<x-productcards :products="$products" />
+        
+        {{-- Bottom navbar for mobile app --}}
+        <x-bottom-navbar />
     </main>
 
     <x-footer />
     <x-chatwindow />
     <x-toast />
 
-
-
-
-
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-
             const lazyImages = [].slice.call(document.querySelectorAll('img.lazy'));
 
             if ('IntersectionObserver' in window) {
@@ -147,7 +158,6 @@
                 });
             }
 
-
             if ('requestIdleCallback' in window) {
                 requestIdleCallback(() => {
                     const preloadLinks = ['/product-list', '/about'];
@@ -158,7 +168,19 @@
                         document.head.appendChild(preloadLink);
                     });
                 });
-            }
+}
+            
+            // Mobile app specific JavaScript
+            @php
+                $isMobileApp = request()->has('app') ||
+                    request()->has('mobile_nav') ||
+                    str_contains(request()->header('User-Agent'), 'DressUpDavaoApp');
+            @endphp
+            
+            @if($isMobileApp)
+                console.log('Mobile app UI loaded');
+                // Add any mobile-specific JavaScript here
+            @endif
         });
     </script>
 </body>
