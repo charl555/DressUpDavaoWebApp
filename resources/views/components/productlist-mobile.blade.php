@@ -21,32 +21,7 @@
             </button>
         </div>
 
-        {{-- Search Bar --}}
-        <form method="GET" action="{{ route('product.list') }}" class="relative">
-            <input type="hidden" name="app" value="1">
-            <input type="hidden" name="mobile_nav" value="true">
-            
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-            </div>
-            
-            <input type="text" name="search" value="{{ request('search') }}"
-                placeholder="Search products..."
-                class="w-full pl-12 pr-4 py-3 bg-gray-100 border-0 rounded-xl focus:ring-2 focus:ring-purple-500 focus:bg-white focus:shadow-sm transition-all text-base"
-                autocomplete="off">
-            
-            @if(request('search'))
-                <button type="button" onclick="clearSearch()" class="absolute inset-y-0 right-0 pr-4 flex items-center">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            @endif
-        </form>
-    </div>
+        </div>
 
     {{-- Filter Sidebar (Hidden by default) --}}
     <div id="filterSidebar" class="fixed inset-0 z-50 bg-black bg-opacity-50 hidden">
@@ -61,105 +36,717 @@
                     </button>
                 </div>
                 
-                {{-- Simple Filters Form --}}
+                {{-- Filters Form --}}
                 <form id="mobileFilterForm" method="GET" action="{{ route('product.list') }}">
                     <input type="hidden" name="app" value="1">
                     <input type="hidden" name="mobile_nav" value="true">
                     
-                    {{-- Type Filter --}}
-                    <div class="mb-6">
-                        <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
-                            <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                            Type
-                        </h3>
-                        <div class="space-y-2">
-                            @php
-                                $types = ['Gown', 'Suit'];
-                                $selectedTypes = request('type', []);
-                                if (!is_array($selectedTypes)) {
-                                    $selectedTypes = [$selectedTypes];
-                                }
-                            @endphp
-                            @foreach($types as $type)
-                                <label class="flex items-center p-3 rounded-lg hover:bg-purple-50 transition-colors cursor-pointer">
-                                    <input type="checkbox" name="type[]" value="{{ $type }}"
-                                        class="form-checkbox text-purple-600 rounded focus:ring-purple-500"
-                                        {{ in_array($type, $selectedTypes) ? 'checked' : '' }}>
-                                    <span class="ml-3 text-gray-700">{{ $type }}</span>
-                                </label>
-                            @endforeach
+                    {{-- Type Filter (only for guests) --}}
+                    @guest
+                        <div class="mb-4">
+                            <details class="group border-b border-gray-200 pb-3">
+                                <summary class="flex justify-between items-center cursor-pointer py-3 text-gray-800 hover:text-purple-700 transition-colors">
+                                    <span class="flex items-center font-semibold">
+                                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                        Type
+                                    </span>
+                                    <span class="transform transition-transform duration-200 group-open:rotate-180">
+                                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </span>
+                                </summary>
+                                <div class="mt-3 space-y-2 pl-2">
+                                    @php
+                                        $types = ['Gown', 'Suit'];
+                                        $selectedTypes = request('type', []);
+                                        if (!is_array($selectedTypes)) {
+                                            $selectedTypes = [$selectedTypes];
+                                        }
+                                    @endphp
+                                    @foreach($types as $type)
+                                        <label class="flex items-center p-2 rounded-lg hover:bg-purple-50 transition-colors cursor-pointer">
+                                            <input type="checkbox" name="type[]" value="{{ $type }}"
+                                                class="form-checkbox text-purple-600 rounded focus:ring-purple-500"
+                                                {{ in_array($type, $selectedTypes) ? 'checked' : '' }}>
+                                            <span class="ml-3 text-gray-700 text-sm">{{ $type }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </details>
                         </div>
-                    </div>
+                    @endguest
 
                     {{-- Style Filter --}}
-                    <div class="mb-6">
-                        <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
-                            <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                            </svg>
-                            Style
-                        </h3>
-                        <input type="text" name="subtype_search" placeholder="Search styles..."
-                            class="w-full p-3 mb-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                            value="{{ request('subtype') }}">
-                        <div class="max-h-60 overflow-y-auto space-y-2">
-                            @php
-                                $selectedSubtypes = request('subtype', []);
-                                if (!is_array($selectedSubtypes)) {
-                                    $selectedSubtypes = [$selectedSubtypes];
-                                }
-                            @endphp
-                            @foreach(['A-line Gown', 'Mermaid Gown', 'Ball Gown', 'Trumpet Gown', 'Evening Gown', 'Classic Suit', 'Tuxedo'] as $subtype)
-                                <label class="flex items-center p-3 rounded-lg hover:bg-purple-50 transition-colors cursor-pointer">
-                                    <input type="checkbox" name="subtype[]" value="{{ $subtype }}"
-                                        class="form-checkbox text-purple-600 rounded focus:ring-purple-500"
-                                        {{ in_array($subtype, $selectedSubtypes) ? 'checked' : '' }}>
-                                    <span class="ml-3 text-gray-700 text-sm">{{ $subtype }}</span>
-                                </label>
-                            @endforeach
-                        </div>
+                    <div class="mb-4">
+                        <details class="group border-b border-gray-200 pb-3">
+                            <summary class="flex justify-between items-center cursor-pointer py-3 text-gray-800 hover:text-purple-700 transition-colors">
+                                <span class="flex items-center font-semibold">
+                                    <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                    </svg>
+                                    Style
+                                </span>
+                                <span class="transform transition-transform duration-200 group-open:rotate-180">
+                                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </span>
+                            </summary>
+                            <div class="mt-3 max-h-60 overflow-y-auto space-y-2 pl-2 pr-2">
+                                @php
+                                    // Determine user gender and set appropriate subtypes
+                                    $userGender = auth()->check() ? auth()->user()->gender : null;
+                                    $gownTypes = ['A-line Gown',
+                            'Anarkali Gown',
+                            'Angel Sleeve Gown',
+                            'Asymmetrical Gown',
+                            'Backless Gown',
+                            'Ball Gown',
+                            'Bandage Gown',
+                            'Bandeau Gown',
+                            'Beaded Gown',
+                            'Bias-cut Gown',
+                            'Boat Neck Gown',
+                            'Bodysuit Gown',
+                            'Boho Gown',
+                            'Bolero Gown',
+                            'Bouffant Gown',
+                            'Bridesmaid Gown',
+                            'Brocade Gown',
+                            'Bustier Gown',
+                            'Cape Gown',
+                            'Cap-sleeve Gown',
+                            'Cargo Gown',
+                            'Chantilly Lace Gown',
+                            'Chemise Gown',
+                            'Chiffon Gown',
+                            'Choker Neck Gown',
+                            'Classic Column Gown',
+                            'Cleopatra Gown',
+                            'Clover Neck Gown',
+                            'Cocktail Gown',
+                            'Cold-shoulder Gown',
+                            'Column Gown',
+                            'Contrast Panel Gown',
+                            'Convertible Gown',
+                            'Court Train Gown',
+                            'Cowl Neck Gown',
+                            'Crepe Gown',
+                            'Cut-out Gown',
+                            'Debutante Gown',
+                            'Deep V-neck Gown',
+                            'Denim Gown',
+                            'Detachable Train Gown',
+                            'Diagonal Neck Gown',
+                            'Draped Gown',
+                            'Drop Waist Gown',
+                            'Duster Gown',
+                            'Embellished Gown',
+                            'Embossed Gown',
+                            'Empire Waist Gown',
+                            'Envelope Neck Gown',
+                            'Evening Gown',
+                            'Fabric Wrap Gown',
+                            'Faille Gown',
+                            'Faux Wrap Gown',
+                            'Feathered Gown',
+                            'Fitted Gown',
+                            'Flared Gown',
+                            'Flipper Sleeve Gown',
+                            'Filipiniana Gown',
+                            'Flounce Gown',
+                            'Flyaway Gown',
+                            'Formal Maxi Gown',
+                            'Frilled Gown',
+                            'Gathered Gown',
+                            'Georgette Gown',
+                            'Glitter Gown',
+                            'Godet Gown',
+                            'Grecian Gown',
+                            'Guest Gown',
+                            'Halter Gown',
+                            'Handkerchief Hem Gown',
+                            'High-collar Gown',
+                            'High-low Gown',
+                            'High-neck Gown',
+                            'Hourglass Gown',
+                            'Illusion Gown',
+                            'Jabot Gown',
+                            'Jersey Gown',
+                            'Jumpsuit Gown',
+                            'Kaftan Gown',
+                            'Keyhole Back Gown',
+                            'Keyhole Neck Gown',
+                            'Kimono Gown',
+                            'Knit Gown',
+                            'Lace Gown',
+                            'Layered Gown',
+                            'Lehenga Gown',
+                            'Linen Gown',
+                            'Long Sleeve Gown',
+                            'Mermaid Gown',
+                            'Mesh Gown',
+                            'Metallic Gown',
+                            'Military Gown',
+                            'Modest Gown',
+                            'Mother of the Bride Gown',
+                            'Mousseline Gown',
+                            'Nehru Collar Gown',
+                            'Night Gown',
+                            'Off-shoulder Gown',
+                            'Ombré Gown',
+                            'One-shoulder Gown',
+                            'Organza Gown',
+                            'Overlay Gown',
+                            'Panel Gown',
+                            'Peasant Gown',
+                            'Peek-a-boo Gown',
+                            'Pencil Gown',
+                            'Peplum Gown',
+                            'Peter Pan Collar Gown',
+                            'Pinafore Gown',
+                            'Pleated Gown',
+                            'Plunge Neck Gown',
+                            'Polo Neck Gown',
+                            'Princess Gown',
+                            'Prom Gown',
+                            'Quilted Gown',
+                            'Racerback Gown',
+                            'Raglan Sleeve Gown',
+                            'Raja Poshak Gown',
+                            'Ravissant Gown',
+                            'Rhinestone Gown',
+                            'Ribbon Gown',
+                            'Robe Gown',
+                            'Ruching Gown',
+                            'Ruffle Gown',
+                            'Sari Gown',
+                            'Satin Gown',
+                            'Scalloped Gown',
+                            'Sequin Gown',
+                            'Sequined Gown',
+                            'Set-in Sleeve Gown',
+                            'Shantung Gown',
+                            'Sheath Gown',
+                            'Shiffon Gown',
+                            'Shirred Gown',
+                            'Shirtwaist Gown',
+                            'Silk Gown',
+                            'Skater Gown',
+                            'Slip Gown',
+                            'Smocked Gown',
+                            'Spaghetti Strap Gown',
+                            'Strapless Gown',
+                            'Surplice Gown',
+                            'Sweetheart Gown',
+                            'Taffeta Gown',
+                            'Tea-length Gown',
+                            'Teddy Gown',
+                            'Tented Gown',
+                            'Tie-back Gown',
+                            'Tie-dye Gown',
+                            'Tiered Gown',
+                            'Trapeze Gown',
+                            'Trumpet Gown',
+                            'Tulle Gown',
+                            'Tunic Gown',
+                            'Turtleneck Gown',
+                            'Two-piece Gown',
+                            'Velvet Gown',
+                            'Venetian Gown',
+                            'V-neck Gown',
+                            'Watteau Train Gown',
+                            'Wedding Gown',
+                            'Wrap Gown',
+                            'Yoke Gown',
+                            'Other',];
+                                    $suitTypes = ['2-Button Suit',
+                            '3-Button Suit',
+                            '4-Button Suit',
+                            '6-Button Suit',
+                            'Admiral Suit',
+                            'Athletic Fit Suit',
+                            'Balmacaan Coat Suit',
+                            'Banana Republic Suit',
+                            'Barong Tagalog',
+                            'Basketweave Suit',
+                            'Beach Suit',
+                            'Biker Jacket Suit',
+                            'Black Tie Suit',
+                            'Blazer Suit',
+                            'Boating Blazer Suit',
+                            'Bold Stripe Suit',
+                            'Bomber Jacket Suit',
+                            'Bond Suit',
+                            'Business Suit',
+                            'Café Racer Suit',
+                            'Canvas Suit',
+                            'Cape Suit',
+                            'Cap-toe Suit',
+                            'Cardigan Suit',
+                            'Casual Suit',
+                            'Chalk Stripe Suit',
+                            'Chesterfield Coat Suit',
+                            'Chino Suit',
+                            'Classic Fit Suit',
+                            'Clean Front Suit',
+                            'Clergy Suit',
+                            'Corduroy Suit',
+                            'Country Suit',
+                            'Court Suit',
+                            'Cricket Blazer Suit',
+                            'Cropped Suit',
+                            'Cruise Suit',
+                            'Custom Suit',
+                            'Cutaway Coat',
+                            'Day Suit',
+                            'Denim Suit',
+                            'Dinner Jacket',
+                            'Dinner Suit',
+                            'Directors Cut Suit',
+                            'Double Breasted Suit',
+                            'Double Rider Suit',
+                            'Double Vent Suit',
+                            'Drape Cut Suit',
+                            'Dress Suit',
+                            'Electric Suit',
+                            'Embossed Suit',
+                            'Emperor Suit',
+                            'Evening Suit',
+                            'Executive Suit',
+                            'Fashion Suit',
+                            'Fitted Suit',
+                            'Flannel Suit',
+                            'Formal Suit',
+                            'French Cuff Suit',
+                            'Glen Check Suit',
+                            'Glen Plaid Suit',
+                            'Golf Suit',
+                            'Gurkha Trousers Suit',
+                            'Harris Tweed Suit',
+                            'Herringbone Suit',
+                            'Hiking Suit',
+                            'Holiday Suit',
+                            'Hombre Suit',
+                            'Houndstooth Suit',
+                            'Hunting Suit',
+                            'Italian Suit',
+                            'Jacquard Suit',
+                            'Jodhpuri Suit',
+                            'Kashmir Suit',
+                            'Khadi Suit',
+                            'Khaki Suit',
+                            'Kimono Suit',
+                            'Kissing Buttons Suit',
+                            'Knit Suit',
+                            'Leather Suit',
+                            'Leisure Suit',
+                            'Linen Suit',
+                            'Lounge Suit',
+                            'Made-to-Measure Suit',
+                            'Mandarin Collar Suit',
+                            'Mariner Suit',
+                            'Matador Suit',
+                            'Medal Ribbon Suit',
+                            'Military Suit',
+                            'Modern Fit Suit',
+                            'Mohair Suit',
+                            'Morning Coat',
+                            'Morning Suit',
+                            'Mourning Suit',
+                            'Navy Blazer Suit',
+                            'Nehru Suit',
+                            'Night Suit',
+                            'No Vent Suit',
+                            'Norfolk Jacket Suit',
+                            'Notch Lapel Suit',
+                            'Official Suit',
+                            'Off-the-Rack Suit',
+                            'One Button Suit',
+                            'Opera Suit',
+                            'Overcoat Suit',
+                            'Oxford Suit',
+                            'Pacific Blazer Suit',
+                            'Paisley Suit',
+                            'Palm Beach Suit',
+                            'Panama Suit',
+                            'Pant Suit',
+                            'Patch Pocket Suit',
+                            'Peak Lapel Suit',
+                            'Pea Coat Suit',
+                            'Pencil Stripe Suit',
+                            'Pinstripe Suit',
+                            'Plaid Suit',
+                            'Polo Suit',
+                            'Polyester Suit',
+                            'Polo Coat Suit',
+                            'Prince Coat',
+                            'Prince of Wales Suit',
+                            'Quilted Suit',
+                            'Racing Suit',
+                            'Rajput Suit',
+                            'Ready-to-Wear Suit',
+                            'Relaxed Fit Suit',
+                            'Riding Suit',
+                            'Robe Suit',
+                            'Rough Suit',
+                            'Safari Suit',
+                            'Sailor Suit',
+                            'Satin Suit',
+                            'School Blazer Suit',
+                            'Seersucker Suit',
+                            'Separates Suit',
+                            'Shawl Collar Suit',
+                            'Shawl Lapel Tuxedo',
+                            'Shell Suit',
+                            'Shirt Jacket Suit',
+                            'Side Vent Suit',
+                            'Silk Suit',
+                            'Single Breasted Suit',
+                            'Single Vent Suit',
+                            'Skirt Suit',
+                            'Slim Fit Suit',
+                            'Smoking Jacket Suit',
+                            'Space Suit',
+                            'Spanish Suit',
+                            'Sport Coat Suit',
+                            'Sports Suit',
+                            'Square Suit',
+                            'Stroller Suit',
+                            'Summer Suit',
+                            'Super 100s Suit',
+                            'Super 150s Suit',
+                            'Surcoat Suit',
+                            'Suspenders Suit',
+                            'Tailcoat',
+                            'Tailored Suit',
+                            'Tartan Suit',
+                            'Tennis Blazer Suit',
+                            'Three Button Roll Suit',
+                            'Three Piece Suit',
+                            'Tracksuit',
+                            'Trapeze Suit',
+                            'Travel Suit',
+                            'Trench Coat Suit',
+                            'Trousers Suit',
+                            'T-Shirt Suit',
+                            'Tunic Suit',
+                            'Tuxedo',
+                            'Tweed Suit',
+                            'Two Button Suit',
+                            'Two Piece Suit',
+                            'Uniform Suit',
+                            'Unstructured Suit',
+                            'Utility Suit',
+                            'Valet Suit',
+                            'Varsity Suit',
+                            'Velvet Suit',
+                            'Ventless Suit',
+                            'Vest Suit',
+                            'Vintage Suit',
+                            'Walking Suit',
+                            'Wardrobe Suit',
+                            'Wash-and-Wear Suit',
+                            'Wedding Suit',
+                            'Weekender Suit',
+                            'Western Suit',
+                            'Whipcord Suit',
+                            'White Tie Suit',
+                            'Windsor Suit',
+                            'Wing Collar Suit',
+                            'Winter Suit',
+                            'Wool Suit',
+                            'Woolen Suit',
+                            'Work Suit',
+                            'Yachting Suit',
+                            'Zoot Suit',
+                            'Other',];
+
+                                    if ($userGender === 'Female') {
+                                        $subtypes = $gownTypes;
+                                    } elseif ($userGender === 'Male') {
+                                        $subtypes = $suitTypes;
+                                    } else {
+                                        $subtypes = array_merge($gownTypes, $suitTypes);
+                                        sort($subtypes);
+                                    }
+
+                                    $selectedSubtypes = request('subtype', []);
+                                    if (!is_array($selectedSubtypes)) {
+                                        $selectedSubtypes = [$selectedSubtypes];
+                                    }
+                                @endphp
+                                @foreach($subtypes as $subtype)
+                                    <label class="flex items-center p-2 rounded-lg hover:bg-purple-50 transition-colors cursor-pointer">
+                                        <input type="checkbox" name="subtype[]" value="{{ $subtype }}"
+                                            class="form-checkbox text-purple-600 rounded focus:ring-purple-500"
+                                            {{ in_array($subtype, $selectedSubtypes) ? 'checked' : '' }}>
+                                        <span class="ml-3 text-gray-700 text-sm">{{ $subtype }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </details>
                     </div>
 
                     {{-- Size Filter --}}
-                    <div class="mb-6">
-                        <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
-                            <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-                            </svg>
-                            Size
-                        </h3>
-                        <div class="grid grid-cols-3 gap-2">
-                            @foreach(['XS', 'S', 'M', 'L', 'XL', 'XXL'] as $size)
+                    <div class="mb-4">
+                        <details class="group border-b border-gray-200 pb-3">
+                            <summary class="flex justify-between items-center cursor-pointer py-3 text-gray-800 hover:text-purple-700 transition-colors">
+                                <span class="flex items-center font-semibold">
+                                    <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                                    </svg>
+                                    Size
+                                </span>
+                                <span class="transform transition-transform duration-200 group-open:rotate-180">
+                                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </span>
+                            </summary>
+                            <div class="mt-3 max-h-60 overflow-y-auto space-y-2 pl-2 pr-2">
                                 @php
+                                    $sizeOptions = [
+                                       // Individual Sizes
+                            'XS' => 'Extra Small (XS)',
+                            'S' => 'Small (S)',
+                            'M' => 'Medium (M)',
+                            'L' => 'Large (L)',
+                            'XL' => 'Extra Large (XL)',
+                            'XXL' => '2X Large (XXL)',
+                            'XXXL' => '3X Large (XXXL)',
+
+                            // Common Ranges
+                            'XS-S' => 'XS to S',
+                            'S-M' => 'S to M',
+                            'M-L' => 'M to L',
+                            'L-XL' => 'L to XL',
+                            'XL-XXL' => 'XL to XXL',
+
+                            // Extended Ranges
+                            'XXS-S' => 'XXS to S',
+                            'XS-M' => 'XS to M',
+                            'S-L' => 'S to L',
+                            'M-XL' => 'M to XL',
+                            'L-XXL' => 'L to XXL',
+                            'XXS-M' => 'XXS to M',
+                            'XS-L' => 'XS to L',
+                            'S-XL' => 'S to XL',
+                            'M-XXL' => 'M to XXL',
+
+                            // Broad Ranges
+                            'XXS-L' => 'XXS to L',
+                            'XS-XL' => 'XS to XL',
+                            'S-XXL' => 'S to XXL',
+                            'XXS-XL' => 'XXS to XL',
+                            'XS-XXL' => 'XS to XXL',
+
+                            // Special
+                            'Adjustable' => 'Adjustable/Customizable',
+
+                                    ];
                                     $selectedSizes = request('size', []);
                                     if (!is_array($selectedSizes)) {
                                         $selectedSizes = [$selectedSizes];
                                     }
                                 @endphp
-                                <label class="flex flex-col items-center p-3 rounded-lg hover:bg-purple-50 transition-colors cursor-pointer">
-                                    <input type="checkbox" name="size[]" value="{{ $size }}"
-                                        class="form-checkbox text-purple-600 rounded focus:ring-purple-500"
-                                        {{ in_array($size, $selectedSizes) ? 'checked' : '' }}>
-                                    <span class="mt-2 text-gray-700 text-sm">{{ $size }}</span>
-                                </label>
-                            @endforeach
-                        </div>
+                                <div class="grid grid-cols-3 gap-2">
+                                    @foreach($sizeOptions as $sizeValue => $sizeLabel)
+                                        <label class="flex flex-col items-center p-2 rounded-lg hover:bg-purple-50 transition-colors cursor-pointer">
+                                            <input type="checkbox" name="size[]" value="{{ $sizeValue }}"
+                                                class="form-checkbox text-purple-600 rounded focus:ring-purple-500"
+                                                {{ in_array($sizeValue, $selectedSizes) ? 'checked' : '' }}>
+                                            <span class="mt-1 text-gray-700 text-xs text-center">{{ $sizeLabel }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </details>
                     </div>
 
+                    {{-- Color Filter --}}
+                    <div class="mb-4">
+                        <details class="group border-b border-gray-200 pb-3">
+                            <summary class="flex justify-between items-center cursor-pointer py-3 text-gray-800 hover:text-purple-700 transition-colors">
+                                <span class="flex items-center font-semibold">
+                                    <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                                    </svg>
+                                    Color
+                                </span>
+                                <span class="transform transition-transform duration-200 group-open:rotate-180">
+                                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </span>
+                            </summary>
+                            <div class="mt-3 pl-2">
+                                <div class="grid grid-cols-5 gap-3">
+                                    @php
+                                        $colors = [
+                                            'Black' => 'bg-black',
+                                            'White' => 'bg-white ring-1 ring-gray-300',
+                                            'Gray' => 'bg-gray-500',
+                                            'Silver' => 'bg-gray-400',
+                                            'Brown' => 'bg-amber-800',
+                                            'Red' => 'bg-red-600',
+                                            'Blue' => 'bg-blue-600',
+                                            'Green' => 'bg-green-600',
+                                            'Yellow' => 'bg-yellow-500',
+                                            'Orange' => 'bg-orange-500',
+                                            'Purple' => 'bg-purple-600',
+                                            'Pink' => 'bg-pink-500',
+                                            'Teal' => 'bg-teal-500',
+                                            'Indigo' => 'bg-indigo-600',
+                                            'Lime' => 'bg-lime-500',
+                                        ];
+                                        $selectedColors = request('color', []);
+                                        if (!is_array($selectedColors)) {
+                                            $selectedColors = [$selectedColors];
+                                        }
+                                    @endphp
+                                    @foreach($colors as $colorName => $colorClass)
+                                        <label class="flex justify-center items-center">
+                                            <input type="checkbox" name="color[]" value="{{ $colorName }}" class="hidden peer"
+                                                {{ in_array($colorName, $selectedColors) ? 'checked' : '' }}>
+                                            <span
+                                                class="w-8 h-8 rounded-full border-2 border-transparent cursor-pointer shadow-sm
+                                                {{ $colorClass }} peer-checked:border-purple-600 peer-checked:ring-2 peer-checked:ring-purple-200 transition-all transform peer-checked:scale-110 hover:scale-105"
+                                                title="{{ $colorName }}"></span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+
+                    {{-- Event Filter --}}
+                    <div class="mb-4">
+                        <details class="group border-b border-gray-200 pb-3">
+                            <summary class="flex justify-between items-center cursor-pointer py-3 text-gray-800 hover:text-purple-700 transition-colors">
+                                <span class="flex items-center font-semibold">
+                                    <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+                                    </svg>
+                                    Event
+                                </span>
+                                <span class="transform transition-transform duration-200 group-open:rotate-180">
+                                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </span>
+                            </summary>
+                            <div class="mt-3 max-h-60 overflow-y-auto space-y-2 pl-2 pr-2">
+                                @php
+                                    $events = [
+                                         // Weddings & Related
+                            'Wedding',
+                            'Engagement Party',
+                            'Bridal Shower',
+                            'Rehearsal Dinner',
+
+                            // Formal & Red Carpet
+                            'Gala',
+                            'Black Tie Event',
+                            'Awards Night',
+                            'Charity Ball',
+                            'Red Carpet Event',
+
+                            // School / Formal Youth Events
+                            'Prom',
+                            'Graduation',
+                            'Homecoming',
+                            'Formal Dance',
+
+                            // Cultural & Ceremonial
+                            'Debut / 18th Birthday',
+                            'Quinceañera',
+                            'Pageant',
+
+                            // Professional / Business
+                            'Corporate Event',
+                            'Business Gala',
+
+                            // Holiday & Seasonal
+                            'Christmas Party',
+                            "New Year's Eve",
+                            'Holiday Ball',
+
+                            // Special Shoots / Exhibitions
+                            'Photo Shoot',
+                            'Fashion Show',
+
+                            // Family Occasions
+                            'Anniversary',
+                            'Birthday Celebration',
+
+                            // Other
+                            'Other',
+                                    ];
+                                    $selectedEvents = request('event', []);
+                                    if (!is_array($selectedEvents)) {
+                                        $selectedEvents = [$selectedEvents];
+                                    }
+                                @endphp
+                                @foreach($events as $event)
+                                    <label class="flex items-center p-2 rounded-lg hover:bg-purple-50 transition-colors cursor-pointer">
+                                        <input type="checkbox" name="event[]" value="{{ $event }}"
+                                            class="form-checkbox text-purple-600 rounded focus:ring-purple-500"
+                                            {{ in_array($event, $selectedEvents) ? 'checked' : '' }}>
+                                        <span class="ml-3 text-gray-700 text-sm">{{ $event }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </details>
+                    </div>
+
+                    {{-- Measurements Filter (for logged in users) --}}
+                    @auth
+                        <div class="mb-4">
+                            <details class="group border-b border-gray-200 pb-3">
+                                <summary class="flex justify-between items-center cursor-pointer py-3 text-gray-800 hover:text-purple-700 transition-colors">
+                                    <span class="flex items-center font-semibold">
+                                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                        </svg>
+                                        My Measurements
+                                    </span>
+                                    <span class="transform transition-transform duration-200 group-open:rotate-180">
+                                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </span>
+                                </summary>
+                                <div class="mt-3 pl-2">
+                                    <label class="flex items-center p-2 rounded-lg hover:bg-purple-50 transition-colors cursor-pointer">
+                                        <input type="checkbox" name="measurements_filter" value="1"
+                                            class="form-checkbox text-purple-600 rounded focus:ring-purple-500"
+                                            {{ request('measurements_filter') ? 'checked' : '' }}>
+                                        <span class="ml-3 text-gray-700 text-sm">Show products that fit my measurements</span>
+                                    </label>
+                                </div>
+                            </details>
+                        </div>
+                    @endauth
+
                     {{-- Action Buttons --}}
-                    <div class="sticky bottom-0 bg-white border-t border-gray-200 p-4">
+                    <div class="sticky bottom-0 bg-white border-t border-gray-200 p-4 mt-4">
                         <div class="flex space-x-3">
                             <button type="button" onclick="clearFilters()"
-                                class="flex-1 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50">
+                                class="flex-1 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 active:scale-95 transition-all">
                                 Clear All
                             </button>
                             <button type="submit"
-                                class="flex-1 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-indigo-700">
+                                class="flex-1 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-indigo-700 active:scale-95 transition-all">
                                 Apply Filters
                             </button>
                         </div>
@@ -176,7 +763,7 @@
                 @foreach($products as $product)
                     <a href="{{ route('product.overview', ['product_id' => $product->product_id]) }}?app=1&mobile_nav=true"
                         class="block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden active:scale-[0.98] transition-all duration-200">
-                        
+
                         {{-- Product Image --}}
                         <div class="relative h-48 bg-gray-100">
                             @php
@@ -197,14 +784,14 @@
 
                             {{-- Recommendation Badge --}}
                             @if(auth()->check() && $product->fit_score > 0)
-                                <div class="absolute top-2 left-2">
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full 
-                                        {{ $product->recommendation_level === 'Perfect Fit' ? 'bg-green-100 text-green-800' : 
-                                           ($product->recommendation_level === 'Great Fit' ? 'bg-blue-100 text-blue-800' : 
-                                           'bg-yellow-100 text-yellow-800') }}">
-                                        {{ $product->fit_score }}%
-                                    </span>
-                                </div>
+                                                <div class="absolute top-2 left-2">
+                                                    <span class="px-2 py-1 text-xs font-semibold rounded-full 
+                                                        {{ $product->recommendation_level === 'Perfect Fit' ? 'bg-green-100 text-green-800' :
+                                ($product->recommendation_level === 'Great Fit' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-yellow-100 text-yellow-800') }}">
+                                                        {{ $product->fit_score }}%
+                                                    </span>
+                                                </div>
                             @endif
 
                             {{-- 3D Model Indicator --}}
@@ -223,7 +810,7 @@
                                 {{ $product->name }}
                             </h3>
                             <p class="text-xs text-gray-600 mb-2">{{ $product->subtype }}</p>
-                            
+
                             @if(!$product->has_actual_measurements)
                                 <span class="inline-flex items-center px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">
                                     <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -232,56 +819,19 @@
                                     No measurements
                                 </span>
                             @endif
-                            
+
                             <p class="text-xs text-gray-500 mt-2">{{ $product->user->shop->shop_name }}</p>
                         </div>
                     </a>
                 @endforeach
             </div>
 
-            {{-- Pagination --}}
-            @if($products->hasPages())
-                <div class="mt-6 flex justify-center">
-                    <nav class="flex items-center gap-2">
-                        {{-- Previous Page Link --}}
-                        @if($products->onFirstPage())
-                            <span class="px-4 py-2 text-gray-400 bg-white border border-gray-200 rounded-lg cursor-not-allowed text-sm">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                                </svg>
-                            </span>
-                        @else
-                            <a href="{{ $products->previousPageUrl() }}?app=1&mobile_nav=true"
-                                class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 text-sm">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                                </svg>
-                            </a>
-                        @endif
-
-                        {{-- Current Page --}}
-                        <span class="px-4 py-2 text-white bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-600 rounded-lg font-semibold text-sm">
-                            {{ $products->currentPage() }}
-                        </span>
-
-                        {{-- Next Page Link --}}
-                        @if($products->hasMorePages())
-                            <a href="{{ $products->nextPageUrl() }}?app=1&mobile_nav=true"
-                                class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 text-sm">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                </svg>
-                            </a>
-                        @else
-                            <span class="px-4 py-2 text-gray-400 bg-white border border-gray-200 rounded-lg cursor-not-allowed text-sm">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                </svg>
-                            </span>
-                        @endif
-                    </nav>
-                </div>
-            @endif
+            {{-- No Pagination - All products shown --}}
+            <div class="mt-4 text-center">
+                <p class="text-sm text-gray-500">
+                    Showing {{ $products->count() }} product{{ $products->count() !== 1 ? 's' : '' }}
+                </p>
+            </div>
 
         @else
             {{-- Empty State --}}
@@ -295,7 +845,7 @@
                 </div>
                 <h3 class="text-lg font-semibold text-gray-900 mb-2">No products found</h3>
                 <p class="text-gray-600 text-center mb-6 max-w-sm">
-                    Try adjusting your filters or search term
+                    Try adjusting your filters
                 </p>
                 <a href="{{ route('product.list') }}?app=1&mobile_nav=true"
                     class="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 active:scale-95">
@@ -334,28 +884,10 @@
             });
         }
 
-        // Clear search function
-        window.clearSearch = function () {
-            window.location.href = '{{ route("product.list") }}?app=1&mobile_nav=true';
-        };
-
         // Clear all filters
         window.clearFilters = function () {
             window.location.href = '{{ route("product.list") }}?app=1&mobile_nav=true';
         };
-
-        // Auto-submit form on filter change (optional)
-        const filterInputs = mobileFilterForm?.querySelectorAll('input[type="checkbox"]');
-        if (filterInputs) {
-            filterInputs.forEach(input => {
-                input.addEventListener('change', () => {
-                    // Add a small delay to allow multiple selections
-                    setTimeout(() => {
-                        mobileFilterForm.submit();
-                    }, 300);
-                });
-            });
-        }
 
         // Handle pull-to-refresh
         let touchStartY = 0;
@@ -376,6 +908,16 @@
                 location.reload();
             }
         }, { passive: true });
+
+        // Close dropdowns when clicking outside on mobile
+        document.addEventListener('click', function(e) {
+            const detailsElements = document.querySelectorAll('details[open]');
+            detailsElements.forEach(details => {
+                if (!details.contains(e.target)) {
+                    details.removeAttribute('open');
+                }
+            });
+        });
     });
 </script>
 
@@ -390,13 +932,6 @@
         transform: scale(0.98);
     }
 
-    /* Fix for iOS input zoom */
-    @media screen and (-webkit-min-device-pixel-ratio:0) {
-        input[type="text"]:focus {
-            font-size: 16px;
-        }
-    }
-
     /* Smooth transitions for filter sidebar */
     #filterSidebar > div {
         animation: slideInRight 0.3s ease-out;
@@ -408,6 +943,37 @@
         }
         to {
             transform: translateX(0);
+        }
+    }
+
+    /* Custom scrollbar for dropdowns */
+    details div[class*="max-h-60"]::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    details div[class*="max-h-60"]::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 2px;
+    }
+
+    details div[class*="max-h-60"]::-webkit-scrollbar-thumb {
+        background: #c4b5fd;
+        border-radius: 2px;
+    }
+
+    /* Dropdown animation */
+    details[open] summary ~ * {
+        animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
 </style>

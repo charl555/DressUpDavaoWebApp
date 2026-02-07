@@ -242,80 +242,105 @@ class ProductController extends Controller
             }
         }
 
-        // ====== NEW: Session-based seed for consistent ordering ======
+        // Check if mobile app - if yes, load ALL products (no pagination)
+        $isMobileApp = $request->has('app') ||
+            $request->has('mobile_nav') ||
+            str_contains($request->header('User-Agent'), 'DressUpDavaoApp');
 
-        // Create a unique seed based on session + filters
-        $filterString = json_encode($request->except(['page', '_token']));
-        $sessionId = session()->getId();
-        $uniqueSeed = crc32($sessionId . $filterString);
+        if ($isMobileApp) {
+            // For mobile, get all filtered products at once (no pagination)
+            $filteredProducts = $query->get();
 
-        // Store the seed in session if not already set for this filter combination
-        $sessionKey = 'product_sort_seed_' . md5($filterString);
-        if (!session()->has($sessionKey)) {
-            session()->put($sessionKey, $uniqueSeed);
-        }
+            if ($filteredProducts->isEmpty()) {
+                $products = collect();
+                return view('productlist', compact('products', 'isMobileApp'));
+            }
 
-        $sessionSeed = session()->get($sessionKey);
+            // Calculate fit scores for all filtered products
+            $productsWithScores = $filteredProducts->map(function ($product) {
+                $fitScore = $this->recommendationService->calculateFitScore($product);
+                $product->fit_score = $fitScore;
+                $product->recommendation_level = $this->recommendationService->getRecommendationLevel($fitScore);
+                $product->has_actual_measurements = $this->hasActualMeasurements($product);
+                return $product;
+            });
 
-        // Clear old seeds (optional: keep only last 5 filter combinations)
-        $this->cleanupOldSeeds();
+            // Create a unique seed for consistent ordering
+            $filterString = json_encode($request->except(['page', '_token']));
+            $sessionId = session()->getId();
+            $uniqueSeed = crc32($sessionId . $filterString);
 
-        // Get all filtered products first
-        $filteredProducts = $query->get();
+            // Sort products with seed
+            $products = $this->sortProductsWithSeed($productsWithScores, $uniqueSeed);
 
-        if ($filteredProducts->isEmpty()) {
-            $products = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 12);
-            $isMobileApp = $request->has('app') ||
-                $request->has('mobile_nav') ||
-                str_contains($request->header('User-Agent'), 'DressUpDavaoApp');
+            return view('productlist', compact('products', 'isMobileApp'));
+        } else {
+            // For web, use pagination as before
+            // Create a unique seed based on session + filters
+            $filterString = json_encode($request->except(['page', '_token']));
+            $sessionId = session()->getId();
+            $uniqueSeed = crc32($sessionId . $filterString);
 
-            if ($request->ajax() && !$isMobileApp) {
+            // Store the seed in session if not already set for this filter combination
+            $sessionKey = 'product_sort_seed_' . md5($filterString);
+            if (!session()->has($sessionKey)) {
+                session()->put($sessionKey, $uniqueSeed);
+            }
+
+            $sessionSeed = session()->get($sessionKey);
+
+            // Clear old seeds (optional: keep only last 5 filter combinations)
+            $this->cleanupOldSeeds();
+
+            // Get all filtered products first
+            $filteredProducts = $query->get();
+
+            if ($filteredProducts->isEmpty()) {
+                $products = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 12);
+
+                if ($request->ajax()) {
+                    return view('partials.products-grid', compact('products'))->render();
+                }
+
+                return view('productlist', compact('products', 'isMobileApp'));
+            }
+
+            // Calculate fit scores for all filtered products
+            $productsWithScores = $filteredProducts->map(function ($product) {
+                $fitScore = $this->recommendationService->calculateFitScore($product);
+                $product->fit_score = $fitScore;
+                $product->recommendation_level = $this->recommendationService->getRecommendationLevel($fitScore);
+                $product->has_actual_measurements = $this->hasActualMeasurements($product);
+                return $product;
+            });
+
+            // Sort products using session-based seed
+            $sortedProducts = $this->sortProductsWithSeed($productsWithScores, $sessionSeed);
+
+            // Paginate the sorted collection
+            $page = $request->input('page', 1);
+            $perPage = 12;
+            $offset = ($page - 1) * $perPage;
+
+            $paginatedProducts = new \Illuminate\Pagination\LengthAwarePaginator(
+                $sortedProducts->slice($offset, $perPage)->values(),
+                $sortedProducts->count(),
+                $perPage,
+                $page,
+                [
+                    'path' => $request->url(),
+                    'query' => $request->query(),
+                ]
+            );
+
+            $products = $paginatedProducts;
+
+            if ($request->ajax()) {
                 return view('partials.products-grid', compact('products'))->render();
             }
 
             return view('productlist', compact('products', 'isMobileApp'));
         }
-
-        // Calculate fit scores for all filtered products
-        $productsWithScores = $filteredProducts->map(function ($product) {
-            $fitScore = $this->recommendationService->calculateFitScore($product);
-            $product->fit_score = $fitScore;
-            $product->recommendation_level = $this->recommendationService->getRecommendationLevel($fitScore);
-            $product->has_actual_measurements = $this->hasActualMeasurements($product);
-            return $product;
-        });
-
-        // Sort products using session-based seed
-        $sortedProducts = $this->sortProductsWithSeed($productsWithScores, $sessionSeed);
-
-        // Paginate the sorted collection
-        $page = $request->input('page', 1);
-        $perPage = 12;
-        $offset = ($page - 1) * $perPage;
-
-        $paginatedProducts = new \Illuminate\Pagination\LengthAwarePaginator(
-            $sortedProducts->slice($offset, $perPage)->values(),
-            $sortedProducts->count(),
-            $perPage,
-            $page,
-            [
-                'path' => $request->url(),
-                'query' => $request->query(),
-            ]
-        );
-
-        $products = $paginatedProducts;
-
-        // Check if mobile app
-        $isMobileApp = $request->has('app') ||
-            $request->has('mobile_nav') ||
-            str_contains($request->header('User-Agent'), 'DressUpDavaoApp');
-
-        if ($request->ajax() && !$isMobileApp) {
-            return view('partials.products-grid', compact('products'))->render();
-        }
-
-        return view('productlist', compact('products', 'isMobileApp'));
     }
 
     /**
