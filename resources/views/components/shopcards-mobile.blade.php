@@ -161,11 +161,12 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // Focus search input on page load
-        const searchInput = document.querySelector('input[name="search"]');
-        if (searchInput) {
-            searchInput.focus();
-        }
+        // REMOVED: Focus search input on page load
+        // This was causing the keyboard to open automatically
+        // const searchInput = document.querySelector('input[name="search"]');
+        // if (searchInput) {
+        //     searchInput.focus();
+        // }
 
         // Clear search function
         window.clearSearch = function () {
@@ -174,6 +175,7 @@
 
         // Auto-submit form when typing (optional, can remove if you prefer manual submit)
         let searchTimer = null;
+        const searchInput = document.querySelector('input[name="search"]');
         if (searchInput) {
             searchInput.addEventListener('input', function () {
                 clearTimeout(searchTimer);
@@ -202,6 +204,11 @@
                 location.reload();
             }
         }, { passive: true });
+
+        // Alternative: Add a manual search button if you want to remove auto-submit
+        // You could add this HTML to the form:
+        // <button type="submit" class="hidden">Search</button>
+        // And then add a search button in the UI if needed
     });
 </script>
 

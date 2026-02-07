@@ -1,5 +1,56 @@
 @props(['products'])
 
+@php
+    // Define the getRecommendationLevel function as a Blade helper
+    function getRecommendationLevel($fitScore) {
+        if ($fitScore >= 90) {
+            return [
+                'level' => 'perfect',
+                'label' => 'Perfect Fit',
+                'description' => 'This product matches your measurements closely and will likely fit perfectly.',
+                'color' => 'emerald',
+            ];
+        } elseif ($fitScore >= 75) {
+            return [
+                'level' => 'excellent',
+                'label' => 'Excellent Fit',
+                'description' => 'This product closely matches your measurements and should fit very well.',
+                'color' => 'green',
+            ];
+        } elseif ($fitScore >= 60) {
+            return [
+                'level' => 'good',
+                'label' => 'Good Fit',
+                'description' => 'This product matches most of your measurements and should fit well.',
+                'color' => 'blue',
+            ];
+        } elseif ($fitScore >= 40) {
+            return [
+                'level' => 'fair',
+                'label' => 'Fair Fit',
+                'description' => 'This product may require minor adjustments to fit perfectly.',
+                'color' => 'yellow',
+            ];
+        } else {
+            return [
+                'level' => 'poor',
+                'label' => 'May Not Fit',
+                'description' => 'This product may not fit well based on your measurements.',
+                'color' => 'red',
+            ];
+        }
+    }
+
+    // Define color classes for badges
+    $colorClasses = [
+        'perfect' => 'bg-emerald-100 text-emerald-800 border-emerald-200',
+        'excellent' => 'bg-green-100 text-green-800 border-green-200',
+        'good' => 'bg-blue-100 text-blue-800 border-blue-200',
+        'fair' => 'bg-yellow-100 text-yellow-800 border-yellow-200',
+        'poor' => 'bg-red-100 text-red-800 border-red-200'
+    ];
+@endphp
+
 <div class="mobile-app-products min-h-screen bg-gray-50">
     {{-- Mobile Header --}}
     <div class="sticky top-0 z-40 bg-white border-b border-gray-200 px-4 py-3 shadow-sm">
@@ -20,8 +71,7 @@
                 </svg>
             </button>
         </div>
-
-        </div>
+    </div>
 
     {{-- Filter Sidebar (Hidden by default) --}}
     <div id="filterSidebar" class="fixed inset-0 z-50 bg-black bg-opacity-50 hidden">
@@ -784,19 +834,20 @@
 
                             {{-- Recommendation Badge --}}
                             @if(auth()->check() && $product->fit_score > 0)
-                                                <div class="absolute top-2 left-2">
-                                                    <span class="px-2 py-1 text-xs font-semibold rounded-full 
-                                                        {{ $product->recommendation_level === 'Perfect Fit' ? 'bg-green-100 text-green-800' :
-                                ($product->recommendation_level === 'Great Fit' ? 'bg-blue-100 text-blue-800' :
-                                    'bg-yellow-100 text-yellow-800') }}">
-                                                        {{ $product->fit_score }}%
-                                                    </span>
-                                                </div>
+                                @php
+                                    $recommendation = getRecommendationLevel($product->fit_score);
+                                    $colorClass = $colorClasses[$recommendation['level']] ?? 'bg-gray-100 text-gray-800 border-gray-200';
+                                @endphp
+                                <div class="absolute top-2 left-2 z-10">
+                                    <div class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border {{ $colorClass }} shadow-sm">
+                                        {{ $recommendation['label'] }}
+                                    </div>
+                                </div>
                             @endif
 
                             {{-- 3D Model Indicator --}}
                             @if($product->product_3d_models && $product->product_3d_models->count() > 0)
-                                <div class="absolute top-2 right-2 bg-purple-600 text-white p-1.5 rounded-full">
+                                <div class="absolute top-2 right-2 bg-purple-600 text-white p-1.5 rounded-full shadow-sm">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"></path>
                                     </svg>
