@@ -20,6 +20,7 @@
     <main class="flex-grow">
         <x-navbar />
         <x-accountsettings :bookings="$bookings" :favorites="$favorites" />
+        <x-bottom-navbar />
         <x-chatwindow />
     </main>
     <x-footer />
