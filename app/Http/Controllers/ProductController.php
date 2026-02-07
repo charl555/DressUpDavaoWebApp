@@ -265,12 +265,15 @@ class ProductController extends Controller
 
         if ($filteredProducts->isEmpty()) {
             $products = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 12);
+            $isMobileApp = $request->has('app') ||
+                $request->has('mobile_nav') ||
+                str_contains($request->header('User-Agent'), 'DressUpDavaoApp');
 
-            if ($request->ajax()) {
+            if ($request->ajax() && !$isMobileApp) {
                 return view('partials.products-grid', compact('products'))->render();
             }
 
-            return view('productlist', compact('products'));
+            return view('productlist', compact('products', 'isMobileApp'));
         }
 
         // Calculate fit scores for all filtered products
@@ -303,11 +306,16 @@ class ProductController extends Controller
 
         $products = $paginatedProducts;
 
-        if ($request->ajax()) {
+        // Check if mobile app
+        $isMobileApp = $request->has('app') ||
+            $request->has('mobile_nav') ||
+            str_contains($request->header('User-Agent'), 'DressUpDavaoApp');
+
+        if ($request->ajax() && !$isMobileApp) {
             return view('partials.products-grid', compact('products'))->render();
         }
 
-        return view('productlist', compact('products'));
+        return view('productlist', compact('products', 'isMobileApp'));
     }
 
     /**

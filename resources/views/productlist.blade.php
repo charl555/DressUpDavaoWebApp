@@ -1,3 +1,9 @@
+@php
+    $isMobileApp = request()->has('app') ||
+        request()->has('mobile_nav') ||
+        str_contains(request()->header('User-Agent'), 'DressUpDavaoApp');
+@endphp
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -7,6 +13,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+
+    @if($isMobileApp)
+        <style>
+            /* Mobile-specific styles */
+            body {
+                padding-top: 64px !important;
+                padding-bottom: 64px !important;
+                background-color: #fafafa;
+                -webkit-tap-highlight-color: transparent;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            }
+
+            * {
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* Better touch targets */
+            button,
+            a {
+                min-height: 44px;
+                min-width: 44px;
+            }
+
+            /* Custom scrollbar */
+            ::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            ::-webkit-scrollbar-track {
+                background: #f1f1f1;
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background: #c7c7c7;
+                border-radius: 2px;
+            }
+
+            /* Line clamp utility */
+            .line-clamp-1 {
+                overflow: hidden;
+                display: -webkit-box;
+                -webkit-box-orient: vertical;
+                -webkit-line-clamp: 1;
+            }
+
+            .line-clamp-2 {
+                overflow: hidden;
+                display: -webkit-box;
+                -webkit-box-orient: vertical;
+                -webkit-line-clamp: 2;
+            }
+        </style>
+    @endif
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#1f2937" />
@@ -21,15 +81,23 @@
         <x-navbar />
 
         <div class="pt-[72px]">
-            <x-productlistcomponent :products="$products" />
+            @if($isMobileApp)
+                <x-productlist-mobile :products="$products" />
+            @else
+                <x-productlistcomponent :products="$products" />
+            @endif
         </div>
 
-
-        <x-bottom-navbar />
-
-        <x-chatwindow />
+        @if($isMobileApp)
+            <x-bottom-navbar />
+        @else
+            <x-chatwindow />
+        @endif
     </main>
-    <x-footer />
+
+    @unless($isMobileApp)
+        <x-footer />
+    @endunless
 
 </body>
 
