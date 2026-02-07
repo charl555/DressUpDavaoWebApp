@@ -30,13 +30,19 @@ class ShopPageController extends Controller
             })
             ->get();
 
-        if ($request->ajax()) {
+        // Check if it's a mobile request
+        $isMobileApp = $request->has('app') ||
+            $request->has('mobile_nav') ||
+            str_contains($request->header('User-Agent'), 'DressUpDavaoApp');
+
+        // If AJAX request for desktop (keep for backward compatibility)
+        if ($request->ajax() && !$isMobileApp) {
             return response()->json([
                 'html' => view('partials.shop-cards', compact('shops'))->render(),
             ]);
         }
 
-        return view('shops', compact('shops', 'search'));
+        return view('shops', compact('shops', 'search', 'isMobileApp'));
     }
 
     public function overview(Request $request, Shops $shop)

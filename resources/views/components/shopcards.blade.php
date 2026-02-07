@@ -1,3 +1,5 @@
+@props(['shops', 'search' => ''])
+
 <div class="py-16 px-4 sm:px-6 lg:px-8 pt-[72px]">
     {{-- Header Section --}}
     <div class="text-center mb-12">
@@ -19,7 +21,7 @@
                             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                 </div>
-                <input type="text" id="shopSearch" name="search" value="{{ $search ?? '' }}"
+                <input type="text" id="shopSearch" name="search" value="{{ $search }}"
                     placeholder="Search shops by name or location..."
                     class="block w-full rounded-lg border-gray-300 pl-12 pr-4 py-3 text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-purple-500 text-base shadow-sm">
             </div>
@@ -39,7 +41,7 @@
     </div>
 </div>
 
-{{-- AJAX Search Script --}}
+{{-- AJAX Search Script (only for desktop) --}}
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const searchInput = document.getElementById('shopSearch');
@@ -47,39 +49,41 @@
         const loadingSpinner = document.getElementById('loadingSpinner');
         let timer = null;
 
-        searchInput.addEventListener('input', function () {
-            clearTimeout(timer);
-            const query = this.value.trim();
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                clearTimeout(timer);
+                const query = this.value.trim();
 
-            timer = setTimeout(() => {
-                // Show spinner
-                loadingSpinner.classList.remove('hidden');
+                timer = setTimeout(() => {
+                    // Show spinner
+                    loadingSpinner.classList.remove('hidden');
 
-                fetch(`{{ route('shops.list') }}?search=${encodeURIComponent(query)}`, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        shopList.innerHTML = data.html;
+                    fetch(`{{ route('shops.list') }}?search=${encodeURIComponent(query)}`, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
                     })
-                    .catch(error => {
-                        console.error('Search failed:', error);
-                        shopList.innerHTML = `
-                            <div class="col-span-full text-center py-12">
-                                <svg class="w-16 h-16 mx-auto text-red-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                                </svg>
-                                <h3 class="text-lg font-semibold text-gray-600 mb-2">Something went wrong</h3>
-                                <p class="text-gray-500">Please try again later.</p>
-                            </div>`;
-                    })
-                    .finally(() => {
-                        // Hide spinner when done
-                        loadingSpinner.classList.add('hidden');
-                    });
-            }, 300); // debounce 300ms
-        });
+                        .then(response => response.json())
+                        .then(data => {
+                            shopList.innerHTML = data.html;
+                        })
+                        .catch(error => {
+                            console.error('Search failed:', error);
+                            shopList.innerHTML = `
+                                <div class="col-span-full text-center py-12">
+                                    <svg class="w-16 h-16 mx-auto text-red-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                                    </svg>
+                                    <h3 class="text-lg font-semibold text-gray-600 mb-2">Something went wrong</h3>
+                                    <p class="text-gray-500">Please try again later.</p>
+                                </div>`;
+                        })
+                        .finally(() => {
+                            // Hide spinner when done
+                            loadingSpinner.classList.add('hidden');
+                        });
+                }, 300); // debounce 300ms
+            });
+        }
     });
 </script>
