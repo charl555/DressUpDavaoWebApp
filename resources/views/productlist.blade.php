@@ -19,9 +19,14 @@
 <body class="bg-white min-h-screen flex flex-col">
     <main class="flex-grow">
         <x-navbar />
+
         <div class="pt-[72px]">
             <x-productlistcomponent :products="$products" />
         </div>
+
+
+        <x-bottom-navbar />
+
         <x-chatwindow />
     </main>
     <x-footer />

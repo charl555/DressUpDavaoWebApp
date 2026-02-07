@@ -24,6 +24,7 @@
         <x-productlistcomponent :products="$products" />
         <x-chatwindow />
     </main>
+    <x-bottom-navbar />
     <x-footer />
     <x-toast />
 </body>

@@ -151,14 +151,12 @@
 
                         <!-- Navigation for Agreement Step -->
                         <div class="flex justify-between pt-6">
-                            <button type="button" @click="exitForm()"
-                                class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50
+                            <button type="button" @click="exitForm()" class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50
                                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500
                                 transition-colors duration-200">
                                 Disagree & Exit
                             </button>
-                            <button type="button" @click="nextStep()" :disabled="!form.nda_agreement"
-                                class="px-6 py-3 bg-violet-600 text-white font-medium rounded-md hover:bg-violet-700
+                            <button type="button" @click="nextStep()" :disabled="!form.nda_agreement" class="px-6 py-3 bg-violet-600 text-white font-medium rounded-md hover:bg-violet-700
                                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500
                                 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                                 I Agree & Continue

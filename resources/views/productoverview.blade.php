@@ -21,6 +21,7 @@
     <main class="flex-grow">
         <x-navbar />
         <x-overview :product="$product" />
+        <x-bottom-navbar />
         <x-chatwindow />
         <x-inquire />
     </main>

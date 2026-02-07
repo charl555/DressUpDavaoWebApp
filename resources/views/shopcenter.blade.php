@@ -233,7 +233,7 @@
             </div>
         </section>
     </main>
-
+    <x-bottom-navbar />
     <x-footer />
 </body>
 

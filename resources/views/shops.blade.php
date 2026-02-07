@@ -21,7 +21,7 @@
         <x-navbar />
 
         <x-shopcards :shops="$shops" />
-
+        <x-bottom-navbar />
         <x-chatwindow />
     </main>
     <x-footer />
