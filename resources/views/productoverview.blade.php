@@ -76,7 +76,12 @@
 <body class="bg-white min-h-screen flex flex-col">
     <main class="flex-grow">
         <x-navbar />
-        <x-overview :product="$product" />
+        
+        {{-- Conditionally apply padding-top based on device type --}}
+        <div class="@if($isMobileApp) pt-0 @else pt-[100px] @endif">
+            <x-overview :product="$product" />
+        </div>
+        
         <x-bottom-navbar />
         
         @php
@@ -125,8 +130,27 @@
                         this.classList.toggle('scale-105');
                     });
                 });
+                
+                // Additional mobile optimization: Adjust content spacing
+                const mainContent = document.querySelector('main');
+                if (mainContent) {
+                    // Remove any additional top padding that might interfere with fixed navbar
+                    mainContent.style.paddingTop = '0';
+                }
             });
         @endif
+        
+        // Optional: Dynamically adjust spacing on window resize
+        window.addEventListener('resize', function() {
+            @if(!$isMobileApp)
+                // On desktop, ensure proper spacing
+                const contentDiv = document.querySelector('.pt-\\[100px\\]');
+                if (contentDiv && window.innerWidth >= 768) {
+                    contentDiv.classList.remove('pt-0');
+                    contentDiv.classList.add('pt-[100px]');
+                }
+            @endif
+        });
     </script>
 </body>
 

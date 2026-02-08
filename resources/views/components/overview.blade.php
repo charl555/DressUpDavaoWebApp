@@ -1,4 +1,4 @@
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 px-4 sm:px-6 lg:px-8 pt-[150px] pb-12 max-w-7xl mx-auto">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 px-4 sm:px-6 lg:px-8 pb-12 max-w-7xl mx-auto">
     @php
     $rawImageRecords = $product->product_images;
     $galleryImages = [];
