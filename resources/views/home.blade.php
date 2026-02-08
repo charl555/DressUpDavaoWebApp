@@ -364,9 +364,9 @@
 
     @unless($isMobileApp)
         <x-footer />
-        <x-chatwindow />
+        
     @endunless
-
+    <x-chatwindow />
     <x-toast />
 
     <script>

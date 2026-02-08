@@ -234,6 +234,7 @@
         </section>
     </main>
     <x-bottom-navbar />
+    <x-chatwindow />
     <x-footer />
 </body>
 

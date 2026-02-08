@@ -81,7 +81,7 @@
         
         {{-- Show chatwindow only on desktop, mobile uses bottom navbar chat --}}
         @unless($isMobileApp)
-            <x-chatwindow />
+          
         @endunless
     </main>
     
@@ -89,6 +89,7 @@
         <x-footer />
     @endunless
     
+    <x-chatwindow />
     <x-toast />
 
     <script>

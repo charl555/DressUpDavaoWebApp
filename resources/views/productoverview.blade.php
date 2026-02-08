@@ -87,7 +87,7 @@
         
         {{-- Show chatwindow only on desktop, mobile uses bottom navbar chat --}}
         @unless($isMobileApp)
-            <x-chatwindow />
+            
         @endunless
         
         {{-- Inquire modal should be available on both mobile and desktop --}}
@@ -98,6 +98,7 @@
         <x-footer />
     @endunless
     
+    <x-chatwindow />
     <x-toast />
 
     <script>

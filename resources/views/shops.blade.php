@@ -89,14 +89,14 @@
         @if($isMobileApp)
             <x-bottom-navbar />
         @else
-            <x-chatwindow />
+
         @endif
     </main>
 
     @unless($isMobileApp)
         <x-footer />
     @endunless
-
+    <x-chatwindow />
     <x-toast />
 
     @if($isMobileApp)

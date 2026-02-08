@@ -131,31 +131,39 @@
             const navbarChatBtn = document.getElementById('navbarChatBtn');
             if (navbarChatBtn) {
                 navbarChatBtn.addEventListener('click', function () {
-                    // Check if chat window exists (from chatwindow component)
-                    const chatWindow = document.getElementById('chatWindow');
-                    const openChatBtn = document.getElementById('openChatBtn');
-
-                    if (chatWindow && openChatBtn) {
-                        // If chat window is already open, close it
-                        if (chatWindow.classList.contains('translate-y-0')) {
-                            chatWindow.classList.remove('translate-y-0', 'opacity-100', 'visible');
-                            chatWindow.classList.add('translate-y-full', 'opacity-0', 'invisible');
-                            openChatBtn.classList.remove('hidden');
-                            document.getElementById('chatOverlay')?.classList.add('hidden');
-                        } else {
-                            // Open chat window
-                            chatWindow.classList.remove('translate-y-full', 'opacity-0', 'invisible');
-                            chatWindow.classList.add('translate-y-0', 'opacity-100', 'visible');
-                            openChatBtn.classList.add('hidden');
-                            document.getElementById('chatOverlay')?.classList.remove('hidden');
-
-                            // Load contacts if function exists
-                            if (typeof loadContacts === 'function') {
-                                loadContacts();
-                            }
-                        }
+                    // Use the global toggle function if available
+                    if (typeof toggleChatWindow === 'function') {
+                        toggleChatWindow();
                     } else {
-                        console.warn('Chat window not found. The chatwindow component might not be loaded.');
+                        // Fallback: Direct DOM manipulation
+                        const chatWindow = document.getElementById('chatWindow');
+                        const chatOverlay = document.getElementById('chatOverlay');
+
+                        if (chatWindow) {
+                            // Check if chat window is currently visible
+                            const isChatVisible = !chatWindow.classList.contains('translate-y-full') &&
+                                !chatWindow.classList.contains('opacity-0') &&
+                                !chatWindow.classList.contains('invisible');
+
+                            if (isChatVisible) {
+                                // Close chat window
+                                chatWindow.classList.add('translate-y-full', 'opacity-0', 'invisible');
+                                chatWindow.classList.remove('translate-y-0', 'opacity-100', 'visible');
+                                if (chatOverlay) chatOverlay.classList.add('hidden');
+                            } else {
+                                // Open chat window
+                                chatWindow.classList.remove('translate-y-full', 'opacity-0', 'invisible');
+                                chatWindow.classList.add('translate-y-0', 'opacity-100', 'visible');
+                                if (chatOverlay) chatOverlay.classList.remove('hidden');
+
+                                // Load contacts if function exists
+                                if (typeof loadContacts === 'function') {
+                                    loadContacts();
+                                }
+                            }
+                        } else {
+                            console.warn('Chat window not found. The chatwindow component might not be loaded.');
+                        }
                     }
                 });
             }

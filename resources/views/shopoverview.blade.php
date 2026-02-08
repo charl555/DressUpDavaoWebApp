@@ -124,7 +124,6 @@
             <x-navbar />
             <x-shopdetailscardcomponent :shop="$shop" :reviews="$reviews" :averageRating="$averageRating" />
             <x-productlistcomponent :products="$products" />
-            <x-chatwindow />
         @endif
     </main>
 
@@ -132,6 +131,7 @@
         <x-footer />
         <x-toast />
     @endunless
+    <x-chatwindow />
 </body>
 
 </html>
