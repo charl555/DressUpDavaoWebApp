@@ -98,27 +98,44 @@
                     </ul>
                 </div>
 
-                <!-- 🔥 UPDATED: APK Download Section -->
+
                 <div class="md:col-span-1">
                     <div class="text-lg font-semibold mb-4 text-center md:text-left">
-                        <span>Get Our App</span>
+                        <span class="flex items-center">
+                            <i class="fab fa-android text-purple-600 mr-2"></i>
+                            Android App
+                        </span>
                     </div>
 
-                    <!-- APK Download Button -->
-                    <a href="/downloads/DressUp.apk" download="DressUpDavao.apk"
-                        class="block w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center space-x-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 mb-3">
-                        <i class="fab fa-android text-lg"></i>
-                        <span class="font-semibold">Download App</span>
+                    <!-- Android App Download Button (Hero-style) -->
+                    <a href="/downloads/DressUpDavao.apk" download="DressUpDavao.apk"
+                        class="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:from-purple-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-300 ease-out group border-0 w-full md:w-auto">
+                        <!-- Android Icon -->
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4483-.9993.9993-.9993c.5511 0 .9993.4483.9993.9993.0001.5511-.4482.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4483.9993.9993 0 .5511-.4483.9997-.9993.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5902 8.2439 13.8533 7.8508 12 7.8508s-3.5902.3931-5.1692 1.0992L4.8085 5.4471a.4161.4161 0 00-.5677-.1521.4157.4157 0 00-.1521.5676l1.9973 3.4592C2.8349 9.4514 1 12.1863 1 15.32v.08c0 .286.214.5.5.5h21c.286 0 .5-.214.5-.5v-.08c0-3.1337-1.8349-5.8686-4.523-6.0586" />
+                        </svg>
+
+                        <span class="mr-2 font-semibold">Download Android App</span>
+
+                        <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-200"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
                     </a>
 
-
+                    <!-- Version & Size Info -->
+                    <div class="mt-3 text-xs text-gray-500 text-center md:text-left">
+                        <p>v1.0.0 • 15 MB • Android 5.0+</p>
+                    </div>
                 </div>
             </div>
 
             <!-- Footer Bottom -->
             <div class="mt-12 border-t border-gray-300 pt-6 text-center text-sm">
                 <p>&copy; {{ date('Y') }} DressUp Davao. All rights reserved.</p>
-
             </div>
         </div>
     </footer>
@@ -160,11 +177,47 @@
         window.addEventListener('resize', initializeAccordions);
 
         // APK Download Analytics
-        document.querySelector('a[href*="DressUp.apk"]').addEventListener('click', function () {
-            // You can add analytics here
-            console.log('APK download initiated');
-            // Example: fetch('/api/track-download', { method: 'POST' });
-        });
+        const downloadBtn = document.querySelector('a[href*="DressUpDavao.apk"]');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', function (e) {
+                // Track download event
+                console.log('Android app download initiated');
+
+                // You can add analytics here:
+                // fetch('/api/track-download', { 
+                //     method: 'POST',
+                //     headers: { 'Content-Type': 'application/json' },
+                //     body: JSON.stringify({ 
+                //         type: 'android_app',
+                //         version: '1.0.0',
+                //         timestamp: new Date().toISOString()
+                //     })
+                // });
+
+                // Optional: Show download confirmation
+                const downloadModal = document.createElement('div');
+                downloadModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden';
+                downloadModal.innerHTML = `
+                    <div class="bg-white rounded-lg p-6 max-w-sm mx-4">
+                        <h3 class="text-lg font-semibold mb-2">Download Started</h3>
+                        <p class="text-gray-600 mb-4">Your Android app download has started. If it doesn't start automatically, check your downloads folder.</p>
+                        <button onclick="this.parentElement.parentElement.remove()" 
+                                class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition">
+                            OK
+                        </button>
+                    </div>
+                `;
+                document.body.appendChild(downloadModal);
+                downloadModal.classList.remove('hidden');
+
+                // Auto-close after 3 seconds
+                setTimeout(() => {
+                    if (downloadModal.parentElement) {
+                        downloadModal.remove();
+                    }
+                }, 3000);
+            });
+        }
     });
 </script>
 
@@ -183,5 +236,16 @@
             padding-top: 0.5rem;
             padding-bottom: 1rem;
         }
+    }
+
+    /* Android download button specific styles */
+    .android-download-btn {
+        background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    }
+
+    .android-download-btn:hover {
+        background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%);
+        box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
     }
 </style>
