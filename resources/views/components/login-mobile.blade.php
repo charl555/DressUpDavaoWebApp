@@ -77,8 +77,8 @@
                                       focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
                                       placeholder-gray-500 text-gray-900 text-base-mobile
                                       transition-all duration-200"
-                               placeholder="you@example.com"
-                               autofocus>
+                               placeholder="you@example.com">
+                               
                     </div>
                     <p x-show="errors.email" x-text="errors.email" class="mt-2 text-sm text-red-600"></p>
                 </div>
@@ -227,16 +227,6 @@
                       transition-all duration-200 active:scale-95 text-center">
                 Create New Account
             </a>
-        </div>
-    </div>
-
-    <!-- Security Notice (Mobile-only) -->
-    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
-        <div class="flex items-center text-gray-600 text-sm">
-            <svg class="w-5 h-5 mr-2 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            <span>Your login information is secured and encrypted.</span>
         </div>
     </div>
 
