@@ -119,65 +119,114 @@ class RegistrationController extends Controller
 
     public function login(Request $request): \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
     {
+        // 🔥 MOBILE DETECTION
+        $isMobileApp = $request->has('app') ||
+            $request->has('mobile_nav') ||
+            str_contains($request->header('User-Agent'), 'DressUpDavaoApp');
+
+        \Log::info('Login attempt', [
+            'is_mobile_app' => $isMobileApp,
+            'user_agent' => $request->header('User-Agent'),
+            'has_app' => $request->has('app'),
+            'has_mobile_nav' => $request->has('mobile_nav'),
+            'ip' => $request->ip()
+        ]);
+
         // 🔥 PWA FIX: Check if request is from PWA
         $isPwaRequest = $request->header('Sec-Fetch-Dest') === 'empty' ||
             $request->header('X-Requested-With') === 'XMLHttpRequest' ||
             $request->header('X-PWA-Request') === 'true' ||
-            !$request->expectsJson();  // PWA often doesn't set proper headers
+            !$request->expectsJson();
 
         // 🔥 PWA FIX: If PWA request, adjust session handling
         if ($isPwaRequest) {
-            // Ensure session is properly started
             $request->session()->start();
-
-            // Re-generate session token for PWA context
             $request->session()->regenerateToken();
-
-            // Log PWA request for debugging
-            \Log::info('PWA Login Attempt', [
-                'ip' => $request->ip(),
-                'headers' => $request->headers->all(),
-                'session_id' => $request->session()->getId(),
-            ]);
         }
 
         try {
-            // Add Turnstile validation to login
-            $credentials = $request->validate([
-                'email' => ['required', 'email'],
-                'password' => ['required'],
-                'cf-turnstile-response' => ['required', 'string'],
-            ]);
+            // 🔥 MOBILE FIX: Different validation for mobile
+            if ($isMobileApp) {
+                $credentials = $request->validate([
+                    'email' => ['required', 'email'],
+                    'password' => ['required'],
+                    'cf-turnstile-response' => ['sometimes', 'string'],  // Make it optional for mobile
+                ]);
+
+                // For mobile, use bypass token if not provided
+                if (empty($credentials['cf-turnstile-response'])) {
+                    $credentials['cf-turnstile-response'] = 'mobile-bypass-token';
+                }
+            } else {
+                // Desktop validation (strict)
+                $credentials = $request->validate([
+                    'email' => ['required', 'email'],
+                    'password' => ['required'],
+                    'cf-turnstile-response' => ['required', 'string'],
+                ]);
+            }
 
             // Check if email is blocked
             $emailBlock = $this->loginSecurity->isEmailBlocked($credentials['email']);
             if ($emailBlock['blocked']) {
-                return $this->handleBlockedLogin($request, $emailBlock, $isPwaRequest);
+                return $this->handleBlockedLogin($request, $emailBlock, $isPwaRequest, $isMobileApp);
             }
 
             // Check if IP is blocked
             $ipBlock = $this->loginSecurity->isIpBlocked($request->ip());
             if ($ipBlock['blocked']) {
-                return $this->handleBlockedLogin($request, $ipBlock, $isPwaRequest);
+                return $this->handleBlockedLogin($request, $ipBlock, $isPwaRequest, $isMobileApp);
             }
 
-            // Validate Turnstile token
-            $turnstileValid = $this->validateTurnstile($credentials['cf-turnstile-response']);
-            if (!$turnstileValid['success']) {
-                $this->loginSecurity->recordAttempt($credentials['email'], $request->ip(), false);
+            // 🔥 MOBILE FIX: Skip Turnstile validation for mobile
+            if (!$isMobileApp) {
+                // Desktop: Validate Turnstile token normally
+                $turnstileValid = $this->validateTurnstile($credentials['cf-turnstile-response']);
+                if (!$turnstileValid['success']) {
+                    $this->loginSecurity->recordAttempt($credentials['email'], $request->ip(), false);
 
-                $responseData = [
-                    'success' => false,
-                    'message' => $turnstileValid['message'],
-                    'errors' => ['cf-turnstile-response' => [$turnstileValid['message']]]
-                ];
+                    $responseData = [
+                        'success' => false,
+                        'message' => $turnstileValid['message'],
+                        'errors' => ['cf-turnstile-response' => [$turnstileValid['message']]]
+                    ];
 
-                // 🔥 PWA FIX: Add CSRF token for PWA
-                if ($isPwaRequest) {
-                    $responseData['csrf_token'] = csrf_token();
+                    if ($isPwaRequest) {
+                        $responseData['csrf_token'] = csrf_token();
+                    }
+
+                    return response()->json($responseData, 422);
                 }
+            } else {
+                // Mobile: Simple bypass token validation
+                if ($credentials['cf-turnstile-response'] !== 'mobile-bypass-token') {
+                    \Log::warning('Invalid mobile token', [
+                        'received' => $credentials['cf-turnstile-response'],
+                        'expected' => 'mobile-bypass-token'
+                    ]);
 
-                return response()->json($responseData, 422);
+                    $this->loginSecurity->recordAttempt($credentials['email'], $request->ip(), false);
+
+                    $responseData = [
+                        'success' => false,
+                        'message' => 'Invalid security token',
+                        'errors' => ['email' => ['Invalid security token']]
+                    ];
+
+                    if ($isPwaRequest) {
+                        $responseData['csrf_token'] = csrf_token();
+                    }
+
+                    if ($isMobileApp && !$isPwaRequest && !$request->expectsJson()) {
+                        return back()
+                            ->withInput($request->only('email', 'remember'))
+                            ->withErrors(['email' => 'Invalid security token'])
+                            ->with('error', 'Invalid security token')
+                            ->with('remaining_attempts', $this->loginSecurity->getRemainingAttempts($credentials['email']));
+                    }
+
+                    return response()->json($responseData, 422);
+                }
             }
         } catch (\Illuminate\Validation\ValidationException $e) {
             $responseData = [
@@ -186,9 +235,17 @@ class RegistrationController extends Controller
                 'errors' => $e->errors()
             ];
 
-            // 🔥 PWA FIX: Add CSRF token for PWA
             if ($isPwaRequest) {
                 $responseData['csrf_token'] = csrf_token();
+            }
+
+            // 🔥 MOBILE FIX: Handle mobile validation errors
+            if ($isMobileApp && !$isPwaRequest && !$request->expectsJson()) {
+                return back()
+                    ->withInput($request->only('email', 'remember'))
+                    ->withErrors($e->errors())
+                    ->with('error', 'Validation failed. Please check your input.')
+                    ->with('remaining_attempts', $this->loginSecurity->getRemainingAttempts($request->input('email')));
             }
 
             if ($request->expectsJson() || $isPwaRequest) {
@@ -209,9 +266,17 @@ class RegistrationController extends Controller
                 'errors' => ['email' => ['Admin accounts must use the admin login page.']]
             ];
 
-            // 🔥 PWA FIX: Add CSRF token for PWA
             if ($isPwaRequest) {
                 $responseData['csrf_token'] = csrf_token();
+            }
+
+            // 🔥 MOBILE FIX: Handle mobile admin login attempt
+            if ($isMobileApp && !$isPwaRequest && !$request->expectsJson()) {
+                return back()
+                    ->withInput($request->only('email', 'remember'))
+                    ->withErrors(['email' => 'Admin accounts must use the admin login page.'])
+                    ->with('error', 'Admin accounts must use the admin login page.')
+                    ->with('remaining_attempts', $this->loginSecurity->getRemainingAttempts($credentials['email']));
             }
 
             if ($request->expectsJson() || $isPwaRequest) {
@@ -237,23 +302,38 @@ class RegistrationController extends Controller
 
             $request->session()->regenerate();
 
+            \Log::info('Login successful', [
+                'email' => $credentials['email'],
+                'is_mobile_app' => $isMobileApp,
+                'is_pwa' => $isPwaRequest
+            ]);
+
             // 🔥 PWA FIX: Special handling for PWA requests
             if ($isPwaRequest) {
-                // For PWA, ensure session is properly saved
                 $request->session()->save();
 
-                // Return JSON with session info for PWA
+                $redirectUrl = $isMobileApp ? '/?app=1&mobile_nav=true' : '/';
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Login successful! Welcome back!',
-                    'redirect' => '/',
+                    'redirect' => $redirectUrl,
                     'session_refreshed' => true,
-                    'csrf_token' => csrf_token(),  // Send new CSRF token
+                    'csrf_token' => csrf_token(),
                     'is_pwa' => true,
+                    'is_mobile_app' => $isMobileApp,
                 ]);
             }
 
-            // Handle regular AJAX requests
+            // 🔥 MOBILE FIX: Handle mobile successful login
+            if ($isMobileApp && !$isPwaRequest && !$request->expectsJson()) {
+                $redirectUrl = $isMobileApp ? '/?app=1&mobile_nav=true' : '/';
+                return redirect()
+                    ->intended($redirectUrl)
+                    ->with('success', 'Login successful! Welcome back!');
+            }
+
+            // Handle regular AJAX requests (desktop)
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => true,
@@ -281,9 +361,17 @@ class RegistrationController extends Controller
             'errors' => ['email' => [$message]]
         ];
 
-        // 🔥 PWA FIX: Add CSRF token for PWA
         if ($isPwaRequest) {
             $responseData['csrf_token'] = csrf_token();
+        }
+
+        // 🔥 MOBILE FIX: Handle mobile failed login
+        if ($isMobileApp && !$isPwaRequest && !$request->expectsJson()) {
+            return back()
+                ->withInput($request->only('email', 'remember'))
+                ->withErrors(['email' => $message])
+                ->with('error', $message)
+                ->with('remaining_attempts', $remainingAttempts);
         }
 
         if ($request->expectsJson() || $isPwaRequest) {
