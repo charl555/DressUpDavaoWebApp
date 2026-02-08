@@ -70,14 +70,20 @@
 <body class="bg-white min-h-screen flex flex-col">
     <main class="flex-grow">
         <x-navbar />
-        <x-accountsettings :bookings="$bookings" :favorites="$favorites" />
-        <x-bottom-navbar />
         
         @php
             $isMobileApp = request()->has('app') ||
                 request()->has('mobile_nav') ||
                 str_contains(request()->header('User-Agent'), 'DressUpDavaoApp');
         @endphp
+        
+        @if($isMobileApp)
+            <x-accountsettings-mobile :bookings="$bookings" :favorites="$favorites" />
+        @else
+            <x-accountsettings :bookings="$bookings" :favorites="$favorites" />
+        @endif
+        
+        <x-bottom-navbar />
         
         {{-- Show chatwindow only on desktop, mobile uses bottom navbar chat --}}
         @unless($isMobileApp)
