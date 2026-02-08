@@ -28,6 +28,25 @@
                 <span class="text-xs font-medium">Collections</span>
             </a>
 
+            {{-- Chat Button (Only for logged in users who are not admins) --}}
+            @auth
+                @if(auth()->user()->role !== 'Admin' && auth()->user()->role !== 'SuperAdmin')
+                    <button id="navbarChatBtn"
+                        class="flex flex-col items-center justify-center w-full h-full text-gray-500 hover:text-purple-600 transition-colors duration-200 hover:bg-purple-50 relative">
+                        <div class="relative">
+                            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                            {{-- Unread messages badge --}}
+                            <span id="navbarUnreadBadge"
+                                class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 items-center justify-center hidden">0</span>
+                        </div>
+                        <span class="text-xs font-medium">Chat</span>
+                    </button>
+                @endif
+            @endauth
+
             {{-- Shops --}}
             <a href="/shops?app=1&mobile_nav=true"
                 class="flex flex-col items-center justify-center w-full h-full {{ request()->is('shops*') ? 'text-purple-600' : 'text-gray-500' }} transition-colors duration-200 hover:bg-purple-50">
@@ -107,6 +126,67 @@
                     console.log('Error processing link:', e);
                 }
             });
+
+            // Chat button click handler for navbar
+            const navbarChatBtn = document.getElementById('navbarChatBtn');
+            if (navbarChatBtn) {
+                navbarChatBtn.addEventListener('click', function () {
+                    // Check if chat window exists (from chatwindow component)
+                    const chatWindow = document.getElementById('chatWindow');
+                    const openChatBtn = document.getElementById('openChatBtn');
+
+                    if (chatWindow && openChatBtn) {
+                        // If chat window is already open, close it
+                        if (chatWindow.classList.contains('translate-y-0')) {
+                            chatWindow.classList.remove('translate-y-0', 'opacity-100', 'visible');
+                            chatWindow.classList.add('translate-y-full', 'opacity-0', 'invisible');
+                            openChatBtn.classList.remove('hidden');
+                            document.getElementById('chatOverlay')?.classList.add('hidden');
+                        } else {
+                            // Open chat window
+                            chatWindow.classList.remove('translate-y-full', 'opacity-0', 'invisible');
+                            chatWindow.classList.add('translate-y-0', 'opacity-100', 'visible');
+                            openChatBtn.classList.add('hidden');
+                            document.getElementById('chatOverlay')?.classList.remove('hidden');
+
+                            // Load contacts if function exists
+                            if (typeof loadContacts === 'function') {
+                                loadContacts();
+                            }
+                        }
+                    } else {
+                        console.warn('Chat window not found. The chatwindow component might not be loaded.');
+                    }
+                });
+            }
+
+            // Update navbar unread badge
+            async function updateNavbarUnreadBadge() {
+                try {
+                    const response = await fetch('/chat/unread-count');
+                    const data = await response.json();
+
+                    const navbarUnreadBadge = document.getElementById('navbarUnreadBadge');
+                    if (navbarUnreadBadge) {
+                        if (data.unread_count > 0) {
+                            navbarUnreadBadge.textContent = data.unread_count;
+                            navbarUnreadBadge.classList.remove('hidden');
+                            navbarUnreadBadge.classList.add('flex');
+                        } else {
+                            navbarUnreadBadge.classList.add('hidden');
+                            navbarUnreadBadge.classList.remove('flex');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error updating navbar unread badge:', error);
+                }
+            }
+
+            // Initialize navbar unread badge
+            updateNavbarUnreadBadge();
+
+            // Update badge periodically (every 30 seconds)
+            setInterval(updateNavbarUnreadBadge, 30000);
         });
     </script>
 
@@ -122,32 +202,55 @@
         }
 
         /* Touch-friendly tap targets */
-        nav a {
+        nav a,
+        nav button {
             -webkit-tap-highlight-color: transparent;
             user-select: none;
         }
 
         /* Hover effect for non-touch devices */
         @media (hover: hover) {
-            nav a:hover {
+
+            nav a:hover,
+            nav button:hover {
                 background-color: rgba(126, 34, 206, 0.05);
             }
         }
 
         /* Mobile-specific styles */
         @media (max-width: 768px) {
-            nav a {
+
+            nav a,
+            nav button {
                 padding: 8px 0;
             }
 
-            nav a svg {
+            nav a svg,
+            nav button svg {
                 width: 22px;
                 height: 22px;
             }
 
-            nav a span {
+            nav a span,
+            nav button span {
                 font-size: 10px;
             }
+        }
+
+        /* Chat button specific styles */
+        #navbarChatBtn {
+            cursor: pointer;
+            border: none;
+            background: none;
+            outline: none;
+        }
+
+        #navbarUnreadBadge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
         }
     </style>
 @endif

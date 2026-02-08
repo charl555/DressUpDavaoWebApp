@@ -80,13 +80,16 @@
     <main class="flex-grow">
         <x-navbar />
 
-        <div class="pt-[72px]">
-            @if($isMobileApp)
+
+        @if($isMobileApp)
+            <div>
                 <x-productlist-mobile :products="$products" />
-            @else
+            </div>
+        @else
+            <div class="pt-[72px]">
                 <x-productlistcomponent :products="$products" />
-            @endif
-        </div>
+            </div>
+        @endif
 
         @if($isMobileApp)
             <x-bottom-navbar />
